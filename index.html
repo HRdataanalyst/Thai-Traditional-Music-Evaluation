@@ -936,22 +936,12 @@
       font-size: 14px;
     }
 
-    .video-note {
-      margin-top: 14px;
-      padding: 14px 16px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.08);
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 13px;
-      line-height: 1.7;
-    }
-
     .video-comment-card {
       margin-top: 0;
       padding: 18px;
       display: flex;
-      flex: 1 1 auto;
-      min-height: 250px;
+      flex: 0 0 auto;
+      min-height: 190px;
       flex-direction: column;
       border: 1px solid var(--border);
       border-radius: 15px;
@@ -968,8 +958,7 @@
 
     .video-comment-card textarea {
       width: 100%;
-      min-height: 220px;
-      flex: 1 1 auto;
+      min-height: 135px;
       resize: vertical;
       border-color: #e7dce9;
       background: #fcf9fc;
@@ -1562,7 +1551,7 @@
 
     .evaluation-video-panel .video-comment-card {
       margin-top: 0;
-      flex: 1 1 auto;
+      flex: 0 0 auto;
     }
 
     .evaluation-action-bar {
@@ -2386,17 +2375,6 @@
 
           <div class="video-container">
 
-            <div id="videoPlayerContainer" class="mock-video">
-              <div style="text-align:center;">
-                <p>ยังไม่พบลิงก์วิดีโอ</p>
-              </div>
-            </div>
-
-            <div class="video-note">
-              ในระบบจริงสามารถเชื่อมคลิปจาก Google Drive,
-              YouTube แบบไม่เป็นสาธารณะ หรือระบบจัดเก็บไฟล์อื่นได้
-            </div>
-
             <div class="comment-area video-comment-card">
               <label for="judgeComment">
                 ความคิดเห็นเพิ่มเติมของกรรมการ
@@ -2406,6 +2384,12 @@
                 id="judgeComment"
                 placeholder="ระบุความคิดเห็นหรือข้อเสนอแนะเพิ่มเติม..."
               ></textarea>
+            </div>
+
+            <div id="videoPlayerContainer" class="mock-video">
+              <div style="text-align:center;">
+                <p>ยังไม่พบลิงก์วิดีโอ</p>
+              </div>
             </div>
 
           </div>
@@ -2656,7 +2640,11 @@
       }
     }
 
-    async function apiGet(action, params = {}) {
+    async function apiGet(
+  action,
+  params = {},
+  timeoutMs = 30000
+) {
       const url = new URL(API_URL);
       url.searchParams.set("action", action);
       url.searchParams.set("_", Date.now());
@@ -2665,10 +2653,11 @@
         url.searchParams.set(key, value ?? "");
       });
 
-      const response = await fetchWithTimeout(
-        url.toString(),
-        { method: "GET" }
-      );
+const response = await fetchWithTimeout(
+  url.toString(),
+  { method: "GET" },
+  timeoutMs
+);
 
       const data = await parseApiResponse(response);
 
@@ -2708,17 +2697,35 @@
       loginError.textContent = "";
       setLoading(true, "กำลังเข้าสู่ระบบ...");
       try {
-        const result = await apiPost("login", {
-          username: usernameInput.value.trim(),
-          password: passwordInput.value.trim()
-        });
-        authToken = result.token;
-        currentJudge = result.judge;
-        await loadApplicants();
-        applyJudgeInfo(result.judge);
-        loginPage.classList.add("hidden");
-        appPage.classList.remove("hidden");
-        showToast("เข้าสู่ระบบสำเร็จ", "success");
+const result = await apiPost("login", {
+  username: usernameInput.value.trim(),
+  password: passwordInput.value.trim()
+});
+
+authToken = result.token;
+currentJudge = result.judge;
+
+applyJudgeInfo(result.judge);
+
+/* เปิดหน้า Dashboard ทันที */
+loginPage.classList.add("hidden");
+appPage.classList.remove("hidden");
+
+showToast("เข้าสู่ระบบสำเร็จ", "success");
+
+/* ค่อยโหลดรายการภายหลัง */
+setLoading(true, "กำลังโหลดรายการผู้เข้าแข่งขัน...");
+
+try {
+  await loadApplicants();
+} catch (loadError) {
+  showToast(
+    "เข้าสู่ระบบแล้ว แต่ยังโหลดรายการไม่สำเร็จ กรุณารีเฟรชอีกครั้ง"
+  );
+  console.error(loadError);
+} finally {
+  setLoading(false);
+}
       } catch (error) {
         loginError.textContent = error.message;
       } finally {
@@ -2727,7 +2734,11 @@
     });
 
     async function loadApplicants() {
-      const result = await apiGet("applicants", { token: authToken });
+      const result = await apiGet(
+  "applicants",
+  { token: authToken },
+  90000
+);
       applicants = Array.isArray(result.applicants) ? result.applicants : [];
       scoreCriteria = (result.scoreCriteria || []).map(item => ({
         key: item.key,
