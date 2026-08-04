@@ -951,6 +951,33 @@
       line-height: 1.7;
     }
 
+    .video-comment-card {
+      margin-top: 0;
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 15px;
+      background: #ffffff;
+      box-shadow: none;
+    }
+
+    .video-comment-card label {
+      margin-bottom: 9px;
+      color: var(--primary-dark);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .video-comment-card textarea {
+      min-height: 132px;
+      border-color: #e7dce9;
+      background: #fcf9fc;
+      color: var(--text-main);
+    }
+
+    .video-comment-card textarea::placeholder {
+      color: #9b8d9d;
+    }
+
     .applicant-detail {
       margin-top: 17px;
       padding: 18px;
@@ -1521,6 +1548,14 @@
       padding: 22px;
       display: flex;
       flex-direction: column;
+    }
+
+    .evaluation-score-panel .score-summary {
+      margin-top: 20px;
+    }
+
+    .evaluation-video-panel .video-comment-card {
+      margin-top: auto;
     }
 
     .evaluation-action-bar {
@@ -2355,6 +2390,16 @@
               YouTube แบบไม่เป็นสาธารณะ หรือระบบจัดเก็บไฟล์อื่นได้
             </div>
 
+            <div class="comment-area video-comment-card">
+              <label for="judgeComment">
+                ความคิดเห็นเพิ่มเติมของกรรมการ
+              </label>
+
+              <textarea
+                id="judgeComment"
+                placeholder="ระบุความคิดเห็นหรือข้อเสนอแนะเพิ่มเติม..."
+              ></textarea>
+            </div>
 
           </div>
 
@@ -2374,19 +2419,6 @@
           </div>
 
           <div id="scoreList" class="score-list"></div>
-
-          <div class="comment-area">
-
-            <label for="judgeComment">
-              ความคิดเห็นเพิ่มเติมของกรรมการ
-            </label>
-
-            <textarea
-              id="judgeComment"
-              placeholder="ระบุความคิดเห็นหรือข้อเสนอแนะเพิ่มเติม..."
-            ></textarea>
-
-          </div>
 
           <div class="score-summary">
 
