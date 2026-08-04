@@ -1490,6 +1490,29 @@
       white-space: nowrap;
     }
 
+    .evaluation-member-main {
+      min-width: 0;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .evaluation-member-main strong {
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .evaluation-member-instrument,
+    .evaluation-member-role {
+      display: block;
+      color: var(--text-soft);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
     .evaluation-workspace {
       display: grid;
       grid-template-columns: minmax(0, 1.02fr) minmax(440px, 0.98fr);
@@ -2375,6 +2398,12 @@
 
 <div class="video-container">
 
+    <div id="videoPlayerContainer" class="mock-video">
+      <div style="text-align:center;">
+        <p>ยังไม่พบลิงก์วิดีโอ</p>
+      </div>
+    </div>
+
     <div class="comment-area video-comment-card">
       <label for="judgeComment">
         ความคิดเห็นเพิ่มเติมของกรรมการ
@@ -2384,12 +2413,6 @@
         id="judgeComment"
         placeholder="ระบุความคิดเห็นหรือข้อเสนอแนะเพิ่มเติม..."
       ></textarea>
-    </div>
-
-    <div id="videoPlayerContainer" class="mock-video">
-      <div style="text-align:center;">
-        <p>ยังไม่พบลิงก์วิดีโอ</p>
-      </div>
     </div>
 
 </div>
@@ -2934,27 +2957,77 @@ try {
     function renderMembers(applicant) {
       const members = applicant.members || [];
       const accompanists = applicant.accompanists || [];
-      const memberRows = members.map((member, index) => `
-        <div class="evaluation-member-row">
-          <span class="evaluation-member-number">${index + 1}</span>
-          <div class="evaluation-member-main">
-            <strong>${escapeHtml(member.displayName || member.fullName || "ไม่ระบุชื่อ")}</strong>
-            ${member.nickname ? `<span>ชื่อเล่น ${escapeHtml(member.nickname)}</span>` : ""}
-            ${member.instrumentName ? `<span>เครื่องดนตรี ${escapeHtml(member.instrumentName)}</span>` : ""}
+
+      const memberRows = members.map((member, index) => {
+        const fullName =
+          member.displayName ||
+          member.fullName ||
+          "ไม่ระบุชื่อ";
+
+        const displayName = member.nickname
+          ? `${fullName} (${member.nickname})`
+          : fullName;
+
+        const instrument =
+          member.instrumentName ||
+          member.instrumentCategory ||
+          "-";
+
+        return `
+          <div class="evaluation-member-row">
+            <span class="evaluation-member-number">${index + 1}</span>
+
+            <div class="evaluation-member-main">
+              <strong>${escapeHtml(displayName)}</strong>
+
+              <span class="evaluation-member-instrument">
+                เครื่องดนตรี : ${escapeHtml(instrument)}
+              </span>
+            </div>
+
+            <span class="evaluation-member-age">
+              ${member.age ? `อายุ ${escapeHtml(member.age)} ปี` : ""}
+            </span>
           </div>
-          <span class="evaluation-member-age">${member.age ? `อายุ ${escapeHtml(member.age)} ปี` : ""}</span>
-        </div>`).join("");
-      const accompanistRows = accompanists.map((member, index) => `
-        <div class="evaluation-member-row">
-          <span class="evaluation-member-number">จ${index + 1}</span>
-          <div class="evaluation-member-main">
-            <strong>${escapeHtml(member.displayName || member.fullName || "ไม่ระบุชื่อ")}</strong>
-            <span>ผู้ประกอบจังหวะ${member.nickname ? ` · ชื่อเล่น ${escapeHtml(member.nickname)}` : ""}</span>
+        `;
+      }).join("");
+
+      const accompanistRows = accompanists.map((member, index) => {
+        const fullName =
+          member.displayName ||
+          member.fullName ||
+          "ไม่ระบุชื่อ";
+
+        const displayName = member.nickname
+          ? `${fullName} (${member.nickname})`
+          : fullName;
+
+        return `
+          <div class="evaluation-member-row">
+            <span class="evaluation-member-number">จ${index + 1}</span>
+
+            <div class="evaluation-member-main">
+              <strong>${escapeHtml(displayName)}</strong>
+
+              <span class="evaluation-member-role">
+                ผู้ประกอบจังหวะ
+              </span>
+            </div>
           </div>
-        </div>`).join("");
+        `;
+      }).join("");
+
       document.getElementById("modalApplicantDetail").innerHTML = `
-        <div class="evaluation-members-header"><h3>รายชื่อผู้เข้าแข่งขัน</h3><span>${members.length} คน</span></div>
-        <div class="evaluation-members-list">${memberRows || "<p>ไม่พบรายชื่อผู้เข้าแข่งขัน</p>"}${accompanistRows}</div>`;
+        <div class="evaluation-members-header">
+          <h3>รายชื่อผู้เข้าแข่งขัน</h3>
+          <span>${members.length} คน</span>
+        </div>
+
+        <div class="evaluation-members-list">
+          ${memberRows || "<p>ไม่พบรายชื่อผู้เข้าแข่งขัน</p>"}
+          ${accompanistRows}
+        </div>
+      `;
     }
 
     function renderVideo(url) {
