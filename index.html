@@ -656,6 +656,11 @@
       transform: translateY(-1px);
     }
 
+    .reload-data-button {
+      margin-top: 8px;
+      background: #ffffff;
+    }
+
     /* =========================
        Applicant cards - 1 รายการต่อ 1 แถว
     ========================== */
@@ -2361,6 +2366,14 @@
           >
             รีเซ็ตตัวกรอง
           </button>
+
+          <button
+            id="reloadApplicantsButton"
+            class="filter-refresh-button reload-data-button"
+            type="button"
+          >
+            โหลดข้อมูลใหม่
+          </button>
         </div>
 
       </section>
@@ -2603,6 +2616,7 @@
     const competitionFilter = document.getElementById("competitionFilter");
     const instrumentFilter = document.getElementById("instrumentFilter");
     const refreshFilterButton = document.getElementById("refreshFilterButton");
+    const reloadApplicantsButton = document.getElementById("reloadApplicantsButton");
     const confirmOverlay = document.getElementById("confirmOverlay");
     const scoreList = document.getElementById("scoreList");
     const judgeComment = document.getElementById("judgeComment");
@@ -2740,7 +2754,7 @@ const response = await fetchWithTimeout(
             ...payload
           })
         },
-        30000
+        action === "applicants" ? 120000 : 30000
       );
 
       const data = await parseApiResponse(response);
@@ -2781,10 +2795,14 @@ setLoading(true, "กำลังโหลดรายการผู้เข�
 try {
   await loadApplicants();
 } catch (loadError) {
+  applicants = [];
+  renderApplicants();
+
   showToast(
-    "เข้าสู่ระบบแล้ว แต่ยังโหลดรายการไม่สำเร็จ กรุณารีเฟรชอีกครั้ง"
+    "โหลดรายการไม่สำเร็จ: " + loadError.message
   );
-  console.error(loadError);
+
+  console.error("loadApplicants error:", loadError);
 } finally {
   setLoading(false);
 }
@@ -2796,12 +2814,17 @@ try {
     });
 
     async function loadApplicants() {
-      const result = await apiGet(
-  "applicants",
-  { token: authToken },
-  90000
-);
-      applicants = Array.isArray(result.applicants) ? result.applicants : [];
+      /*
+       * ใช้ POST สำหรับโหลดรายการ เพื่อเลี่ยงปัญหา GET/redirect
+       * ที่ทำให้บางครั้ง Login สำเร็จแต่รายการกลายเป็น 0
+       */
+      const result = await apiPost("applicants", {
+        token: authToken
+      });
+
+      applicants = Array.isArray(result.applicants)
+        ? result.applicants
+        : [];
       scoreCriteria = (result.scoreCriteria || []).map(item => ({
         key: item.key,
         title: item.label,
@@ -2932,6 +2955,24 @@ try {
       searchInput.focus();
 
       showToast("รีเซ็ตตัวกรองเรียบร้อยแล้ว");
+    });
+
+    reloadApplicantsButton.addEventListener("click", async function () {
+      if (!authToken) {
+        showToast("กรุณาเข้าสู่ระบบใหม่");
+        return;
+      }
+
+      setLoading(true, "กำลังโหลดรายการผู้เข้าแข่งขัน...");
+
+      try {
+        await loadApplicants();
+        showToast("โหลดข้อมูลล่าสุดเรียบร้อยแล้ว", "success");
+      } catch (error) {
+        showToast("โหลดข้อมูลไม่สำเร็จ: " + error.message);
+      } finally {
+        setLoading(false);
+      }
     });
 
     function buildClientSummary(items) {
