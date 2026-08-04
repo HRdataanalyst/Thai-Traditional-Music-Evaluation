@@ -1062,6 +1062,52 @@
       font-weight: 700;
     }
 
+    .score-slider-wrap {
+      position: relative;
+      margin-top: 28px;
+      padding-top: 12px;
+    }
+
+    .score-bubble {
+      position: absolute;
+      left: 0%;
+      top: -18px;
+      min-width: 38px;
+      height: 28px;
+      padding: 0 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(93, 40, 95, 0.18);
+      border-radius: 9px;
+      background: rgba(243, 234, 244, 0.82);
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 5px 14px rgba(61, 24, 63, 0.08);
+      backdrop-filter: blur(6px);
+      transform: translateX(-50%);
+      pointer-events: none;
+      transition: left 0.08s linear;
+    }
+
+    .score-bubble::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -5px;
+      width: 8px;
+      height: 8px;
+      border-right: 1px solid rgba(93, 40, 95, 0.18);
+      border-bottom: 1px solid rgba(93, 40, 95, 0.18);
+      background: rgba(243, 234, 244, 0.92);
+      transform: translateX(-50%) rotate(45deg);
+    }
+
+    .score-slider-wrap .score-range {
+      margin-top: 0;
+    }
+
     .score-range {
       width: 100%;
       height: 6px;
@@ -1196,6 +1242,367 @@
     .submit-button:hover {
       background: var(--primary-dark);
     }
+
+
+    /* =========================
+       Evaluation page
+    ========================== */
+
+    .evaluation-page {
+      min-height: 100vh;
+      background: var(--background);
+    }
+
+    .evaluation-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      min-height: 74px;
+      padding: 12px clamp(18px, 4vw, 56px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+    }
+
+    .evaluation-back-button {
+      min-height: 42px;
+      padding: 0 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: #ffffff;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .evaluation-back-button:hover {
+      border-color: #ccb8d0;
+      background: var(--primary-light);
+    }
+
+    .evaluation-heading {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .evaluation-heading h1 {
+      overflow: hidden;
+      color: var(--primary-dark);
+      font-size: 20px;
+      line-height: 1.35;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .evaluation-heading p {
+      margin-top: 2px;
+      color: var(--text-soft);
+      font-size: 12px;
+    }
+
+    .evaluation-page-content {
+      width: min(1440px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 26px 0 46px;
+    }
+
+    .evaluation-school-card {
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 18px;
+      padding: 24px 28px;
+      border: 1px solid #e7dce9;
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 92% 18%, rgba(93, 40, 95, 0.09), transparent 23%),
+        linear-gradient(135deg, #ffffff, #fbf7fc);
+      box-shadow: var(--shadow-small);
+    }
+
+    .evaluation-school-card::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+    }
+
+    .evaluation-school-label {
+      margin-bottom: 5px;
+      color: var(--text-soft);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .evaluation-school-card h2 {
+      color: var(--primary-dark);
+      font-size: clamp(24px, 2.4vw, 34px);
+      line-height: 1.35;
+      letter-spacing: -0.4px;
+    }
+
+    .evaluation-school-card p {
+      margin-top: 5px;
+      color: var(--text-soft);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .evaluation-info-card {
+      margin-bottom: 18px;
+      padding: 20px 22px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      border: 1px solid var(--border);
+      border-radius: 17px;
+      background: #ffffff;
+      box-shadow: var(--shadow-small);
+    }
+
+    .evaluation-info-item {
+      min-width: 0;
+      padding-right: 14px;
+      border-right: 1px solid #eee8ef;
+    }
+
+    .evaluation-info-item:last-child {
+      padding-right: 0;
+      border-right: none;
+    }
+
+    .evaluation-info-item span {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--text-soft);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .evaluation-info-item strong {
+      display: block;
+      overflow: hidden;
+      color: var(--text-main);
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.45;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .evaluation-members-card {
+      margin-bottom: 18px;
+      padding: 20px 22px;
+      border: 1px solid var(--border);
+      border-radius: 17px;
+      background: #ffffff;
+      box-shadow: var(--shadow-small);
+    }
+
+    .evaluation-members-header {
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .evaluation-members-header h2 {
+      color: var(--primary-dark);
+      font-size: 17px;
+    }
+
+    .evaluation-members-count {
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .evaluation-members-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .evaluation-member-row {
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      border: 1px solid #eee7ef;
+      border-radius: 12px;
+      background: #fbf8fc;
+    }
+
+    .evaluation-member-number {
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .evaluation-member-name {
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .evaluation-member-age {
+      margin-left: auto;
+      color: var(--text-soft);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .evaluation-workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .evaluation-video-panel,
+    .evaluation-score-panel {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: #ffffff;
+      box-shadow: var(--shadow-small);
+    }
+
+    .evaluation-video-panel {
+      padding: 20px;
+      background: #241a26;
+    }
+
+    .evaluation-video-panel .video-container {
+      position: static;
+    }
+
+    .evaluation-video-panel .applicant-detail {
+      margin-top: 16px;
+    }
+
+    .evaluation-score-panel {
+      padding: 22px;
+    }
+
+    .evaluation-page-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 40;
+      margin-top: 18px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 -5px 20px rgba(55, 25, 58, 0.07);
+      backdrop-filter: blur(12px);
+    }
+
+    @media (max-width: 1100px) {
+      .evaluation-workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .evaluation-info-card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .evaluation-info-item:nth-child(2) {
+        border-right: none;
+      }
+
+      .evaluation-members-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .evaluation-school-card {
+        padding: 20px 20px 20px 23px;
+      }
+
+      .evaluation-school-card h2 {
+        font-size: 23px;
+      }
+
+      .evaluation-topbar {
+        align-items: flex-start;
+      }
+
+      .evaluation-heading h1 {
+        font-size: 17px;
+      }
+
+      .evaluation-page-content {
+        width: min(100% - 24px, 1440px);
+        padding-top: 18px;
+      }
+
+      .evaluation-info-card {
+        grid-template-columns: 1fr 1fr;
+        padding: 16px;
+      }
+
+      .evaluation-info-item {
+        padding-right: 0;
+        border-right: none;
+      }
+
+      .evaluation-video-panel,
+      .evaluation-score-panel {
+        border-radius: 15px;
+      }
+
+      .evaluation-video-panel,
+      .evaluation-score-panel {
+        padding: 16px;
+      }
+
+      .evaluation-page-footer {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .evaluation-page-footer .secondary-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .evaluation-info-card {
+        grid-template-columns: 1fr;
+      }
+
+      .evaluation-page-footer {
+        grid-template-columns: 1fr;
+      }
+    }
+
 
     /* =========================
        Confirmation modal
@@ -1802,34 +2209,65 @@
   </div>
 
   <!-- ====================================
-       Popup ประเมินคะแนน
+       หน้าประเมินคะแนน
   ===================================== -->
 
-  <div id="evaluationOverlay" class="modal-overlay">
+  <div id="evaluationPage" class="evaluation-page hidden">
 
-    <div class="evaluation-modal">
+    <header class="evaluation-topbar">
 
-      <div class="modal-header">
+      <button
+        id="backToDashboardButton"
+        class="evaluation-back-button"
+        type="button"
+      >
+        ← กลับหน้ารายการ
+      </button>
 
-        <div class="modal-title-group">
-          <h2>แบบประเมินคลิปวิดีโอ</h2>
-          <p id="modalApplicantCode">รหัสผู้สมัคร</p>
-        </div>
-
-        <button
-          id="closeEvaluationButton"
-          class="close-modal"
-          type="button"
-          aria-label="ปิดหน้าต่าง"
-        >
-          ×
-        </button>
-
+      <div class="evaluation-heading">
+        <h1>แบบประเมินคลิปวิดีโอ</h1>
+        <p>ตรวจสอบข้อมูลผู้เข้าแข่งขัน รับชมคลิป และบันทึกผลการประเมิน</p>
       </div>
 
-      <div class="modal-body">
+    </header>
 
-        <section class="video-column">
+    <main class="evaluation-page-content">
+
+      <section class="evaluation-school-card">
+        <div class="evaluation-school-label">ชื่อโรงเรียน</div>
+        <h2 id="evaluationSchoolName">ชื่อโรงเรียน</h2>
+        <p id="modalApplicantCode">Submission Number</p>
+      </section>
+
+      <section class="evaluation-info-card">
+
+        <div class="evaluation-info-item">
+          <span>ภูมิภาค</span>
+          <strong id="evaluationRegion">-</strong>
+        </div>
+
+        <div class="evaluation-info-item">
+          <span>รายการแข่งขัน</span>
+          <strong id="evaluationCompetition">-</strong>
+        </div>
+
+        <div class="evaluation-info-item">
+          <span>ชื่อเพลง</span>
+          <strong id="evaluationSongTitle">-</strong>
+        </div>
+
+        <div class="evaluation-info-item">
+          <span>ประเภทเครื่องดนตรี</span>
+          <strong id="evaluationInstrument">-</strong>
+        </div>
+
+      </section>
+
+      <section id="modalApplicantDetail" class="evaluation-members-card"></section>
+
+      <div class="evaluation-workspace">
+
+        <section class="evaluation-video-panel">
 
           <div class="video-container">
 
@@ -1856,13 +2294,12 @@
               YouTube แบบไม่เป็นสาธารณะ หรือระบบจัดเก็บไฟล์อื่นได้
             </div>
 
-            <div id="modalApplicantDetail" class="applicant-detail"></div>
 
           </div>
 
         </section>
 
-        <section class="score-column">
+        <section class="evaluation-score-panel">
 
           <div class="score-intro">
 
@@ -1908,14 +2345,14 @@
 
       </div>
 
-      <div class="modal-footer">
+      <div class="evaluation-page-footer">
 
         <button
           id="cancelEvaluationButton"
           class="secondary-button"
           type="button"
         >
-          ยกเลิก
+          กลับหน้ารายการ
         </button>
 
         <button
@@ -1936,7 +2373,7 @@
 
       </div>
 
-    </div>
+    </main>
 
   </div>
 
@@ -1999,6 +2436,7 @@
     const applicants = [
       {
         id: "BCT-0001",
+        songTitle: "ลาวดวงเดือน",
       submissionNumber: "BCT-0001",
       schoolName: "โรงเรียนเชียงใหม่วิทยาคม",
         region: "ภาคเหนือ",
@@ -2020,6 +2458,7 @@
       },
       {
         id: "BCT-0002",
+        songTitle: "เขมรไทรโยค",
       submissionNumber: "BCT-0002",
       schoolName: "โรงเรียนกรุงเทพพิทยา",
         region: "ภาคกลางและภาคตะวันออก",
@@ -2043,16 +2482,16 @@
           }
         ],
         scores: {
-          technique: 14,
-          rhythm: 15,
-          melody: 16,
-          expression: 13,
-          creativity: 14
+          performanceSkill: 18,
+          instrumentTechnique: 19,
+          creativity: 17,
+          personalityCommunication: 18
         },
         comment: "ควรเพิ่มความพร้อมเพรียงในบางช่วง"
       },
       {
         id: "BCT-0003",
+        songTitle: "แขกบรเทศ",
       submissionNumber: "BCT-0003",
       schoolName: "โรงเรียนขอนแก่นวิทยายน",
         region: "ภาคตะวันออกเฉียงเหนือ",
@@ -2086,6 +2525,7 @@
       },
       {
         id: "BCT-0004",
+        songTitle: "พญาโศก",
       submissionNumber: "BCT-0004",
       schoolName: "โรงเรียนหาดใหญ่วิทยาลัย",
         region: "ภาคใต้และภาคตะวันตก",
@@ -2103,16 +2543,16 @@
           }
         ],
         scores: {
-          technique: 18,
-          rhythm: 17,
-          melody: 18,
-          expression: 17,
-          creativity: 16
+          performanceSkill: 23,
+          instrumentTechnique: 22,
+          creativity: 21,
+          personalityCommunication: 23
         },
         comment: "ควบคุมลมหายใจได้ดี มีความมั่นใจ"
       },
       {
         id: "BCT-0005",
+        songTitle: "ลาวคำหอม",
       submissionNumber: "BCT-0005",
       schoolName: "โรงเรียนชลราษฎรอำรุง",
         region: "ภาคกลางและภาคตะวันออก",
@@ -2134,6 +2574,7 @@
       },
       {
         id: "BCT-0006",
+        songTitle: "โหมโรงมหาราช",
       submissionNumber: "BCT-0006",
       schoolName: "โรงเรียนบุญวาทย์วิทยาลัย",
         region: "ภาคเหนือ",
@@ -2157,11 +2598,10 @@
           }
         ],
         scores: {
-          technique: 17,
-          rhythm: 18,
-          melody: 17,
-          expression: 16,
-          creativity: 17
+          performanceSkill: 22,
+          instrumentTechnique: 23,
+          creativity: 21,
+          personalityCommunication: 22
         },
         comment: "มีความพร้อมเพรียงและถ่ายทอดอารมณ์ได้ดี"
       }
@@ -2174,34 +2614,28 @@
 
     const scoreCriteria = [
       {
-        key: "technique",
-        title: "ทักษะและเทคนิคการบรรเลง",
-        description: "ความถูกต้อง ความคล่องแคล่ว และการควบคุมเครื่องดนตรี",
-        maxScore: 20
+        key: "performanceSkill",
+        title: "1. ทักษะการบรรเลงดนตรี",
+        description: "พิจารณาความถูกต้องของทำนอง จังหวะ และความแม่นยำในการบรรเลงตามมาตรฐาน",
+        maxScore: 25
       },
       {
-        key: "rhythm",
-        title: "จังหวะและความพร้อมเพรียง",
-        description: "ความแม่นยำของจังหวะ และความสัมพันธ์ระหว่างผู้บรรเลง",
-        maxScore: 20
-      },
-      {
-        key: "melody",
-        title: "ความถูกต้องของทำนอง",
-        description: "ความถูกต้องของทำนอง ตัวโน้ต และรูปแบบเพลง",
-        maxScore: 20
-      },
-      {
-        key: "expression",
-        title: "อารมณ์และการถ่ายทอด",
-        description: "การสื่อสารอารมณ์ บุคลิกภาพ และความน่าสนใจ",
-        maxScore: 20
+        key: "instrumentTechnique",
+        title: "2. เทคนิคและการใช้เครื่องดนตรี",
+        description: "พิจารณาทักษะการใช้เทคนิคเฉพาะของเครื่องดนตรีได้อย่างเต็มประสิทธิภาพและเหมาะสมกับวัย",
+        maxScore: 25
       },
       {
         key: "creativity",
-        title: "ความคิดสร้างสรรค์และภาพรวม",
-        description: "การนำเสนอ ความเหมาะสม และความสมบูรณ์ของผลงาน",
-        maxScore: 20
+        title: "3. ความคิดสร้างสรรค์",
+        description: "การเรียบเรียงทำนองเพลง การออกแบบการนำเสนอ และความสอดคล้องของการผสมผสานเครื่องดนตรี",
+        maxScore: 25
+      },
+      {
+        key: "personalityCommunication",
+        title: "4. บุคลิกภาพและการสื่อสาร",
+        description: "พิจารณาความมั่นใจในการแสดงออก การแต่งกายที่สุภาพตามกาลเทศะ และการถ่ายทอดอารมณ์เพลงสู่ผู้ชม",
+        maxScore: 25
       }
     ];
 
@@ -2227,13 +2661,24 @@
     const instrumentFilter =
       document.getElementById("instrumentFilter");
 
-    const evaluationOverlay =
-      document.getElementById("evaluationOverlay");
+    const evaluationPage =
+      document.getElementById("evaluationPage");
     const confirmOverlay =
       document.getElementById("confirmOverlay");
 
     const scoreList = document.getElementById("scoreList");
     const judgeComment = document.getElementById("judgeComment");
+
+    const evaluationRegion =
+      document.getElementById("evaluationRegion");
+    const evaluationCompetition =
+      document.getElementById("evaluationCompetition");
+    const evaluationSongTitle =
+      document.getElementById("evaluationSongTitle");
+    const evaluationInstrument =
+      document.getElementById("evaluationInstrument");
+    const evaluationSchoolName =
+      document.getElementById("evaluationSchoolName");
 
     /*
      * ==================================================
@@ -2278,6 +2723,7 @@
       .getElementById("logoutButton")
       .addEventListener("click", function () {
         appPage.classList.add("hidden");
+        evaluationPage.classList.add("hidden");
         loginPage.classList.remove("hidden");
 
         loginForm.reset();
@@ -2586,19 +3032,50 @@
 
       setEvaluationDisabled(isSubmitted);
 
-      evaluationOverlay.classList.add("active");
-      document.body.style.overflow = "hidden";
+      evaluationSchoolName.textContent =
+        applicant.schoolName || "ไม่ระบุชื่อโรงเรียน";
+
+      evaluationRegion.textContent =
+        applicant.region || "-";
+
+      evaluationCompetition.textContent =
+        applicant.competition || "-";
+
+      evaluationSongTitle.textContent =
+        applicant.songTitle || "ยังไม่ระบุชื่อเพลง";
+
+      evaluationInstrument.textContent =
+        applicant.instrument || "-";
+
+      appPage.classList.add("hidden");
+      evaluationPage.classList.remove("hidden");
+
+      window.scrollTo(0, 0);
+
+      if (history.state?.page !== "evaluation") {
+        history.pushState(
+          {
+            page: "evaluation",
+            applicantId: applicant.id
+          },
+          "",
+          "#evaluation-" + encodeURIComponent(applicant.id)
+        );
+      }
     }
 
     function renderModalApplicantDetail(applicant) {
       const members = applicant.members
         .map(function (member, index) {
           return `
-            <div class="detail-member">
-              ${index + 1}. ${member.title}
-              ${member.firstName}
-              ${member.lastName}
-              · อายุ ${member.age} ปี
+            <div class="evaluation-member-row">
+              <span class="evaluation-member-number">${index + 1}</span>
+              <span class="evaluation-member-name">
+                ${member.title} ${member.firstName} ${member.lastName}
+              </span>
+              <span class="evaluation-member-age">
+                อายุ ${member.age} ปี
+              </span>
             </div>
           `;
         })
@@ -2607,45 +3084,14 @@
       document.getElementById(
         "modalApplicantDetail"
       ).innerHTML = `
-        <div class="applicant-detail-header">
-
-          <h3>ข้อมูลผู้เข้าแข่งขัน</h3>
-
-          <div class="applicant-detail-id">
-            ${applicant.id}
-          </div>
-
+        <div class="evaluation-members-header">
+          <h2>รายชื่อผู้เข้าแข่งขัน</h2>
+          <span class="evaluation-members-count">
+            ${applicant.members.length} คน
+          </span>
         </div>
 
-        <div class="detail-chips">
-
-          <span class="detail-chip">
-            ${applicant.schoolName || "ไม่ระบุชื่อโรงเรียน"}
-          </span>
-
-          <span class="detail-chip">
-            ${applicant.region}
-          </span>
-
-          <span class="detail-chip">
-            จังหวัด${applicant.province}
-          </span>
-
-          <span class="detail-chip">
-            ${applicant.competition}
-          </span>
-
-          <span class="detail-chip">
-            ${applicant.ageGroup}
-          </span>
-
-          <span class="detail-chip">
-            เครื่องดนตรีประเภท${applicant.instrument}
-          </span>
-
-        </div>
-
-        <div class="detail-members">
+        <div class="evaluation-members-list">
           ${members}
         </div>
       `;
@@ -2682,22 +3128,31 @@
 
           </div>
 
-          <input
-            class="score-range"
-            type="range"
-            min="0"
-            max="${criteria.maxScore}"
-            step="1"
-            value="${currentValue}"
-            data-score-key="${criteria.key}"
-            oninput="
-              updateScoreValue(
-                '${criteria.key}',
-                this.value,
-                ${criteria.maxScore}
-              )
-            "
-          >
+          <div class="score-slider-wrap">
+            <div
+              id="scoreBubble-${criteria.key}"
+              class="score-bubble"
+            >
+              ${currentValue}
+            </div>
+
+            <input
+              class="score-range"
+              type="range"
+              min="0"
+              max="${criteria.maxScore}"
+              step="1"
+              value="${currentValue}"
+              data-score-key="${criteria.key}"
+              oninput="
+                updateScoreValue(
+                  '${criteria.key}',
+                  this,
+                  ${criteria.maxScore}
+                )
+              "
+            >
+          </div>
 
           <div class="range-labels">
             <span>0</span>
@@ -2706,18 +3161,42 @@
         `;
 
         scoreList.appendChild(item);
+
+        const range = item.querySelector(".score-range");
+        updateScoreBubble(criteria.key, range, criteria.maxScore);
       });
 
       updateTotalScore();
     }
 
-    function updateScoreValue(key, value, maxScore) {
+    function updateScoreValue(key, rangeElement, maxScore) {
+      const value = Number(rangeElement.value);
+
       document.getElementById(
         `scoreValue-${key}`
       ).textContent =
         `${value} / ${maxScore}`;
 
+      updateScoreBubble(key, rangeElement, maxScore);
       updateTotalScore();
+    }
+
+    function updateScoreBubble(key, rangeElement, maxScore) {
+      const bubble = document.getElementById(`scoreBubble-${key}`);
+
+      if (!bubble || !rangeElement) {
+        return;
+      }
+
+      const value = Number(rangeElement.value);
+      const min = Number(rangeElement.min || 0);
+      const max = Number(maxScore);
+      const percent = max === min
+        ? 0
+        : ((value - min) / (max - min)) * 100;
+
+      bubble.textContent = value;
+      bubble.style.left = `calc(${percent}% + ${(8 - percent * 0.16).toFixed(2)}px)`;
     }
 
     function updateTotalScore() {
@@ -2811,7 +3290,12 @@
 
         applicant.status = "draft";
 
-        closeEvaluation();
+        if (history.state?.page === "evaluation") {
+          history.back();
+        } else {
+          showDashboardPage();
+        }
+
         renderApplicants();
         updateSummary();
 
@@ -2851,7 +3335,12 @@
         applicant.status = "submitted";
 
         confirmOverlay.classList.remove("active");
-        closeEvaluation();
+
+        if (history.state?.page === "evaluation") {
+          history.back();
+        } else {
+          showDashboardPage();
+        }
 
         renderApplicants();
         updateSummary();
@@ -2868,16 +3357,25 @@
      * ==================================================
      */
 
-    function closeEvaluation() {
-      evaluationOverlay.classList.remove("active");
+    function showDashboardPage() {
       confirmOverlay.classList.remove("active");
-
-      document.body.style.overflow = "";
+      evaluationPage.classList.add("hidden");
+      appPage.classList.remove("hidden");
       currentApplicantId = null;
+      window.scrollTo(0, 0);
+    }
+
+    function closeEvaluation() {
+      if (history.state?.page === "evaluation") {
+        history.back();
+        return;
+      }
+
+      showDashboardPage();
     }
 
     document
-      .getElementById("closeEvaluationButton")
+      .getElementById("backToDashboardButton")
       .addEventListener("click", closeEvaluation);
 
     document
@@ -2889,15 +3387,6 @@
       .addEventListener("click", function () {
         confirmOverlay.classList.remove("active");
       });
-
-    evaluationOverlay.addEventListener(
-      "click",
-      function (event) {
-        if (event.target === evaluationOverlay) {
-          closeEvaluation();
-        }
-      }
-    );
 
     confirmOverlay.addEventListener(
       "click",
@@ -2915,11 +3404,15 @@
           return;
         }
 
-        if (
-          evaluationOverlay.classList.contains("active")
-        ) {
+        if (!evaluationPage.classList.contains("hidden")) {
           closeEvaluation();
         }
+      }
+    });
+
+    window.addEventListener("popstate", function () {
+      if (!evaluationPage.classList.contains("hidden")) {
+        showDashboardPage();
       }
     });
 
