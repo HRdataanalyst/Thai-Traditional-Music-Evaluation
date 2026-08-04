@@ -911,15 +911,10 @@
       overflow: hidden;
       display: grid;
       place-items: center;
+      border: 1px solid var(--border);
       border-radius: 17px;
-      background:
-        radial-gradient(
-          circle at center,
-          rgba(255, 255, 255, 0.08),
-          transparent 30%
-        ),
-        linear-gradient(145deg, #342539, #171119);
-      color: white;
+      background: #ffffff;
+      color: var(--text-soft);
     }
 
     .play-button {
@@ -937,7 +932,7 @@
 
     .mock-video p {
       margin-top: 18px;
-      color: rgba(255, 255, 255, 0.68);
+      color: var(--text-soft);
       font-size: 14px;
     }
 
@@ -954,7 +949,11 @@
     .video-comment-card {
       margin-top: 0;
       padding: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.11);
+      display: flex;
+      flex: 1 1 auto;
+      min-height: 250px;
+      flex-direction: column;
+      border: 1px solid var(--border);
       border-radius: 15px;
       background: #ffffff;
       box-shadow: none;
@@ -968,7 +967,10 @@
     }
 
     .video-comment-card textarea {
-      min-height: 132px;
+      width: 100%;
+      min-height: 220px;
+      flex: 1 1 auto;
+      resize: vertical;
       border-color: #e7dce9;
       background: #fcf9fc;
       color: var(--text-main);
@@ -1520,11 +1522,15 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      background: #241a26;
+      background: #ffffff;
     }
 
     .evaluation-video-panel .video-container {
       position: static;
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      gap: 16px;
     }
 
     .evaluation-video-panel .evaluation-members-card {
@@ -1555,7 +1561,8 @@
     }
 
     .evaluation-video-panel .video-comment-card {
-      margin-top: auto;
+      margin-top: 0;
+      flex: 1 1 auto;
     }
 
     .evaluation-action-bar {
