@@ -1,2 +1,2 @@
 # Thai-classical-music-Evaluation
-Thai classical music Evaluation System
+Thai Traditional Music Evaluation
