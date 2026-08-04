@@ -1885,6 +1885,37 @@
         display: none;
       }
     }
+
+    .video-embed {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: inherit;
+      background: #000;
+    }
+
+    .api-loading {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(35, 18, 38, 0.42);
+      backdrop-filter: blur(3px);
+    }
+
+    .api-loading.show { display: flex; }
+
+    .api-loading-box {
+      padding: 18px 24px;
+      border-radius: 14px;
+      background: #fff;
+      color: var(--primary);
+      font-weight: 700;
+      box-shadow: var(--shadow);
+    }
+
   </style>
 </head>
 
@@ -2017,12 +2048,12 @@
       <div class="user-area">
 
         <div class="user-info">
-          <strong>อาจารย์สมชาย ใจดี</strong>
-          <span>คณะกรรมการประเมิน</span>
+          <strong id="topbarJudgeName">กรรมการทดสอบ</strong>
+          <span id="topbarJudgeRole">คณะกรรมการประเมิน</span>
         </div>
 
-        <button class="user-avatar" type="button">
-          สช
+        <button id="topbarJudgeAvatar" class="user-avatar" type="button">
+          กท
         </button>
 
         <button
@@ -2271,22 +2302,10 @@
 
           <div class="video-container">
 
-            <div class="mock-video">
-
+            <div id="videoPlayerContainer" class="mock-video">
               <div style="text-align:center;">
-
-                <button
-                  class="play-button"
-                  type="button"
-                  onclick="showToast('ตัวอย่างนี้ยังไม่ได้เชื่อมกับคลิปวิดีโอจริง')"
-                >
-                  ▶
-                </button>
-
-                <p>พื้นที่แสดงคลิปวิดีโอผู้เข้าแข่งขัน</p>
-
+                <p>ยังไม่พบลิงก์วิดีโอ</p>
               </div>
-
             </div>
 
             <div class="video-note">
@@ -2419,1039 +2438,433 @@
 
   </div>
 
+  <div id="apiLoading" class="api-loading"><div class="api-loading-box">กำลังโหลดข้อมูล...</div></div>
+
   <div id="toast" class="toast">
     <span id="toastIcon">✓</span>
     <span id="toastMessage"></span>
   </div>
 
   <script>
-    /*
-     * ==================================================
-     * ข้อมูลจำลอง
-     * ในระบบจริงส่วนนี้จะเปลี่ยนเป็นข้อมูลจาก Backend
-     * หรือ Google Apps Script
-     * ==================================================
-     */
+    const API_URL = "https://script.google.com/macros/s/AKfycbyKs7N1lfiP8jyLXl2FWF2PdYYp3iMZFWBzGudbDUAKlOM4ZU-P3F03WYbY9KS_Guyq/exec";
 
-    const applicants = [
-      {
-        id: "BCT-0001",
-        songTitle: "ลาวดวงเดือน",
-      submissionNumber: "BCT-0001",
-      schoolName: "โรงเรียนเชียงใหม่วิทยาคม",
-        region: "ภาคเหนือ",
-        province: "เชียงใหม่",
-        competition: "เดี่ยว",
-        ageGroup: "Junior",
-        instrument: "สี",
-        status: "not-started",
-        members: [
-          {
-            title: "เด็กหญิง",
-            firstName: "กัญญารัตน์",
-            lastName: "ใจดี",
-            age: 10
-          }
-        ],
-        scores: {},
-        comment: ""
-      },
-      {
-        id: "BCT-0002",
-        songTitle: "เขมรไทรโยค",
-      submissionNumber: "BCT-0002",
-      schoolName: "โรงเรียนกรุงเทพพิทยา",
-        region: "ภาคกลางและภาคตะวันออก",
-        province: "กรุงเทพมหานคร",
-        competition: "คู่",
-        ageGroup: "Senior",
-        instrument: "ดีด",
-        status: "draft",
-        members: [
-          {
-            title: "นาย",
-            firstName: "พีรวิชญ์",
-            lastName: "แสงทอง",
-            age: 17
-          },
-          {
-            title: "นางสาว",
-            firstName: "ณัฐณิชา",
-            lastName: "บุญช่วย",
-            age: 16
-          }
-        ],
-        scores: {
-          performanceSkill: 18,
-          instrumentTechnique: 19,
-          creativity: 17,
-          personalityCommunication: 18
-        },
-        comment: "ควรเพิ่มความพร้อมเพรียงในบางช่วง"
-      },
-      {
-        id: "BCT-0003",
-        songTitle: "แขกบรเทศ",
-      submissionNumber: "BCT-0003",
-      schoolName: "โรงเรียนขอนแก่นวิทยายน",
-        region: "ภาคตะวันออกเฉียงเหนือ",
-        province: "ขอนแก่น",
-        competition: "Trio",
-        ageGroup: "Junior",
-        instrument: "ตี",
-        status: "not-started",
-        members: [
-          {
-            title: "เด็กชาย",
-            firstName: "ธนภัทร",
-            lastName: "มีสุข",
-            age: 11
-          },
-          {
-            title: "เด็กหญิง",
-            firstName: "ชญานิน",
-            lastName: "พรหมมา",
-            age: 12
-          },
-          {
-            title: "เด็กชาย",
-            firstName: "ภูวดล",
-            lastName: "แก้วดี",
-            age: 11
-          }
-        ],
-        scores: {},
-        comment: ""
-      },
-      {
-        id: "BCT-0004",
-        songTitle: "พญาโศก",
-      submissionNumber: "BCT-0004",
-      schoolName: "โรงเรียนหาดใหญ่วิทยาลัย",
-        region: "ภาคใต้และภาคตะวันตก",
-        province: "สงขลา",
-        competition: "เดี่ยว",
-        ageGroup: "Senior",
-        instrument: "เป่า",
-        status: "submitted",
-        members: [
-          {
-            title: "นาย",
-            firstName: "ธีรเดช",
-            lastName: "ศรีสุวรรณ",
-            age: 18
-          }
-        ],
-        scores: {
-          performanceSkill: 23,
-          instrumentTechnique: 22,
-          creativity: 21,
-          personalityCommunication: 23
-        },
-        comment: "ควบคุมลมหายใจได้ดี มีความมั่นใจ"
-      },
-      {
-        id: "BCT-0005",
-        songTitle: "ลาวคำหอม",
-      submissionNumber: "BCT-0005",
-      schoolName: "โรงเรียนชลราษฎรอำรุง",
-        region: "ภาคกลางและภาคตะวันออก",
-        province: "ชลบุรี",
-        competition: "เดี่ยว",
-        ageGroup: "Junior",
-        instrument: "ดีด",
-        status: "not-started",
-        members: [
-          {
-            title: "เด็กหญิง",
-            firstName: "ปภาวรินท์",
-            lastName: "ทองแท้",
-            age: 9
-          }
-        ],
-        scores: {},
-        comment: ""
-      },
-      {
-        id: "BCT-0006",
-        songTitle: "โหมโรงมหาราช",
-      submissionNumber: "BCT-0006",
-      schoolName: "โรงเรียนบุญวาทย์วิทยาลัย",
-        region: "ภาคเหนือ",
-        province: "ลำปาง",
-        competition: "คู่",
-        ageGroup: "Senior",
-        instrument: "สี",
-        status: "submitted",
-        members: [
-          {
-            title: "นาย",
-            firstName: "ปรเมศวร์",
-            lastName: "พงศ์ดี",
-            age: 16
-          },
-          {
-            title: "นางสาว",
-            firstName: "วรัญญา",
-            lastName: "นาคำ",
-            age: 17
-          }
-        ],
-        scores: {
-          performanceSkill: 22,
-          instrumentTechnique: 23,
-          creativity: 21,
-          personalityCommunication: 22
-        },
-        comment: "มีความพร้อมเพรียงและถ่ายทอดอารมณ์ได้ดี"
-      }
-    ];
-
-    /*
-     * เกณฑ์คะแนนตัวอย่าง
-     * สามารถแก้ชื่อหัวข้อ คำอธิบาย และคะแนนเต็มได้
-     */
-
-    const scoreCriteria = [
-      {
-        key: "performanceSkill",
-        title: "1. ทักษะการบรรเลงดนตรี",
-        description: "พิจารณาความถูกต้องของทำนอง จังหวะ และความแม่นยำในการบรรเลงตามมาตรฐาน",
-        maxScore: 25
-      },
-      {
-        key: "instrumentTechnique",
-        title: "2. เทคนิคและการใช้เครื่องดนตรี",
-        description: "พิจารณาทักษะการใช้เทคนิคเฉพาะของเครื่องดนตรีได้อย่างเต็มประสิทธิภาพและเหมาะสมกับวัย",
-        maxScore: 25
-      },
-      {
-        key: "creativity",
-        title: "3. ความคิดสร้างสรรค์",
-        description: "การเรียบเรียงทำนองเพลง การออกแบบการนำเสนอ และความสอดคล้องของการผสมผสานเครื่องดนตรี",
-        maxScore: 25
-      },
-      {
-        key: "personalityCommunication",
-        title: "4. บุคลิกภาพและการสื่อสาร",
-        description: "พิจารณาความมั่นใจในการแสดงออก การแต่งกายที่สุภาพตามกาลเทศะ และการถ่ายทอดอารมณ์เพลงสู่ผู้ชม",
-        maxScore: 25
-      }
+    let applicants = [];
+    let scoreCriteria = [
+      { key: "musicianship", title: "ทักษะการบรรเลงดนตรี", description: "พิจารณาความถูกต้องของทำนอง จังหวะ และความแม่นยำในการบรรเลงตามมาตรฐาน", maxScore: 25 },
+      { key: "technique", title: "เทคนิคและการใช้เครื่องดนตรี", description: "พิจารณาทักษะการใช้เทคนิคเฉพาะของเครื่องดนตรีได้อย่างเต็มประสิทธิภาพและเหมาะสมกับวัย", maxScore: 25 },
+      { key: "creativity", title: "ความคิดสร้างสรรค์", description: "การเรียบเรียงทำนองเพลง การออกแบบการนำเสนอ และความสอดคล้องของการผสมผสานเครื่องดนตรี", maxScore: 25 },
+      { key: "personality", title: "บุคลิกภาพและการสื่อสาร", description: "พิจารณาความมั่นใจในการแสดงออก การแต่งกายที่สุภาพตามกาลเทศะ และการถ่ายทอดอารมณ์เพลงสู่ผู้ชม", maxScore: 25 }
     ];
 
     let currentApplicantId = null;
+    let authToken = "";
+    let currentJudge = null;
+    let toastTimeout;
 
     const loginPage = document.getElementById("loginPage");
     const appPage = document.getElementById("appPage");
-
+    const evaluationPage = document.getElementById("evaluationPage");
     const loginForm = document.getElementById("loginForm");
     const usernameInput = document.getElementById("username");
     const passwordInput = document.getElementById("password");
     const passwordToggle = document.getElementById("passwordToggle");
     const loginError = document.getElementById("loginError");
-
     const applicantGrid = document.getElementById("applicantGrid");
-
     const searchInput = document.getElementById("searchInput");
     const statusFilter = document.getElementById("statusFilter");
     const regionFilter = document.getElementById("regionFilter");
     const ageFilter = document.getElementById("ageFilter");
-    const competitionFilter =
-      document.getElementById("competitionFilter");
-    const instrumentFilter =
-      document.getElementById("instrumentFilter");
-
-    const evaluationPage =
-      document.getElementById("evaluationPage");
-    const confirmOverlay =
-      document.getElementById("confirmOverlay");
-
+    const competitionFilter = document.getElementById("competitionFilter");
+    const instrumentFilter = document.getElementById("instrumentFilter");
+    const confirmOverlay = document.getElementById("confirmOverlay");
     const scoreList = document.getElementById("scoreList");
     const judgeComment = document.getElementById("judgeComment");
+    const apiLoading = document.getElementById("apiLoading");
 
-    const evaluationRegion =
-      document.getElementById("evaluationRegion");
-    const evaluationCompetition =
-      document.getElementById("evaluationCompetition");
-    const evaluationSongTitle =
-      document.getElementById("evaluationSongTitle");
-    const evaluationInstrument =
-      document.getElementById("evaluationInstrument");
-    const evaluationSchoolName =
-      document.getElementById("evaluationSchoolName");
+    function setLoading(show, text = "กำลังโหลดข้อมูล...") {
+      apiLoading.querySelector(".api-loading-box").textContent = text;
+      apiLoading.classList.toggle("show", show);
+    }
 
-    /*
-     * ==================================================
-     * Login
-     * ==================================================
-     */
+    async function apiGet(action, params = {}) {
+      const url = new URL(API_URL);
+      url.searchParams.set("action", action);
+      Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value ?? ""));
+      const response = await fetch(url.toString(), { method: "GET", redirect: "follow" });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || "เกิดข้อผิดพลาดจากระบบ");
+      return data;
+    }
 
-    loginForm.addEventListener("submit", function (event) {
+    async function apiPost(action, payload = {}) {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        redirect: "follow",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, ...payload })
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || "เกิดข้อผิดพลาดจากระบบ");
+      return data;
+    }
+
+    loginForm.addEventListener("submit", async function (event) {
       event.preventDefault();
-
-      const username = usernameInput.value.trim();
-      const password = passwordInput.value.trim();
-
-      if (username === "judge01" && password === "1234") {
-        loginError.textContent = "";
-
+      loginError.textContent = "";
+      setLoading(true, "กำลังเข้าสู่ระบบ...");
+      try {
+        const result = await apiPost("login", {
+          username: usernameInput.value.trim(),
+          password: passwordInput.value.trim()
+        });
+        authToken = result.token;
+        currentJudge = result.judge;
+        await loadApplicants();
+        applyJudgeInfo(result.judge);
         loginPage.classList.add("hidden");
         appPage.classList.remove("hidden");
-
-        renderApplicants();
-        updateSummary();
-
         showToast("เข้าสู่ระบบสำเร็จ", "success");
-      } else {
-        loginError.textContent =
-          "ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง";
+      } catch (error) {
+        loginError.textContent = error.message;
+      } finally {
+        setLoading(false);
       }
     });
 
+    async function loadApplicants() {
+      const result = await apiGet("applicants", { token: authToken });
+      applicants = Array.isArray(result.applicants) ? result.applicants : [];
+      scoreCriteria = (result.scoreCriteria || []).map(item => ({
+        key: item.key,
+        title: item.label,
+        description: item.description,
+        maxScore: Number(item.maxScore)
+      }));
+      if (result.judge) {
+        currentJudge = result.judge;
+        applyJudgeInfo(result.judge);
+      }
+      renderApplicants();
+      updateSummary(result.summary);
+    }
+
+    function applyJudgeInfo(judge) {
+      if (!judge) return;
+      document.getElementById("topbarJudgeName").textContent = judge.name || "กรรมการ";
+      document.getElementById("topbarJudgeRole").textContent = judge.role || "คณะกรรมการประเมิน";
+      document.getElementById("topbarJudgeAvatar").textContent = judge.initials || "กท";
+      const welcome = document.querySelector(".welcome-section h1");
+      if (welcome) welcome.textContent = `สวัสดี ${judge.name || "กรรมการ"}`;
+    }
+
     passwordToggle.addEventListener("click", function () {
-      const isPassword =
-        passwordInput.type === "password";
-
-      passwordInput.type =
-        isPassword ? "text" : "password";
-
-      passwordToggle.textContent =
-        isPassword ? "🙈" : "👁";
+      const isPassword = passwordInput.type === "password";
+      passwordInput.type = isPassword ? "text" : "password";
+      passwordToggle.textContent = isPassword ? "🙈" : "👁";
     });
 
-    document
-      .getElementById("logoutButton")
-      .addEventListener("click", function () {
-        appPage.classList.add("hidden");
-        evaluationPage.classList.add("hidden");
-        loginPage.classList.remove("hidden");
-
-        loginForm.reset();
-        loginError.textContent = "";
-      });
-
-    /*
-     * ==================================================
-     * สร้างกล่องผู้สมัคร
-     * ==================================================
-     */
+    document.getElementById("logoutButton").addEventListener("click", async function () {
+      try { if (authToken) await apiPost("logout", { token: authToken }); } catch (_) {}
+      authToken = "";
+      currentJudge = null;
+      applicants = [];
+      appPage.classList.add("hidden");
+      evaluationPage.classList.add("hidden");
+      loginPage.classList.remove("hidden");
+      loginForm.reset();
+      loginError.textContent = "";
+    });
 
     function renderApplicants() {
       const filteredApplicants = getFilteredApplicants();
-
       applicantGrid.innerHTML = "";
+      document.getElementById("resultCount").textContent = `พบ ${filteredApplicants.length} รายการ`;
 
-      document.getElementById("resultCount").textContent =
-        `พบ ${filteredApplicants.length} รายการ`;
-
-      if (filteredApplicants.length === 0) {
-        applicantGrid.innerHTML = `
-          <div class="empty-state">
-            
-            <strong>ไม่พบรายการที่ตรงกับเงื่อนไข</strong>
-            <p style="margin-top:6px;">
-              ลองเปลี่ยนคำค้นหาหรือตัวกรองอีกครั้ง
-            </p>
-          </div>
-        `;
+      if (!filteredApplicants.length) {
+        applicantGrid.innerHTML = `<div class="empty-state"><strong>ไม่พบรายการที่ตรงกับเงื่อนไข</strong><p style="margin-top:6px;">ลองเปลี่ยนคำค้นหาหรือตัวกรองอีกครั้ง</p></div>`;
         return;
       }
 
       filteredApplicants.forEach(function (applicant) {
-        const card = document.createElement("article");
         const statusInfo = getStatusInfo(applicant.status);
         const buttonInfo = getButtonInfo(applicant.status);
-        const submissionNumber = applicant.submissionNumber || applicant.id;
-        const schoolName = applicant.schoolName || "ไม่ระบุชื่อโรงเรียน";
-
-        card.className =
-          `applicant-card status-${applicant.status}`;
+        const card = document.createElement("article");
+        card.className = `applicant-card status-${applicant.status}`;
         card.tabIndex = 0;
         card.setAttribute("role", "button");
-        card.setAttribute(
-          "aria-label",
-          `เปิดรายการ ${submissionNumber} ${schoolName}`
-        );
-
         card.innerHTML = `
-          <div class="row-field submission-field">
-            <span>Submission Number</span>
-            <strong>${submissionNumber}</strong>
-          </div>
-
-          <div class="row-field school-field">
-            <span>ชื่อโรงเรียน</span>
-            <strong title="${schoolName}">${schoolName}</strong>
-          </div>
-
-          <div class="row-field">
-            <span>ภูมิภาค</span>
-            <strong title="${applicant.region}">${applicant.region}</strong>
-          </div>
-
-          <div class="row-field">
-            <span>รายการแข่งขัน</span>
-            <strong>${applicant.competition}</strong>
-          </div>
-
-          <div class="row-field">
-            <span>รุ่นอายุ</span>
-            <strong>${applicant.ageGroup}</strong>
-          </div>
-
-          <div class="row-field">
-            <span>ประเภทเครื่องดนตรี</span>
-            <strong>${applicant.instrument}</strong>
-          </div>
-
+          <div class="row-field submission-field"><span>Submission Number</span><strong>${escapeHtml(applicant.submissionNumber || applicant.id)}</strong></div>
+          <div class="row-field school-field"><span>ชื่อโรงเรียน</span><strong title="${escapeHtml(applicant.schoolName)}">${escapeHtml(applicant.schoolName || "ไม่ระบุชื่อโรงเรียน")}</strong></div>
+          <div class="row-field"><span>ภูมิภาค</span><strong title="${escapeHtml(applicant.region)}">${escapeHtml(applicant.region || "-")}</strong></div>
+          <div class="row-field"><span>รายการแข่งขัน</span><strong>${escapeHtml(applicant.competition || "-")}</strong></div>
+          <div class="row-field"><span>รุ่นอายุ</span><strong>${escapeHtml(applicant.ageGroup || "-")}</strong></div>
+          <div class="row-field"><span>ประเภทเครื่องดนตรี</span><strong>${escapeHtml(applicant.instrumentCategory || "-")}</strong></div>
           <div class="status-column">
-            <div class="status-badge ${statusInfo.className}">
-              ${statusInfo.label}
-            </div>
-            <button
-              class="row-action ${buttonInfo.className}"
-              type="button"
-            >
-              ${buttonInfo.label}
-            </button>
-          </div>
-        `;
+            <div class="status-badge ${statusInfo.className}">${statusInfo.label}</div>
+            <button class="row-action ${buttonInfo.className}" type="button">${buttonInfo.label}</button>
+          </div>`;
 
-        card.addEventListener("click", function () {
-          openEvaluation(applicant.id);
-        });
-
-        card.addEventListener("keydown", function (event) {
+        card.addEventListener("click", () => openEvaluation(applicant.id));
+        card.addEventListener("keydown", event => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
             openEvaluation(applicant.id);
           }
         });
-
         applicantGrid.appendChild(card);
       });
     }
 
     function getStatusInfo(status) {
-      const statusMap = {
-        "not-started": {
-          label: "ยังไม่เริ่ม",
-          className: "status-not-started"
-        },
-        "draft": {
-          label: "บันทึกร่าง",
-          className: "status-draft-badge"
-        },
-        "submitted": {
-          label: "ส่งคะแนนแล้ว",
-          className: "status-submitted-badge"
-        }
-      };
-
-      return statusMap[status];
+      return {
+        "not-started": { label: "ยังไม่เริ่ม", className: "status-not-started" },
+        "draft": { label: "บันทึกร่าง", className: "status-draft-badge" },
+        "submitted": { label: "ส่งคะแนนแล้ว", className: "status-submitted-badge" }
+      }[status] || { label: "ยังไม่เริ่ม", className: "status-not-started" };
     }
 
     function getButtonInfo(status) {
-      const buttonMap = {
-        "not-started": {
-          label: "เริ่มประเมิน",
-          className: ""
-        },
-        "draft": {
-          label: "ประเมินต่อ",
-          className: "edit"
-        },
-        "submitted": {
-          label: "ดูคะแนน",
-          className: "view"
-        }
-      };
-
-      return buttonMap[status];
+      return {
+        "not-started": { label: "เริ่มประเมิน", className: "" },
+        "draft": { label: "ประเมินต่อ", className: "edit" },
+        "submitted": { label: "ดูคะแนน", className: "view" }
+      }[status] || { label: "เริ่มประเมิน", className: "" };
     }
 
-    /*
-     * ==================================================
-     * ตัวกรอง
-     * ==================================================
-     */
-
     function getFilteredApplicants() {
-      const search = searchInput.value
-        .trim()
-        .toLowerCase();
-
-      return applicants.filter(function (applicant) {
-        const memberNames = applicant.members
-          .map(function (member) {
-            return (
-              member.title +
-              member.firstName +
-              member.lastName
-            );
-          })
-          .join(" ")
-          .toLowerCase();
-
-        const searchableText = [
-          applicant.id,
-          applicant.submissionNumber,
-          applicant.schoolName,
-          applicant.region,
-          applicant.province,
-          applicant.competition,
-          applicant.ageGroup,
-          applicant.instrument,
-          memberNames
-        ]
-          .join(" ")
-          .toLowerCase();
-
-        const matchesSearch =
-          !search || searchableText.includes(search);
-
-        const matchesStatus =
-          !statusFilter.value ||
-          applicant.status === statusFilter.value;
-
-        const matchesRegion =
-          !regionFilter.value ||
-          applicant.region === regionFilter.value;
-
-        const matchesAge =
-          !ageFilter.value ||
-          applicant.ageGroup === ageFilter.value;
-
-        const matchesCompetition =
-          !competitionFilter.value ||
-          applicant.competition === competitionFilter.value;
-
-        const matchesInstrument =
-          !instrumentFilter.value ||
-          applicant.instrument === instrumentFilter.value;
-
-        return (
-          matchesSearch &&
-          matchesStatus &&
-          matchesRegion &&
-          matchesAge &&
-          matchesCompetition &&
-          matchesInstrument
-        );
+      const search = searchInput.value.trim().toLowerCase();
+      return applicants.filter(applicant => {
+        const memberNames = (applicant.members || []).map(member => member.displayName || member.fullName || "").join(" ");
+        const searchableText = [applicant.id, applicant.submissionNumber, applicant.schoolName, applicant.region, applicant.province, applicant.competition, applicant.ageGroup, applicant.instrumentCategory, applicant.instrumentName, memberNames].join(" ").toLowerCase();
+        return (!search || searchableText.includes(search)) &&
+          (!statusFilter.value || applicant.status === statusFilter.value) &&
+          (!regionFilter.value || applicant.region === regionFilter.value) &&
+          (!ageFilter.value || applicant.ageGroup === ageFilter.value) &&
+          (!competitionFilter.value || applicant.competition === competitionFilter.value) &&
+          (!instrumentFilter.value || String(applicant.instrumentCategory || "").includes(instrumentFilter.value));
       });
     }
 
-    [
-      searchInput,
-      statusFilter,
-      regionFilter,
-      ageFilter,
-      competitionFilter,
-      instrumentFilter
-    ].forEach(function (element) {
+    [searchInput, statusFilter, regionFilter, ageFilter, competitionFilter, instrumentFilter].forEach(element => {
       element.addEventListener("input", renderApplicants);
       element.addEventListener("change", renderApplicants);
     });
 
-    /*
-     * ==================================================
-     * สรุปจำนวนและ Progress
-     * ==================================================
-     */
-
-    function updateSummary() {
-      const total = applicants.length;
-
-      const pending = applicants.filter(function (item) {
-        return item.status === "not-started";
-      }).length;
-
-      const draft = applicants.filter(function (item) {
-        return item.status === "draft";
-      }).length;
-
-      const submitted = applicants.filter(function (item) {
-        return item.status === "submitted";
-      }).length;
-
-      const progress =
-        total === 0
-          ? 0
-          : Math.round((submitted / total) * 100);
-
-      document.getElementById("totalCount").textContent =
-        total;
-
-      document.getElementById("pendingCount").textContent =
-        pending;
-
-      document.getElementById("draftCount").textContent =
-        draft;
-
-      document.getElementById("submittedCount").textContent =
-        submitted;
-
-      document.getElementById("progressText").textContent =
-        progress + "%";
-
-      document.getElementById("progressFill").style.width =
-        progress + "%";
+    function updateSummary(summary) {
+      const value = summary || {
+        total: applicants.length,
+        pending: applicants.filter(i => i.status === "not-started").length,
+        draft: applicants.filter(i => i.status === "draft").length,
+        submitted: applicants.filter(i => i.status === "submitted").length,
+        progressPercent: applicants.length ? Math.round(applicants.filter(i => i.status === "submitted").length / applicants.length * 100) : 0
+      };
+      document.getElementById("totalCount").textContent = value.total || 0;
+      document.getElementById("pendingCount").textContent = value.pending || 0;
+      document.getElementById("draftCount").textContent = value.draft || 0;
+      document.getElementById("submittedCount").textContent = value.submitted || 0;
+      document.getElementById("progressText").textContent = `${value.progressPercent || 0}%`;
+      document.getElementById("progressFill").style.width = `${value.progressPercent || 0}%`;
     }
 
-    /*
-     * ==================================================
-     * เปิดหน้าประเมิน
-     * ==================================================
-     */
-
-    function openEvaluation(applicantId) {
+    function openEvaluation(applicantId, pushHistory = true) {
+      const applicant = applicants.find(item => item.id === applicantId);
+      if (!applicant) return showToast("ไม่พบข้อมูลผู้สมัคร");
       currentApplicantId = applicantId;
 
-      const applicant = applicants.find(function (item) {
-        return item.id === applicantId;
-      });
+      document.getElementById("evaluationSchoolName").textContent = applicant.schoolName || "ไม่ระบุชื่อโรงเรียน";
+      document.getElementById("modalApplicantCode").textContent = `Submission Number: ${applicant.submissionNumber || applicant.id}`;
+      document.getElementById("evaluationRegion").textContent = applicant.region || "-";
+      document.getElementById("evaluationCompetition").textContent = applicant.competition || "-";
+      document.getElementById("evaluationSongTitle").textContent = applicant.songTitle || "ยังไม่ระบุชื่อเพลง";
+      document.getElementById("evaluationInstrument").textContent = applicant.instrumentCategory || "-";
 
-      if (!applicant) {
-        showToast("ไม่พบข้อมูลผู้สมัคร");
-        return;
-      }
-
-      document.getElementById(
-        "modalApplicantCode"
-      ).textContent =
-        `Submission Number: ${applicant.submissionNumber || applicant.id}`;
-
-      renderModalApplicantDetail(applicant);
+      renderMembers(applicant);
+      renderVideo(applicant.videoUrl);
       renderScoreCriteria(applicant);
-
-      judgeComment.value =
-        applicant.comment || "";
-
-      const isSubmitted =
-        applicant.status === "submitted";
-
-      setEvaluationDisabled(isSubmitted);
-
-      evaluationSchoolName.textContent =
-        applicant.schoolName || "ไม่ระบุชื่อโรงเรียน";
-
-      evaluationRegion.textContent =
-        applicant.region || "-";
-
-      evaluationCompetition.textContent =
-        applicant.competition || "-";
-
-      evaluationSongTitle.textContent =
-        applicant.songTitle || "ยังไม่ระบุชื่อเพลง";
-
-      evaluationInstrument.textContent =
-        applicant.instrument || "-";
+      judgeComment.value = applicant.comment || "";
+      setEvaluationDisabled(applicant.status === "submitted");
 
       appPage.classList.add("hidden");
       evaluationPage.classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "instant" });
+      if (pushHistory) history.pushState({ page: "evaluation", applicantId }, "", `#evaluation-${encodeURIComponent(applicantId)}`);
+    }
 
-      window.scrollTo(0, 0);
+    function renderMembers(applicant) {
+      const members = applicant.members || [];
+      const accompanists = applicant.accompanists || [];
+      const memberRows = members.map((member, index) => `
+        <div class="evaluation-member-row">
+          <span class="evaluation-member-number">${index + 1}</span>
+          <div class="evaluation-member-main">
+            <strong>${escapeHtml(member.displayName || member.fullName || "ไม่ระบุชื่อ")}</strong>
+            ${member.nickname ? `<span>ชื่อเล่น ${escapeHtml(member.nickname)}</span>` : ""}
+            ${member.instrumentName ? `<span>เครื่องดนตรี ${escapeHtml(member.instrumentName)}</span>` : ""}
+          </div>
+          <span class="evaluation-member-age">${member.age ? `อายุ ${escapeHtml(member.age)} ปี` : ""}</span>
+        </div>`).join("");
+      const accompanistRows = accompanists.map((member, index) => `
+        <div class="evaluation-member-row">
+          <span class="evaluation-member-number">จ${index + 1}</span>
+          <div class="evaluation-member-main">
+            <strong>${escapeHtml(member.displayName || member.fullName || "ไม่ระบุชื่อ")}</strong>
+            <span>ผู้ประกอบจังหวะ${member.nickname ? ` · ชื่อเล่น ${escapeHtml(member.nickname)}` : ""}</span>
+          </div>
+        </div>`).join("");
+      document.getElementById("modalApplicantDetail").innerHTML = `
+        <div class="evaluation-members-header"><h3>รายชื่อผู้เข้าแข่งขัน</h3><span>${members.length} คน</span></div>
+        <div class="evaluation-members-list">${memberRows || "<p>ไม่พบรายชื่อผู้เข้าแข่งขัน</p>"}${accompanistRows}</div>`;
+    }
 
-      if (history.state?.page !== "evaluation") {
-        history.pushState(
-          {
-            page: "evaluation",
-            applicantId: applicant.id
-          },
-          "",
-          "#evaluation-" + encodeURIComponent(applicant.id)
-        );
+    function renderVideo(url) {
+      const container = document.getElementById("videoPlayerContainer");
+      const embedUrl = toEmbedUrl(url);
+      if (embedUrl) {
+        container.innerHTML = `<iframe class="video-embed" src="${escapeHtml(embedUrl)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+      } else if (url) {
+        container.innerHTML = `<div style="text-align:center;padding:24px;"><p>ไม่สามารถฝังวิดีโอนี้ได้</p><a href="${escapeHtml(url)}" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;">เปิดคลิปในหน้าต่างใหม่</a></div>`;
+      } else {
+        container.innerHTML = `<div style="text-align:center;"><p>ยังไม่พบลิงก์วิดีโอ</p></div>`;
       }
     }
 
-    function renderModalApplicantDetail(applicant) {
-      const members = applicant.members
-        .map(function (member, index) {
-          return `
-            <div class="evaluation-member-row">
-              <span class="evaluation-member-number">${index + 1}</span>
-              <span class="evaluation-member-name">
-                ${member.title} ${member.firstName} ${member.lastName}
-              </span>
-              <span class="evaluation-member-age">
-                อายุ ${member.age} ปี
-              </span>
-            </div>
-          `;
-        })
-        .join("");
-
-      document.getElementById(
-        "modalApplicantDetail"
-      ).innerHTML = `
-        <div class="evaluation-members-header">
-          <h2>รายชื่อผู้เข้าแข่งขัน</h2>
-          <span class="evaluation-members-count">
-            ${applicant.members.length} คน
-          </span>
-        </div>
-
-        <div class="evaluation-members-list">
-          ${members}
-        </div>
-      `;
+    function toEmbedUrl(url) {
+      if (!url) return "";
+      const text = String(url).trim();
+      let match = text.match(/drive\.google\.com\/file\/d\/([^/]+)/i);
+      if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+      match = text.match(/[?&]id=([^&]+)/i);
+      if (/drive\.google\.com/i.test(text) && match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+      match = text.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/i);
+      if (match) return `https://www.youtube.com/embed/${match[1]}`;
+      return "";
     }
 
     function renderScoreCriteria(applicant) {
       scoreList.innerHTML = "";
-
-      scoreCriteria.forEach(function (criteria) {
-        const currentValue =
-          applicant.scores[criteria.key] ?? 0;
-
+      scoreCriteria.forEach(criteria => {
+        const currentValue = Number((applicant.scores || {})[criteria.key] || 0);
         const item = document.createElement("div");
-
         item.className = "score-item";
-
         item.innerHTML = `
-          <div class="score-item-top">
-
-            <div>
-              <h4>${criteria.title}</h4>
-
-              <div class="score-item-description">
-                ${criteria.description}
-              </div>
-            </div>
-
-            <div
-              id="scoreValue-${criteria.key}"
-              class="score-value"
-            >
-              ${currentValue} / ${criteria.maxScore}
-            </div>
-
-          </div>
-
+          <div class="score-item-top"><div><h4>${escapeHtml(criteria.title)}</h4><div class="score-item-description">${escapeHtml(criteria.description)}</div></div><div id="scoreValue-${criteria.key}" class="score-value">${currentValue} / ${criteria.maxScore}</div></div>
           <div class="score-slider-wrap">
-            <div
-              id="scoreBubble-${criteria.key}"
-              class="score-bubble"
-            >
-              ${currentValue}
-            </div>
-
-            <input
-              class="score-range"
-              type="range"
-              min="0"
-              max="${criteria.maxScore}"
-              step="1"
-              value="${currentValue}"
-              data-score-key="${criteria.key}"
-              oninput="
-                updateScoreValue(
-                  '${criteria.key}',
-                  this,
-                  ${criteria.maxScore}
-                )
-              "
-            >
+            <div id="scoreBubble-${criteria.key}" class="score-bubble">${currentValue}</div>
+            <input class="score-range" type="range" min="0" max="${criteria.maxScore}" step="1" value="${currentValue}" data-score-key="${criteria.key}">
           </div>
-
-          <div class="range-labels">
-            <span>0</span>
-            <span>${criteria.maxScore}</span>
-          </div>
-        `;
-
-        scoreList.appendChild(item);
-
+          <div class="range-labels"><span>0</span><span>${criteria.maxScore}</span></div>`;
         const range = item.querySelector(".score-range");
-        updateScoreBubble(criteria.key, range, criteria.maxScore);
+        range.addEventListener("input", () => updateScoreValue(criteria.key, range.value, criteria.maxScore, range));
+        scoreList.appendChild(item);
+        requestAnimationFrame(() => positionScoreBubble(criteria.key, range));
       });
-
       updateTotalScore();
     }
 
-    function updateScoreValue(key, rangeElement, maxScore) {
-      const value = Number(rangeElement.value);
-
-      document.getElementById(
-        `scoreValue-${key}`
-      ).textContent =
-        `${value} / ${maxScore}`;
-
-      updateScoreBubble(key, rangeElement, maxScore);
+    function updateScoreValue(key, value, maxScore, range) {
+      document.getElementById(`scoreValue-${key}`).textContent = `${value} / ${maxScore}`;
+      document.getElementById(`scoreBubble-${key}`).textContent = value;
+      positionScoreBubble(key, range);
       updateTotalScore();
     }
 
-    function updateScoreBubble(key, rangeElement, maxScore) {
+    function positionScoreBubble(key, range) {
       const bubble = document.getElementById(`scoreBubble-${key}`);
-
-      if (!bubble || !rangeElement) {
-        return;
-      }
-
-      const value = Number(rangeElement.value);
-      const min = Number(rangeElement.min || 0);
-      const max = Number(maxScore);
-      const percent = max === min
-        ? 0
-        : ((value - min) / (max - min)) * 100;
-
-      bubble.textContent = value;
-      bubble.style.left = `calc(${percent}% + ${(8 - percent * 0.16).toFixed(2)}px)`;
+      if (!bubble || !range) return;
+      const min = Number(range.min || 0), max = Number(range.max || 100), value = Number(range.value || 0);
+      const percent = max === min ? 0 : ((value - min) / (max - min)) * 100;
+      bubble.style.left = `calc(${percent}% + (${8 - percent * 0.16}px))`;
     }
 
     function updateTotalScore() {
-      const ranges =
-        document.querySelectorAll(".score-range");
-
       let total = 0;
-
-      ranges.forEach(function (range) {
-        total += Number(range.value);
-      });
-
-      const maximum = scoreCriteria.reduce(
-        function (sum, item) {
-          return sum + item.maxScore;
-        },
-        0
-      );
-
-      document.getElementById("totalScore").textContent =
-        total;
-
-      document.getElementById(
-        "maximumScore"
-      ).textContent = maximum;
+      document.querySelectorAll(".score-range").forEach(range => total += Number(range.value));
+      document.getElementById("totalScore").textContent = total;
+      document.getElementById("maximumScore").textContent = scoreCriteria.reduce((sum, item) => sum + item.maxScore, 0);
     }
 
     function setEvaluationDisabled(isDisabled) {
-      const scoreRanges =
-        document.querySelectorAll(".score-range");
-
-      scoreRanges.forEach(function (range) {
-        range.disabled = isDisabled;
-      });
-
+      document.querySelectorAll(".score-range").forEach(range => range.disabled = isDisabled);
       judgeComment.disabled = isDisabled;
-
-      document.getElementById(
-        "saveDraftButton"
-      ).style.display =
-        isDisabled ? "none" : "inline-block";
-
-      document.getElementById(
-        "submitScoreButton"
-      ).style.display =
-        isDisabled ? "none" : "inline-block";
+      document.getElementById("saveDraftButton").style.display = isDisabled ? "none" : "inline-block";
+      document.getElementById("submitScoreButton").style.display = isDisabled ? "none" : "inline-block";
     }
-
-    /*
-     * ==================================================
-     * บันทึกคะแนน
-     * ==================================================
-     */
 
     function collectEvaluationData() {
       const scores = {};
-
-      document
-        .querySelectorAll(".score-range")
-        .forEach(function (range) {
-          scores[range.dataset.scoreKey] =
-            Number(range.value);
-        });
-
-      return {
-        scores: scores,
-        comment: judgeComment.value.trim()
-      };
+      document.querySelectorAll(".score-range").forEach(range => scores[range.dataset.scoreKey] = Number(range.value));
+      return { scores, comment: judgeComment.value.trim() };
     }
 
-    document
-      .getElementById("saveDraftButton")
-      .addEventListener("click", function () {
-        const applicant =
-          applicants.find(function (item) {
-            return item.id === currentApplicantId;
-          });
+    document.getElementById("saveDraftButton").addEventListener("click", async function () {
+      await saveEvaluation("saveDraft", "warning");
+    });
 
-        if (!applicant) {
-          return;
-        }
+    document.getElementById("submitScoreButton").addEventListener("click", function () {
+      confirmOverlay.classList.add("active");
+    });
 
-        const evaluationData =
-          collectEvaluationData();
-
-        applicant.scores =
-          evaluationData.scores;
-
-        applicant.comment =
-          evaluationData.comment;
-
-        applicant.status = "draft";
-
-        if (history.state?.page === "evaluation") {
-          history.back();
-        } else {
-          showDashboardPage();
-        }
-
-        renderApplicants();
-        updateSummary();
-
-        showToast(
-          "บันทึกร่างเรียบร้อยแล้ว",
-          "warning"
-        );
-      });
-
-    document
-      .getElementById("submitScoreButton")
-      .addEventListener("click", function () {
-        confirmOverlay.classList.add("active");
-      });
-
-    document
-      .getElementById("confirmSubmitButton")
-      .addEventListener("click", function () {
-        const applicant =
-          applicants.find(function (item) {
-            return item.id === currentApplicantId;
-          });
-
-        if (!applicant) {
-          return;
-        }
-
-        const evaluationData =
-          collectEvaluationData();
-
-        applicant.scores =
-          evaluationData.scores;
-
-        applicant.comment =
-          evaluationData.comment;
-
-        applicant.status = "submitted";
-
-        confirmOverlay.classList.remove("active");
-
-        if (history.state?.page === "evaluation") {
-          history.back();
-        } else {
-          showDashboardPage();
-        }
-
-        renderApplicants();
-        updateSummary();
-
-        showToast(
-          "ส่งคะแนนเรียบร้อยแล้ว",
-          "success"
-        );
-      });
-
-    /*
-     * ==================================================
-     * ปิด Popup
-     * ==================================================
-     */
-
-    function showDashboardPage() {
+    document.getElementById("confirmSubmitButton").addEventListener("click", async function () {
       confirmOverlay.classList.remove("active");
+      await saveEvaluation("submitScore", "success");
+    });
+
+    async function saveEvaluation(action, toastType) {
+      if (!currentApplicantId) return;
+      setLoading(true, action === "submitScore" ? "กำลังส่งคะแนน..." : "กำลังบันทึกร่าง...");
+      try {
+        const data = collectEvaluationData();
+        const result = await apiPost(action, { token: authToken, applicantId: currentApplicantId, ...data });
+        const index = applicants.findIndex(item => item.id === currentApplicantId);
+        if (index !== -1 && result.applicant) applicants[index] = result.applicant;
+        renderApplicants();
+        updateSummary(result.summary);
+        showDashboard(false);
+        showToast(result.message, toastType);
+      } catch (error) {
+        showToast(error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function showDashboard(pushHistory = true) {
+      currentApplicantId = null;
       evaluationPage.classList.add("hidden");
       appPage.classList.remove("hidden");
-      currentApplicantId = null;
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, behavior: "instant" });
+      if (pushHistory) history.pushState({ page: "dashboard" }, "", "#dashboard");
     }
 
-    function closeEvaluation() {
-      if (history.state?.page === "evaluation") {
-        history.back();
-        return;
-      }
+    document.getElementById("backToDashboardButton").addEventListener("click", () => history.back());
+    document.getElementById("cancelEvaluationButton").addEventListener("click", () => history.back());
+    document.getElementById("cancelConfirmButton").addEventListener("click", () => confirmOverlay.classList.remove("active"));
+    confirmOverlay.addEventListener("click", event => { if (event.target === confirmOverlay) confirmOverlay.classList.remove("active"); });
 
-      showDashboardPage();
-    }
-
-    document
-      .getElementById("backToDashboardButton")
-      .addEventListener("click", closeEvaluation);
-
-    document
-      .getElementById("cancelEvaluationButton")
-      .addEventListener("click", closeEvaluation);
-
-    document
-      .getElementById("cancelConfirmButton")
-      .addEventListener("click", function () {
-        confirmOverlay.classList.remove("active");
-      });
-
-    confirmOverlay.addEventListener(
-      "click",
-      function (event) {
-        if (event.target === confirmOverlay) {
-          confirmOverlay.classList.remove("active");
-        }
-      }
-    );
-
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") {
-        if (confirmOverlay.classList.contains("active")) {
-          confirmOverlay.classList.remove("active");
-          return;
-        }
-
-        if (!evaluationPage.classList.contains("hidden")) {
-          closeEvaluation();
-        }
+    window.addEventListener("popstate", function (event) {
+      if (event.state && event.state.page === "evaluation" && event.state.applicantId) {
+        openEvaluation(event.state.applicantId, false);
+      } else if (authToken) {
+        showDashboard(false);
       }
     });
-
-    window.addEventListener("popstate", function () {
-      if (!evaluationPage.classList.contains("hidden")) {
-        showDashboardPage();
-      }
-    });
-
-    /*
-     * ==================================================
-     * Toast แจ้งเตือน
-     * ==================================================
-     */
-
-    let toastTimeout;
 
     function showToast(message, type = "") {
       const toast = document.getElementById("toast");
-      const toastMessage =
-        document.getElementById("toastMessage");
-      const toastIcon =
-        document.getElementById("toastIcon");
-
       clearTimeout(toastTimeout);
-
       toast.className = "toast";
-
-      if (type) {
-        toast.classList.add(type);
-      }
-
-      toastIcon.textContent =
-        type === "warning" ? "✎" : "✓";
-
-      toastMessage.textContent = message;
-
-      requestAnimationFrame(function () {
-        toast.classList.add("show");
-      });
-
-      toastTimeout = setTimeout(function () {
-        toast.classList.remove("show");
-      }, 2800);
+      if (type) toast.classList.add(type);
+      document.getElementById("toastIcon").textContent = type === "warning" ? "✎" : "✓";
+      document.getElementById("toastMessage").textContent = message;
+      requestAnimationFrame(() => toast.classList.add("show"));
+      toastTimeout = setTimeout(() => toast.classList.remove("show"), 2800);
     }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+    }
+
+    history.replaceState({ page: "login" }, "", location.pathname);
   </script>
 
 </body>
