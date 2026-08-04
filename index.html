@@ -2528,6 +2528,8 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyKs7N1lfiP8jyLXl2FWF2PdYYp3iMZFWBzGudbDUAKlOM4ZU-P3F03WYbY9KS_Guyq/exec";
+    const EXPECTED_API_VERSION = "2026-08-04-v2";
+    let apiHealthPromise = null;
 
     let applicants = [];
     let scoreCriteria = [
@@ -2566,26 +2568,138 @@
       apiLoading.querySelector(".api-loading-box").textContent = text;
       apiLoading.classList.toggle("show", show);
     }
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        return await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          redirect: "follow",
+          cache: "no-store"
+        });
+      } catch (error) {
+        if (error.name === "AbortError") {
+          throw new Error("เชื่อมต่อระบบใช้เวลานานเกินไป กรุณาลองใหม่");
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    async function parseApiResponse(response) {
+      const responseText = await response.text();
+      const trimmedText = responseText.trim();
+
+      if (!response.ok) {
+        throw new Error(`API ตอบกลับ HTTP ${response.status}`);
+      }
+
+      if (
+        trimmedText.startsWith("<!DOCTYPE") ||
+        trimmedText.startsWith("<html") ||
+        trimmedText.startsWith("<")
+      ) {
+        throw new Error(
+          "Web App URL ยังชี้ไปที่หน้า HTML หรือ Deployment ยังไม่เปิดสิทธิ์ Anyone"
+        );
+      }
+
+      try {
+        return JSON.parse(trimmedText);
+      } catch (_) {
+        throw new Error("API ไม่ได้ส่งข้อมูล JSON กลับมา");
+      }
+    }
+
+    async function checkApiHealth(force = false) {
+      if (!force && apiHealthPromise) {
+        return apiHealthPromise;
+      }
+
+      apiHealthPromise = (async function () {
+        const url = new URL(API_URL);
+        url.searchParams.set("action", "health");
+        url.searchParams.set("_", Date.now());
+
+        const response = await fetchWithTimeout(
+          url.toString(),
+          { method: "GET" },
+          10000
+        );
+
+        const data = await parseApiResponse(response);
+
+        if (!data.success) {
+          throw new Error(data.message || "API ยังไม่พร้อมใช้งาน");
+        }
+
+        if (
+          data.apiVersion &&
+          data.apiVersion !== EXPECTED_API_VERSION
+        ) {
+          throw new Error(
+            `หน้าเว็บใช้ API ${EXPECTED_API_VERSION} แต่ Deployment ยังเป็น ${data.apiVersion}`
+          );
+        }
+
+        return data;
+      })();
+
+      try {
+        return await apiHealthPromise;
+      } catch (error) {
+        apiHealthPromise = null;
+        throw error;
+      }
+    }
 
     async function apiGet(action, params = {}) {
       const url = new URL(API_URL);
       url.searchParams.set("action", action);
-      Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value ?? ""));
-      const response = await fetch(url.toString(), { method: "GET", redirect: "follow" });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.message || "เกิดข้อผิดพลาดจากระบบ");
+      url.searchParams.set("_", Date.now());
+
+      Object.entries(params).forEach(([key, value]) => {
+        url.searchParams.set(key, value ?? "");
+      });
+
+      const response = await fetchWithTimeout(
+        url.toString(),
+        { method: "GET" }
+      );
+
+      const data = await parseApiResponse(response);
+
+      if (!data.success) {
+        throw new Error(data.message || "เกิดข้อผิดพลาดจากระบบ");
+      }
+
       return data;
     }
 
     async function apiPost(action, payload = {}) {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        redirect: "follow",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action, ...payload })
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.message || "เกิดข้อผิดพลาดจากระบบ");
+      const response = await fetchWithTimeout(
+        API_URL,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify({
+            action,
+            ...payload
+          })
+        }
+      );
+
+      const data = await parseApiResponse(response);
+
+      if (!data.success) {
+        throw new Error(data.message || "เกิดข้อผิดพลาดจากระบบ");
+      }
+
       return data;
     }
 
@@ -2594,6 +2708,8 @@
       loginError.textContent = "";
       setLoading(true, "กำลังเข้าสู่ระบบ...");
       try {
+        await checkApiHealth();
+
         const result = await apiPost("login", {
           username: usernameInput.value.trim(),
           password: passwordInput.value.trim()
@@ -2946,6 +3062,13 @@
     }
 
     history.replaceState({ page: "login" }, "", location.pathname);
+
+    // เรียก Health Check ล่วงหน้าเพื่อให้การกด Login ตอบสนองเร็วขึ้น
+    window.addEventListener("load", function () {
+      checkApiHealth().catch(function (error) {
+        console.warn("API health check:", error.message);
+      });
+    });
   </script>
 
 </body>
