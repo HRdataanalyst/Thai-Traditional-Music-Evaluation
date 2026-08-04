@@ -936,12 +936,22 @@
       font-size: 14px;
     }
 
+    .video-note {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
     .video-comment-card {
       margin-top: 0;
       padding: 18px;
       display: flex;
-      flex: 0 0 auto;
-      min-height: 190px;
+      flex: 1 1 auto;
+      min-height: 250px;
       flex-direction: column;
       border: 1px solid var(--border);
       border-radius: 15px;
@@ -958,7 +968,8 @@
 
     .video-comment-card textarea {
       width: 100%;
-      min-height: 135px;
+      min-height: 220px;
+      flex: 1 1 auto;
       resize: vertical;
       border-color: #e7dce9;
       background: #fcf9fc;
@@ -1551,7 +1562,7 @@
 
     .evaluation-video-panel .video-comment-card {
       margin-top: 0;
-      flex: 0 0 auto;
+      flex: 1 1 auto;
     }
 
     .evaluation-action-bar {
@@ -2373,28 +2384,26 @@
 
           <section id="modalApplicantDetail" class="evaluation-members-card"></section>
 
-          <div class="video-container">
+<div class="video-container">
 
-            <div class="comment-area video-comment-card">
-              <label for="judgeComment">
-                ความคิดเห็นเพิ่มเติมของกรรมการ
-              </label>
+    <div class="comment-area video-comment-card">
+      <label for="judgeComment">
+        ความคิดเห็นเพิ่มเติมของกรรมการ
+      </label>
 
-              <textarea
-                id="judgeComment"
-                placeholder="ระบุความคิดเห็นหรือข้อเสนอแนะเพิ่มเติม..."
-              ></textarea>
-            </div>
+      <textarea
+        id="judgeComment"
+        placeholder="ระบุความคิดเห็นหรือข้อเสนอแนะเพิ่มเติม..."
+      ></textarea>
+    </div>
 
-            <div id="videoPlayerContainer" class="mock-video">
-              <div style="text-align:center;">
-                <p>ยังไม่พบลิงก์วิดีโอ</p>
-              </div>
-            </div>
+    <div id="videoPlayerContainer" class="mock-video">
+      <div style="text-align:center;">
+        <p>ยังไม่พบลิงก์วิดีโอ</p>
+      </div>
+    </div>
 
-          </div>
-
-        </section>
+</div>
 
         <section class="evaluation-score-panel">
 
