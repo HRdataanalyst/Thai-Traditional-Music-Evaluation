@@ -537,10 +537,10 @@
       color: var(--primary);
     }
 
-    .summary-icon.pending {
-      background: var(--info-light);
-      color: var(--info);
-    }
+.summary-icon.pending {
+  background: var(--primary-light);
+  color: var(--primary);
+}
 
     .summary-icon.draft {
       background: var(--warning-light);
@@ -632,77 +632,122 @@
     }
 
     /* =========================
-       Applicant cards
+       Applicant cards - 1 รายการต่อ 1 แถว
     ========================== */
 
     .applicant-grid {
       margin-top: 18px;
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 17px;
+      grid-template-columns: 1fr;
+      gap: 14px;
     }
 
     .applicant-card {
       position: relative;
       overflow: hidden;
-      padding: 23px;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      background: white;
-      box-shadow: var(--shadow-small);
-      transition: 0.2s ease;
+      display: grid;
+      grid-template-columns:
+        minmax(145px, 0.9fr)
+        minmax(240px, 1.5fr)
+        minmax(175px, 1fr)
+        minmax(105px, 0.7fr)
+        minmax(90px, 0.6fr)
+        minmax(130px, 0.8fr)
+        222px;
+      align-items: center;
+      column-gap: 18px;
+      height: 102px;
+      min-height: 102px;
+      padding: 18px 24px;
+      border: 1px solid #ebe4ed;
+      border-radius: 16px;
+      background: #ffffff;
+      box-shadow: 0 6px 18px rgba(61, 24, 63, 0.06);
+      transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+
+    .applicant-card.status-not-started,
+    .applicant-card.status-draft,
+    .applicant-card.status-submitted {
+      background: #ffffff !important;
     }
 
     .applicant-card:hover {
-      transform: translateY(-3px);
-      border-color: #d9c5dc;
-      box-shadow: var(--shadow);
+      transform: translateY(-2px);
+      border-color: #cdbbd1;
+      box-shadow: 0 12px 30px rgba(61, 24, 63, 0.1);
     }
 
-    .applicant-card::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 5px;
-      background: var(--primary);
+    .applicant-card:focus-visible {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(93, 40, 95, 0.12);
     }
 
-    .applicant-card.status-draft::before {
-      background: var(--warning);
+    .row-field {
+      min-width: 0;
     }
 
-    .applicant-card.status-submitted::before {
-      background: var(--success);
+    .row-field span {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text-soft);
+      font-size: 11px;
+      font-weight: 500;
     }
 
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 15px;
-    }
-
-    .applicant-id {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      color: var(--primary);
+    .row-field strong {
+      display: block;
+      overflow: hidden;
+      color: var(--text-main);
       font-size: 13px;
+      font-weight: 600;
+      line-height: 1.45;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .submission-field strong {
+      color: var(--primary);
       font-weight: 700;
     }
 
-    .status-badge {
-      flex: 0 0 auto;
-      padding: 7px 11px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
+    .school-field strong {
+      font-size: 15px;
+      font-weight: 700;
     }
 
-    .status-not-started {
-      background: var(--info-light);
-      color: var(--info);
+    .status-column {
+      display: grid;
+      grid-template-columns: 105px 105px;
+      align-items: center;
+      justify-content: end;
+      gap: 12px;
+      width: 222px;
+    }
+
+    .status-badge {
+      width: 105px;
+      min-height: 30px;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .status-badge.status-not-started {
+      background: var(--primary-light);
+      color: var(--primary);
     }
 
     .status-draft-badge {
@@ -715,106 +760,48 @@
       color: var(--success);
     }
 
-    .applicant-main {
-      margin-top: 18px;
-    }
-
-    .applicant-main h3 {
-      font-size: 20px;
-      line-height: 1.5;
-    }
-
-    .member-list {
-      margin-top: 9px;
-      display: grid;
-      gap: 7px;
-    }
-
-    .member-row {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      color: var(--text-main);
-      font-size: 14px;
-    }
-
-    .member-number {
-      width: 24px;
-      height: 24px;
-      display: inline-grid;
-      place-items: center;
-      border-radius: 7px;
-      background: var(--primary-light);
-      color: var(--primary);
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .meta-grid {
-      margin-top: 18px;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 11px;
-    }
-
-    .meta-item {
-      padding: 11px 12px;
-      border-radius: 11px;
-      background: #faf8fa;
-    }
-
-    .meta-item span {
-      display: block;
-      margin-bottom: 3px;
-      color: var(--text-soft);
-      font-size: 11px;
-    }
-
-    .meta-item strong {
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .card-footer {
-      margin-top: 19px;
-      padding-top: 17px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
-      border-top: 1px solid var(--border);
-    }
-
-    .video-status {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      color: var(--text-soft);
-      font-size: 12px;
-    }
-
-    .action-button {
+    .row-action {
+      width: 105px;
+      min-width: 105px;
       height: 42px;
-      padding: 0 18px;
+      padding: 0 12px;
       border: none;
-      border-radius: 11px;
-      background: var(--primary);
-      color: white;
-      font-weight: 600;
-      transition: 0.2s ease;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 6px 14px rgba(93, 40, 95, 0.18);
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
     }
 
-    .action-button:hover {
-      background: var(--primary-dark);
+    .row-action:hover {
       transform: translateY(-1px);
+      box-shadow: 0 9px 18px rgba(93, 40, 95, 0.24);
     }
 
-    .action-button.edit {
+    .row-action.edit {
       background: var(--warning);
+      box-shadow: 0 6px 14px rgba(229, 155, 37, 0.22);
     }
 
-    .action-button.view {
+    .row-action.edit:hover {
+      background: #cc8618;
+      box-shadow: 0 9px 18px rgba(229, 155, 37, 0.28);
+    }
+
+    .row-action.view {
       background: var(--success);
+      box-shadow: 0 6px 14px rgba(31, 157, 103, 0.2);
+    }
+
+    .row-action.view:hover {
+      background: #178254;
+      box-shadow: 0 9px 18px rgba(31, 157, 103, 0.26);
     }
 
     .empty-state {
@@ -1296,6 +1283,17 @@
     ========================== */
 
     @media (max-width: 1100px) {
+      .applicant-card {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        height: auto;
+        min-height: 150px;
+      }
+
+      .status-column {
+        width: auto;
+        justify-content: flex-start;
+      }
+
       .login-page {
         grid-template-columns: 1fr;
       }
@@ -1384,8 +1382,35 @@
         grid-column: auto;
       }
 
-      .applicant-grid {
-        grid-template-columns: 1fr;
+      .applicant-card {
+        grid-template-columns: 1fr 1fr;
+        gap: 14px 16px;
+        height: auto;
+        min-height: 0;
+        padding: 18px;
+      }
+
+      .submission-field,
+      .school-field,
+      .status-column {
+        grid-column: 1 / -1;
+      }
+
+      .status-column {
+        grid-template-columns: 1fr 105px;
+        width: 100%;
+        justify-content: stretch;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+      }
+
+      .status-badge {
+        width: max-content;
+        min-width: 105px;
+      }
+
+      .row-action {
+        justify-self: end;
       }
 
       .meta-grid {
@@ -1444,18 +1469,6 @@
         align-items: center;
       }
 
-      .meta-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .card-footer {
-        align-items: stretch;
-        flex-direction: column;
-      }
-
-      .action-button {
-        width: 100%;
-      }
 
       .login-brand h1 {
         font-size: 35px;
@@ -1706,13 +1719,13 @@
       <section class="filter-panel">
 
         <div class="filter-item">
-          <label for="searchInput">ค้นหาผู้สมัคร</label>
+          <label for="searchInput">ค้นหารายการ</label>
 
           <input
             id="searchInput"
             class="filter-control"
             type="text"
-            placeholder="ค้นหาชื่อ จังหวัด หรือรหัสผู้สมัคร"
+            placeholder="ค้นหาเลข Submission โรงเรียน หรือภูมิภาค"
           >
         </div>
 
@@ -1986,6 +1999,8 @@
     const applicants = [
       {
         id: "BCT-0001",
+      submissionNumber: "BCT-0001",
+      schoolName: "โรงเรียนเชียงใหม่วิทยาคม",
         region: "ภาคเหนือ",
         province: "เชียงใหม่",
         competition: "เดี่ยว",
@@ -2005,6 +2020,8 @@
       },
       {
         id: "BCT-0002",
+      submissionNumber: "BCT-0002",
+      schoolName: "โรงเรียนกรุงเทพพิทยา",
         region: "ภาคกลางและภาคตะวันออก",
         province: "กรุงเทพมหานคร",
         competition: "คู่",
@@ -2036,6 +2053,8 @@
       },
       {
         id: "BCT-0003",
+      submissionNumber: "BCT-0003",
+      schoolName: "โรงเรียนขอนแก่นวิทยายน",
         region: "ภาคตะวันออกเฉียงเหนือ",
         province: "ขอนแก่น",
         competition: "Trio",
@@ -2067,6 +2086,8 @@
       },
       {
         id: "BCT-0004",
+      submissionNumber: "BCT-0004",
+      schoolName: "โรงเรียนหาดใหญ่วิทยาลัย",
         region: "ภาคใต้และภาคตะวันตก",
         province: "สงขลา",
         competition: "เดี่ยว",
@@ -2092,6 +2113,8 @@
       },
       {
         id: "BCT-0005",
+      submissionNumber: "BCT-0005",
+      schoolName: "โรงเรียนชลราษฎรอำรุง",
         region: "ภาคกลางและภาคตะวันออก",
         province: "ชลบุรี",
         competition: "เดี่ยว",
@@ -2111,6 +2134,8 @@
       },
       {
         id: "BCT-0006",
+      submissionNumber: "BCT-0006",
+      schoolName: "โรงเรียนบุญวาทย์วิทยาลัย",
         region: "ภาคเหนือ",
         province: "ลำปาง",
         competition: "คู่",
@@ -2266,8 +2291,7 @@
      */
 
     function renderApplicants() {
-      const filteredApplicants =
-        getFilteredApplicants();
+      const filteredApplicants = getFilteredApplicants();
 
       applicantGrid.innerHTML = "";
 
@@ -2277,149 +2301,89 @@
       if (filteredApplicants.length === 0) {
         applicantGrid.innerHTML = `
           <div class="empty-state">
-            <div class="empty-state-icon">🔎</div>
+            
             <strong>ไม่พบรายการที่ตรงกับเงื่อนไข</strong>
             <p style="margin-top:6px;">
               ลองเปลี่ยนคำค้นหาหรือตัวกรองอีกครั้ง
             </p>
           </div>
         `;
-
         return;
       }
 
       filteredApplicants.forEach(function (applicant) {
         const card = document.createElement("article");
+        const statusInfo = getStatusInfo(applicant.status);
+        const buttonInfo = getButtonInfo(applicant.status);
+        const submissionNumber = applicant.submissionNumber || applicant.id;
+        const schoolName = applicant.schoolName || "ไม่ระบุชื่อโรงเรียน";
 
         card.className =
           `applicant-card status-${applicant.status}`;
-
-        const memberContent =
-          createMemberContent(applicant);
-
-        const statusInfo =
-          getStatusInfo(applicant.status);
-
-        const buttonInfo =
-          getButtonInfo(applicant.status);
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
+        card.setAttribute(
+          "aria-label",
+          `เปิดรายการ ${submissionNumber} ${schoolName}`
+        );
 
         card.innerHTML = `
-          <div class="card-top">
+          <div class="row-field submission-field">
+            <span>Submission Number</span>
+            <strong>${submissionNumber}</strong>
+          </div>
 
-            <div class="applicant-id">
-              🎼 ${applicant.id}
-            </div>
+          <div class="row-field school-field">
+            <span>ชื่อโรงเรียน</span>
+            <strong title="${schoolName}">${schoolName}</strong>
+          </div>
 
+          <div class="row-field">
+            <span>ภูมิภาค</span>
+            <strong title="${applicant.region}">${applicant.region}</strong>
+          </div>
+
+          <div class="row-field">
+            <span>รายการแข่งขัน</span>
+            <strong>${applicant.competition}</strong>
+          </div>
+
+          <div class="row-field">
+            <span>รุ่นอายุ</span>
+            <strong>${applicant.ageGroup}</strong>
+          </div>
+
+          <div class="row-field">
+            <span>ประเภทเครื่องดนตรี</span>
+            <strong>${applicant.instrument}</strong>
+          </div>
+
+          <div class="status-column">
             <div class="status-badge ${statusInfo.className}">
               ${statusInfo.label}
             </div>
-
-          </div>
-
-          <div class="applicant-main">
-            ${memberContent}
-          </div>
-
-          <div class="meta-grid">
-
-            <div class="meta-item">
-              <span>ภูมิภาคและจังหวัด</span>
-              <strong>
-                ${applicant.region} · ${applicant.province}
-              </strong>
-            </div>
-
-            <div class="meta-item">
-              <span>รายการแข่งขัน</span>
-              <strong>${applicant.competition}</strong>
-            </div>
-
-            <div class="meta-item">
-              <span>รุ่นอายุ</span>
-              <strong>${applicant.ageGroup}</strong>
-            </div>
-
-            <div class="meta-item">
-              <span>ประเภทเครื่องดนตรี</span>
-              <strong>${applicant.instrument}</strong>
-            </div>
-
-          </div>
-
-          <div class="card-footer">
-
-            <div class="video-status">
-              🎬 คลิปวิดีโอพร้อมรับชม
-            </div>
-
             <button
-              class="action-button ${buttonInfo.className}"
+              class="row-action ${buttonInfo.className}"
               type="button"
-              onclick="openEvaluation('${applicant.id}')"
             >
               ${buttonInfo.label}
             </button>
-
           </div>
         `;
+
+        card.addEventListener("click", function () {
+          openEvaluation(applicant.id);
+        });
+
+        card.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openEvaluation(applicant.id);
+          }
+        });
 
         applicantGrid.appendChild(card);
       });
-    }
-
-    function createMemberContent(applicant) {
-      if (applicant.members.length === 1) {
-        const member = applicant.members[0];
-
-        return `
-          <h3>
-            ${member.title}
-            ${member.firstName}
-            ${member.lastName}
-          </h3>
-
-          <div
-            style="
-              margin-top:7px;
-              color:var(--text-soft);
-              font-size:14px;
-            "
-          >
-            อายุ ${member.age} ปี
-          </div>
-        `;
-      }
-
-      const memberRows = applicant.members
-        .map(function (member, index) {
-          return `
-            <div class="member-row">
-
-              <span class="member-number">
-                ${index + 1}
-              </span>
-
-              <span>
-                ${member.title}
-                ${member.firstName}
-                ${member.lastName}
-                · อายุ ${member.age} ปี
-              </span>
-
-            </div>
-          `;
-        })
-        .join("");
-
-      return `
-        <h3>
-          ผู้เข้าแข่งขันประเภท${applicant.competition}
-        </h3>
-
-        <div class="member-list">
-          ${memberRows}
-        </div>
-      `;
     }
 
     function getStatusInfo(status) {
@@ -2485,6 +2449,8 @@
 
         const searchableText = [
           applicant.id,
+          applicant.submissionNumber,
+          applicant.schoolName,
           applicant.region,
           applicant.province,
           applicant.competition,
@@ -2607,7 +2573,7 @@
       document.getElementById(
         "modalApplicantCode"
       ).textContent =
-        `รหัสผู้สมัคร ${applicant.id}`;
+        `Submission Number: ${applicant.submissionNumber || applicant.id}`;
 
       renderModalApplicantDetail(applicant);
       renderScoreCriteria(applicant);
@@ -2652,6 +2618,10 @@
         </div>
 
         <div class="detail-chips">
+
+          <span class="detail-chip">
+            ${applicant.schoolName || "ไม่ระบุชื่อโรงเรียน"}
+          </span>
 
           <span class="detail-chip">
             ${applicant.region}
