@@ -2638,11 +2638,6 @@
       const trimmedText = responseText.trim();
 
       if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error(
-            "ไม่พบ Web App Deployment กรุณาตรวจสอบว่า Deploy เป็น Web app และใช้ URL /exec เดิม"
-          );
-        }
         throw new Error(`API ตอบกลับ HTTP ${response.status}`);
       }
 
@@ -2733,58 +2728,30 @@ const response = await fetchWithTimeout(
       return data;
     }
     async function apiPost(action, payload = {}) {
-      const requestBody = {
-        action,
-        ...payload
-      };
-
-      try {
-        const response = await fetchWithTimeout(
-          API_URL,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "text/plain;charset=utf-8"
-            },
-            body: JSON.stringify(requestBody)
+      const response = await fetchWithTimeout(
+        API_URL,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
           },
-          30000
-        );
-
-        if (response.status !== 404) {
-          const data = await parseApiResponse(response);
-
-          if (!data.success) {
-            throw new Error(data.message || "เกิดข้อผิดพลาดจากระบบ");
-          }
-
-          return data;
-        }
-      } catch (error) {
-        // ถ้าไม่ใช่ปัญหา 404/เครือข่าย จะลอง fallback GET อีกครั้ง
-        console.warn("POST API fallback:", error.message);
-      }
-
-      const fallbackUrl = new URL(API_URL);
-      fallbackUrl.searchParams.set("action", action);
-      fallbackUrl.searchParams.set("payload", JSON.stringify(payload));
-      fallbackUrl.searchParams.set("_", Date.now());
-
-      const fallbackResponse = await fetchWithTimeout(
-        fallbackUrl.toString(),
-        { method: "GET" },
+          body: JSON.stringify({
+            action,
+            ...payload
+          })
+        },
         30000
       );
 
-      const fallbackData = await parseApiResponse(fallbackResponse);
+      const data = await parseApiResponse(response);
 
-      if (!fallbackData.success) {
+      if (!data.success) {
         throw new Error(
-          fallbackData.message || "เกิดข้อผิดพลาดจากระบบ"
+          data.message || "เกิดข้อผิดพลาดจากระบบ"
         );
       }
 
-      return fallbackData;
+      return data;
     }
 
     loginForm.addEventListener("submit", async function (event) {
