@@ -936,22 +936,12 @@
       font-size: 14px;
     }
 
-    .video-note {
-      margin-top: 14px;
-      padding: 14px 16px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.08);
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 13px;
-      line-height: 1.7;
-    }
-
     .video-comment-card {
       margin-top: 0;
       padding: 18px;
       display: flex;
-      flex: 1 1 auto;
-      min-height: 250px;
+      flex: 0 0 auto;
+      min-height: 190px;
       flex-direction: column;
       border: 1px solid var(--border);
       border-radius: 15px;
@@ -968,8 +958,7 @@
 
     .video-comment-card textarea {
       width: 100%;
-      min-height: 220px;
-      flex: 1 1 auto;
+      min-height: 135px;
       resize: vertical;
       border-color: #e7dce9;
       background: #fcf9fc;
@@ -1562,7 +1551,7 @@
 
     .evaluation-video-panel .video-comment-card {
       margin-top: 0;
-      flex: 1 1 auto;
+      flex: 0 0 auto;
     }
 
     .evaluation-action-bar {
@@ -2405,6 +2394,8 @@
 
 </div>
 
+        </section>
+
         <section class="evaluation-score-panel">
 
           <div class="score-intro">
@@ -2587,6 +2578,11 @@
       const trimmedText = responseText.trim();
 
       if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(
+            "ไม่พบ Web App Deployment กรุณาตรวจสอบว่า Deploy เป็น Web app และใช้ URL /exec เดิม"
+          );
+        }
         throw new Error(`API ตอบกลับ HTTP ${response.status}`);
       }
 
@@ -2676,29 +2672,59 @@ const response = await fetchWithTimeout(
 
       return data;
     }
-
     async function apiPost(action, payload = {}) {
-      const response = await fetchWithTimeout(
-        API_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "text/plain;charset=utf-8"
+      const requestBody = {
+        action,
+        ...payload
+      };
+
+      try {
+        const response = await fetchWithTimeout(
+          API_URL,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify(requestBody)
           },
-          body: JSON.stringify({
-            action,
-            ...payload
-          })
+          30000
+        );
+
+        if (response.status !== 404) {
+          const data = await parseApiResponse(response);
+
+          if (!data.success) {
+            throw new Error(data.message || "เกิดข้อผิดพลาดจากระบบ");
+          }
+
+          return data;
         }
-      );
-
-      const data = await parseApiResponse(response);
-
-      if (!data.success) {
-        throw new Error(data.message || "เกิดข้อผิดพลาดจากระบบ");
+      } catch (error) {
+        // ถ้าไม่ใช่ปัญหา 404/เครือข่าย จะลอง fallback GET อีกครั้ง
+        console.warn("POST API fallback:", error.message);
       }
 
-      return data;
+      const fallbackUrl = new URL(API_URL);
+      fallbackUrl.searchParams.set("action", action);
+      fallbackUrl.searchParams.set("payload", JSON.stringify(payload));
+      fallbackUrl.searchParams.set("_", Date.now());
+
+      const fallbackResponse = await fetchWithTimeout(
+        fallbackUrl.toString(),
+        { method: "GET" },
+        30000
+      );
+
+      const fallbackData = await parseApiResponse(fallbackResponse);
+
+      if (!fallbackData.success) {
+        throw new Error(
+          fallbackData.message || "เกิดข้อผิดพลาดจากระบบ"
+        );
+      }
+
+      return fallbackData;
     }
 
     loginForm.addEventListener("submit", async function (event) {
@@ -2937,7 +2963,7 @@ try {
       if (embedUrl) {
         container.innerHTML = `<iframe class="video-embed" src="${escapeHtml(embedUrl)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
       } else if (url) {
-        container.innerHTML = `<div style="text-align:center;padding:24px;"><p>ไม่สามารถฝังวิดีโอนี้ได้</p><a href="${escapeHtml(url)}" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;">เปิดคลิปในหน้าต่างใหม่</a></div>`;
+        container.innerHTML = `<div style="text-align:center;padding:24px;"><p>ไม่สามารถฝังวิดีโอนี้ได้</p><a href="${escapeHtml(url)}" target="_blank" rel="noopener" style="color:#5d285f;text-decoration:underline;">เปิดคลิปในหน้าต่างใหม่</a></div>`;
       } else {
         container.innerHTML = `<div style="text-align:center;"><p>ยังไม่พบลิงก์วิดีโอ</p></div>`;
       }
