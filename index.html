@@ -594,7 +594,7 @@
     .filter-panel {
       padding: 19px;
       display: grid;
-      grid-template-columns: 1.5fr repeat(5, minmax(130px, 1fr));
+      grid-template-columns: 1.5fr repeat(6, minmax(125px, 1fr));
       gap: 12px;
       border: 1px solid var(--border);
       border-radius: var(--radius-medium);
@@ -629,6 +629,31 @@
     .filter-control:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(93, 40, 95, 0.08);
+    }
+
+    .filter-refresh-item {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .filter-refresh-button {
+      width: 100%;
+      height: 44px;
+      padding: 0 14px;
+      border: 1px solid #ccb8d0;
+      border-radius: 11px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      transition: 0.2s ease;
+    }
+
+    .filter-refresh-button:hover {
+      border-color: var(--primary);
+      background: #eaddeb;
+      transform: translateY(-1px);
     }
 
     /* =========================
@@ -2327,6 +2352,17 @@
           </select>
         </div>
 
+        <div class="filter-item filter-refresh-item">
+          <label>&nbsp;</label>
+          <button
+            id="refreshFilterButton"
+            class="filter-refresh-button"
+            type="button"
+          >
+            รีเซ็ตตัวกรอง
+          </button>
+        </div>
+
       </section>
 
       <section id="applicantGrid" class="applicant-grid"></section>
@@ -2566,6 +2602,7 @@
     const ageFilter = document.getElementById("ageFilter");
     const competitionFilter = document.getElementById("competitionFilter");
     const instrumentFilter = document.getElementById("instrumentFilter");
+    const refreshFilterButton = document.getElementById("refreshFilterButton");
     const confirmOverlay = document.getElementById("confirmOverlay");
     const scoreList = document.getElementById("scoreList");
     const judgeComment = document.getElementById("judgeComment");
@@ -2809,7 +2846,6 @@ try {
         applyJudgeInfo(result.judge);
       }
       renderApplicants();
-      updateSummary(result.summary);
     }
 
     function applyJudgeInfo(judge) {
@@ -2843,6 +2879,9 @@ try {
       const filteredApplicants = getFilteredApplicants();
       applicantGrid.innerHTML = "";
       document.getElementById("resultCount").textContent = `พบ ${filteredApplicants.length} รายการ`;
+
+      /* อัปเดต Summary ตามเงื่อนไข Filter ปัจจุบัน */
+      updateSummary(buildClientSummary(filteredApplicants));
 
       if (!filteredApplicants.length) {
         applicantGrid.innerHTML = `<div class="empty-state"><strong>ไม่พบรายการที่ตรงกับเงื่อนไข</strong><p style="margin-top:6px;">ลองเปลี่ยนคำค้นหาหรือตัวกรองอีกครั้ง</p></div>`;
@@ -2914,14 +2953,47 @@ try {
       element.addEventListener("change", renderApplicants);
     });
 
-    function updateSummary(summary) {
-      const value = summary || {
-        total: applicants.length,
-        pending: applicants.filter(i => i.status === "not-started").length,
-        draft: applicants.filter(i => i.status === "draft").length,
-        submitted: applicants.filter(i => i.status === "submitted").length,
-        progressPercent: applicants.length ? Math.round(applicants.filter(i => i.status === "submitted").length / applicants.length * 100) : 0
+    refreshFilterButton.addEventListener("click", function () {
+      searchInput.value = "";
+      statusFilter.value = "";
+      regionFilter.value = "";
+      ageFilter.value = "";
+      competitionFilter.value = "";
+      instrumentFilter.value = "";
+
+      renderApplicants();
+      searchInput.focus();
+
+      showToast("รีเซ็ตตัวกรองเรียบร้อยแล้ว");
+    });
+
+    function buildClientSummary(items) {
+      const list = Array.isArray(items) ? items : [];
+
+      const total = list.length;
+      const pending = list.filter(
+        item => item.status === "not-started"
+      ).length;
+      const draft = list.filter(
+        item => item.status === "draft"
+      ).length;
+      const submitted = list.filter(
+        item => item.status === "submitted"
+      ).length;
+
+      return {
+        total,
+        pending,
+        draft,
+        submitted,
+        progressPercent: total
+          ? Math.round((submitted / total) * 100)
+          : 0
       };
+    }
+
+    function updateSummary(summary) {
+      const value = summary || buildClientSummary(applicants);
       document.getElementById("totalCount").textContent = value.total || 0;
       document.getElementById("pendingCount").textContent = value.pending || 0;
       document.getElementById("draftCount").textContent = value.draft || 0;
@@ -2946,7 +3018,8 @@ try {
       renderVideo(applicant.videoUrl);
       renderScoreCriteria(applicant);
       judgeComment.value = applicant.comment || "";
-      setEvaluationDisabled(applicant.status === "submitted");
+      /* อนุญาตให้แก้ไขได้ทุกสถานะ รวมถึงส่งคะแนนแล้ว */
+      setEvaluationDisabled(false);
 
       appPage.classList.add("hidden");
       evaluationPage.classList.remove("hidden");
@@ -3097,11 +3170,18 @@ try {
       document.getElementById("maximumScore").textContent = scoreCriteria.reduce((sum, item) => sum + item.maxScore, 0);
     }
 
-    function setEvaluationDisabled(isDisabled) {
-      document.querySelectorAll(".score-range").forEach(range => range.disabled = isDisabled);
-      judgeComment.disabled = isDisabled;
-      document.getElementById("saveDraftButton").style.display = isDisabled ? "none" : "inline-block";
-      document.getElementById("submitScoreButton").style.display = isDisabled ? "none" : "inline-block";
+    function setEvaluationDisabled() {
+      document.querySelectorAll(".score-range").forEach(range => {
+        range.disabled = false;
+      });
+
+      judgeComment.disabled = false;
+
+      document.getElementById("saveDraftButton").style.display =
+        "inline-block";
+
+      document.getElementById("submitScoreButton").style.display =
+        "inline-block";
     }
 
     function collectEvaluationData() {
@@ -3132,7 +3212,6 @@ try {
         const index = applicants.findIndex(item => item.id === currentApplicantId);
         if (index !== -1 && result.applicant) applicants[index] = result.applicant;
         renderApplicants();
-        updateSummary(result.summary);
         showDashboard(false);
         showToast(result.message, toastType);
       } catch (error) {
