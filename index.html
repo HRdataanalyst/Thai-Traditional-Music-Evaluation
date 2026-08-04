@@ -1474,9 +1474,9 @@
 
     .evaluation-workspace {
       display: grid;
-      grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
+      grid-template-columns: minmax(0, 1.02fr) minmax(440px, 0.98fr);
       gap: 18px;
-      align-items: start;
+      align-items: stretch;
     }
 
     .evaluation-video-panel,
@@ -1490,11 +1490,27 @@
 
     .evaluation-video-panel {
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
       background: #241a26;
     }
 
     .evaluation-video-panel .video-container {
       position: static;
+    }
+
+    .evaluation-video-panel .evaluation-members-card {
+      margin: 0;
+      padding: 18px;
+      border: none;
+      border-radius: 15px;
+      background: #ffffff;
+      box-shadow: none;
+    }
+
+    .evaluation-video-panel .evaluation-members-list {
+      grid-template-columns: 1fr;
     }
 
     .evaluation-video-panel .applicant-detail {
@@ -1503,22 +1519,45 @@
 
     .evaluation-score-panel {
       padding: 22px;
+      display: flex;
+      flex-direction: column;
     }
 
-    .evaluation-page-footer {
-      position: sticky;
-      bottom: 0;
-      z-index: 40;
-      margin-top: 18px;
-      padding: 14px 18px;
+    .evaluation-action-bar {
+      margin-top: 20px;
+      padding-top: 18px;
       display: flex;
-      justify-content: flex-end;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .evaluation-action-back {
+      min-height: 44px;
+      padding: 0 4px;
+      border: none;
+      background: transparent;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .evaluation-action-back:hover {
+      color: var(--primary-dark);
+      text-decoration: underline;
+    }
+
+    .evaluation-action-primary {
+      display: flex;
+      align-items: center;
       gap: 10px;
-      border: 1px solid var(--border);
-      border-radius: 15px;
-      background: rgba(255, 255, 255, 0.96);
-      box-shadow: 0 -5px 20px rgba(55, 25, 58, 0.07);
-      backdrop-filter: blur(12px);
+    }
+
+    .evaluation-action-primary .draft-button,
+    .evaluation-action-primary .submit-button {
+      min-height: 46px;
+      padding: 0 22px;
+      border-radius: 12px;
     }
 
     @media (max-width: 1100px) {
@@ -1581,15 +1620,18 @@
         padding: 16px;
       }
 
-      .evaluation-page-footer {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+      .evaluation-action-bar {
+        align-items: stretch;
+        flex-direction: column;
       }
 
-      .evaluation-page-footer .secondary-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+      .evaluation-action-back {
+        text-align: left;
+      }
+
+      .evaluation-action-primary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
       }
     }
 
@@ -1598,7 +1640,7 @@
         grid-template-columns: 1fr;
       }
 
-      .evaluation-page-footer {
+      .evaluation-action-primary {
         grid-template-columns: 1fr;
       }
     }
@@ -2294,11 +2336,11 @@
 
       </section>
 
-      <section id="modalApplicantDetail" class="evaluation-members-card"></section>
-
       <div class="evaluation-workspace">
 
         <section class="evaluation-video-panel">
+
+          <section id="modalApplicantDetail" class="evaluation-members-card"></section>
 
           <div class="video-container">
 
@@ -2360,35 +2402,35 @@
 
           </div>
 
+          <div class="evaluation-action-bar">
+            <button
+              id="cancelEvaluationButton"
+              class="evaluation-action-back"
+              type="button"
+            >
+              ← กลับหน้ารายการ
+            </button>
+
+            <div class="evaluation-action-primary">
+              <button
+                id="saveDraftButton"
+                class="draft-button"
+                type="button"
+              >
+                บันทึกร่าง
+              </button>
+
+              <button
+                id="submitScoreButton"
+                class="submit-button"
+                type="button"
+              >
+                ยืนยันส่งคะแนน
+              </button>
+            </div>
+          </div>
+
         </section>
-
-      </div>
-
-      <div class="evaluation-page-footer">
-
-        <button
-          id="cancelEvaluationButton"
-          class="secondary-button"
-          type="button"
-        >
-          กลับหน้ารายการ
-        </button>
-
-        <button
-          id="saveDraftButton"
-          class="draft-button"
-          type="button"
-        >
-          บันทึกร่าง
-        </button>
-
-        <button
-          id="submitScoreButton"
-          class="submit-button"
-          type="button"
-        >
-          ยืนยันส่งคะแนน
-        </button>
 
       </div>
 
