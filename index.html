@@ -3411,7 +3411,7 @@ padding: 4px;
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyKs7N1lfiP8jyLXl2FWF2PdYYp3iMZFWBzGudbDUAKlOM4ZU-P3F03WYbY9KS_Guyq/exec";
     const EXPECTED_API_VERSION =
-  "2026-08-06-v5";
+  "2026-08-06-v6";
     let apiHealthPromise = null;
 
     let applicants = [];
@@ -3832,6 +3832,13 @@ loginForm.addEventListener(
        */
       renderApplicants();
 
+      console.info(
+        "Assigned applicants:",
+        applicants.length,
+        "Judge:",
+        currentJudge && currentJudge.name
+      );
+
       /*
        * ซ่อน Login และเปิด Dashboard
        */
@@ -3936,8 +3943,11 @@ if (welcome) {
       applicantGrid.innerHTML = "";
       document.getElementById("resultCount").textContent = `พบ ${filteredApplicants.length} รายการ`;
 
-      /* อัปเดต Summary ตามเงื่อนไข Filter ปัจจุบัน */
-      updateSummary(buildClientSummary(filteredApplicants));
+      /*
+       * Summary นับจากคลิปทั้งหมดที่กรรมการได้รับมอบหมาย
+       * ไม่เปลี่ยนตามคำค้นหาและตัวกรองบนหน้าเว็บ
+       */
+      updateSummary(buildClientSummary(applicants));
 
       if (!filteredApplicants.length) {
         applicantGrid.innerHTML = `<div class="empty-state"><strong>ไม่พบรายการที่ตรงกับเงื่อนไข</strong><p style="margin-top:6px;">ลองเปลี่ยนคำค้นหาหรือตัวกรองอีกครั้ง</p></div>`;
