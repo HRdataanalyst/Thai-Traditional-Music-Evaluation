@@ -383,6 +383,25 @@
   font-size: 12px;
   font-weight: 600;
 }
+    
+    .judge-list-message {
+  min-height: 16px;
+
+  margin-top: 5px;
+
+  color: var(--text-soft);
+
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.judge-list-message.ready {
+  color: var(--success);
+}
+
+.judge-list-message.error {
+  color: var(--danger);
+}
 
 
 .input-wrapper {
@@ -649,12 +668,6 @@
   .login-panel {
     padding: 26px 20px 32px;
   }
-}
-
-  .login-panel {
-    padding: 26px 20px 32px;
-  }
-
 }
 
     /* =========================
@@ -2821,24 +2834,40 @@ padding: 4px;
 
         <form id="loginForm">
 
-          <div class="form-group">
-            <label for="username">
-              ชื่อผู้ใช้งาน
-            </label>
+<div class="form-group">
 
-            <div class="input-wrapper">
-              <span class="input-icon">👤</span>
+  <label for="username">
+    ชื่อกรรมการ
+  </label>
 
-              <input
-                id="username"
-                class="form-control"
-                type="text"
-                placeholder="กรอกชื่อผู้ใช้งาน"
-                autocomplete="username"
-                required
-              >
-            </div>
-          </div>
+  <div class="input-wrapper">
+
+    <span class="input-icon">
+      👤
+    </span>
+
+    <input
+      id="username"
+      class="form-control"
+      type="text"
+      list="judgeNameList"
+      placeholder="เลือกหรือพิมพ์ชื่อกรรมการ"
+      autocomplete="off"
+      required
+    >
+
+    <datalist id="judgeNameList"></datalist>
+
+  </div>
+
+  <div
+    id="judgeListMessage"
+    class="judge-list-message"
+  >
+    กำลังโหลดรายชื่อกรรมการ...
+  </div>
+
+</div>
 
 
           <div class="form-group">
@@ -3330,7 +3359,8 @@ padding: 4px;
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyKs7N1lfiP8jyLXl2FWF2PdYYp3iMZFWBzGudbDUAKlOM4ZU-P3F03WYbY9KS_Guyq/exec";
-    const EXPECTED_API_VERSION = "2026-08-05-v3";
+    const EXPECTED_API_VERSION =
+  "2026-08-06-v4";
     let apiHealthPromise = null;
 
     let applicants = [];
@@ -3352,6 +3382,15 @@ padding: 4px;
     const loginForm = document.getElementById("loginForm");
     const usernameInput = document.getElementById("username");
     const passwordInput = document.getElementById("password");
+    const judgeNameList =
+  document.getElementById(
+    "judgeNameList"
+  );
+
+const judgeListMessage =
+  document.getElementById(
+    "judgeListMessage"
+  );
     const passwordToggle = document.getElementById("passwordToggle");
     const loginError = document.getElementById("loginError");
     const applicantGrid = document.getElementById("applicantGrid");
@@ -3513,7 +3552,70 @@ const response = await fetchWithTimeout(
 
       return data;
     }
+/**
+ * โหลดรายชื่อกรรมการเพียงครั้งเดียว
+ * ตอนเปิดหน้า Login
+ */
+async function loadJudgeOptions() {
+  judgeListMessage.textContent =
+    "กำลังโหลดรายชื่อกรรมการ...";
 
+  judgeListMessage.className =
+    "judge-list-message";
+
+  try {
+    const result =
+      await apiGet(
+        "judgeOptions",
+        {},
+        15000
+      );
+
+    const judges =
+      Array.isArray(result.judges)
+        ? result.judges
+        : [];
+
+    judgeNameList.innerHTML = "";
+
+    judges.forEach(
+      function(judge) {
+        const option =
+          document.createElement(
+            "option"
+          );
+
+        option.value =
+          judge.name || "";
+
+        judgeNameList.appendChild(
+          option
+        );
+      }
+    );
+
+    judgeListMessage.textContent =
+      `พบรายชื่อกรรมการ ${judges.length} คน`;
+
+    judgeListMessage.className =
+      "judge-list-message ready";
+  } catch (error) {
+    judgeNameList.innerHTML = "";
+
+    judgeListMessage.textContent =
+      "โหลดรายชื่อไม่สำเร็จ กรุณาติดต่อผู้ดูแลระบบ";
+
+    judgeListMessage.className =
+      "judge-list-message error";
+
+    console.error(
+      "loadJudgeOptions:",
+      error
+    );
+  }
+}
+    
+    
 loginForm.addEventListener(
   "submit",
   async function(event) {
@@ -3527,70 +3629,124 @@ loginForm.addEventListener(
     );
 
     try {
-      const result = await apiPost(
-        "login",
-        {
-          username:
-            usernameInput.value.trim(),
-          password:
-            passwordInput.value.trim()
-        }
-      );
+      /*
+       * รับชื่อกรรมการจากช่อง Dropdown แบบพิมพ์ได้
+       */
+      const selectedJudgeName =
+        usernameInput.value.trim();
 
-      authToken = result.token;
-      currentJudge = result.judge;
+      if (!selectedJudgeName) {
+        throw new Error(
+          "กรุณาเลือกหรือพิมพ์ชื่อกรรมการ"
+        );
+      }
 
       /*
-       * รับข้อมูลผู้สมัครจาก Login Response ทันที
-       * ไม่ต้องเรียก Applicants API รอบที่สอง
+       * รับรหัสผ่าน
        */
-      applicants = Array.isArray(
-        result.applicants
-      )
-        ? result.applicants
-        : [];
+      const enteredPassword =
+        passwordInput.value.trim();
+
+      if (!enteredPassword) {
+        throw new Error(
+          "กรุณากรอกรหัสผ่าน"
+        );
+      }
+
+      /*
+       * ส่งข้อมูลไปยัง Google Apps Script
+       */
+      const result =
+        await apiPost(
+          "login",
+          {
+            username:
+              selectedJudgeName,
+
+            password:
+              enteredPassword
+          }
+        );
+
+      authToken =
+        result.token;
+
+      currentJudge =
+        result.judge;
+
+      /*
+       * รับข้อมูลผู้สมัครจาก Login Response
+       */
+      applicants =
+        Array.isArray(
+          result.applicants
+        )
+          ? result.applicants
+          : [];
 
       /*
        * รับเกณฑ์คะแนนจากระบบ
        */
       if (
-        Array.isArray(result.scoreCriteria) &&
+        Array.isArray(
+          result.scoreCriteria
+        ) &&
         result.scoreCriteria.length
       ) {
         scoreCriteria =
           result.scoreCriteria.map(
             function(item) {
               return {
-                key: item.key,
+                key:
+                  item.key,
+
                 title:
                   item.label ||
                   item.title ||
                   "",
+
                 description:
-                  item.description || "",
+                  item.description ||
+                  "",
+
                 maxScore:
-                  Number(item.maxScore) || 0
+                  Number(
+                    item.maxScore
+                  ) || 0
               };
             }
           );
       }
 
-      applyJudgeInfo(result.judge);
+      applyJudgeInfo(
+        result.judge
+      );
 
       /*
-       * สร้าง Dashboard จากข้อมูลที่ได้จาก Login
+       * สร้างรายการผู้สมัคร
        */
       renderApplicants();
 
       /*
-       * เปิดหน้า Dashboard หลังเตรียมข้อมูลเสร็จแล้ว
+       * ซ่อน Login และเปิด Dashboard
        */
-      loginPage.classList.add("hidden");
-      evaluationPage.classList.add("hidden");
-      appPage.classList.remove("hidden");
+      loginPage.classList.add(
+        "hidden"
+      );
+
+      evaluationPage.classList.add(
+        "hidden"
+      );
+
+      appPage.classList.remove(
+        "hidden"
+      );
 
       history.replaceState(
-        { page: "dashboard" },
+        {
+          page:
+            "dashboard"
+        },
         "",
         "#dashboard"
       );
@@ -3601,7 +3757,9 @@ loginForm.addEventListener(
       );
     } catch (error) {
       authToken = "";
+
       currentJudge = null;
+
       applicants = [];
 
       loginError.textContent =
@@ -4083,6 +4241,12 @@ reloadApplicantsButton.addEventListener(
     }
 
     history.replaceState({ page: "login" }, "", location.pathname);
+    
+    /*
+ * โหลดรายชื่อกรรมการครั้งเดียว
+ * หลังหน้าเว็บพร้อมใช้งาน
+ */
+loadJudgeOptions();
 
 
   </script>
