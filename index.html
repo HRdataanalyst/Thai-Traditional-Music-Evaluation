@@ -2367,13 +2367,13 @@
             รีเซ็ตตัวกรอง
           </button>
 
-          <button
-            id="reloadApplicantsButton"
-            class="filter-refresh-button reload-data-button"
-            type="button"
-          >
-            โหลดข้อมูลใหม่
-          </button>
+<button
+  id="reloadApplicantsButton"
+  class="filter-refresh-button reload-data-button"
+  type="button"
+>
+  อัปเดตสถานะคะแนน
+</button>
         </div>
 
       </section>
@@ -2584,7 +2584,7 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyKs7N1lfiP8jyLXl2FWF2PdYYp3iMZFWBzGudbDUAKlOM4ZU-P3F03WYbY9KS_Guyq/exec";
-    const EXPECTED_API_VERSION = "2026-08-04-v2";
+    const EXPECTED_API_VERSION = "2026-08-05-v3";
     let apiHealthPromise = null;
 
     let applicants = [];
@@ -2768,50 +2768,104 @@ const response = await fetchWithTimeout(
       return data;
     }
 
-    loginForm.addEventListener("submit", async function (event) {
-      event.preventDefault();
-      loginError.textContent = "";
-      setLoading(true, "กำลังเข้าสู่ระบบ...");
-      try {
-const result = await apiPost("login", {
-  username: usernameInput.value.trim(),
-  password: passwordInput.value.trim()
-});
+loginForm.addEventListener(
+  "submit",
+  async function(event) {
+    event.preventDefault();
 
-authToken = result.token;
-currentJudge = result.judge;
+    loginError.textContent = "";
 
-applyJudgeInfo(result.judge);
+    setLoading(
+      true,
+      "กำลังเข้าสู่ระบบ..."
+    );
 
-/* เปิดหน้า Dashboard ทันที */
-loginPage.classList.add("hidden");
-appPage.classList.remove("hidden");
+    try {
+      const result = await apiPost(
+        "login",
+        {
+          username:
+            usernameInput.value.trim(),
+          password:
+            passwordInput.value.trim()
+        }
+      );
 
-showToast("เข้าสู่ระบบสำเร็จ", "success");
+      authToken = result.token;
+      currentJudge = result.judge;
 
-/* ค่อยโหลดรายการภายหลัง */
-setLoading(true, "กำลังโหลดรายการผู้เข้าแข่งขัน...");
+      /*
+       * รับข้อมูลผู้สมัครจาก Login Response ทันที
+       * ไม่ต้องเรียก Applicants API รอบที่สอง
+       */
+      applicants = Array.isArray(
+        result.applicants
+      )
+        ? result.applicants
+        : [];
 
-try {
-  await loadApplicants();
-} catch (loadError) {
-  applicants = [];
-  renderApplicants();
-
-  showToast(
-    "โหลดรายการไม่สำเร็จ: " + loadError.message
-  );
-
-  console.error("loadApplicants error:", loadError);
-} finally {
-  setLoading(false);
-}
-      } catch (error) {
-        loginError.textContent = error.message;
-      } finally {
-        setLoading(false);
+      /*
+       * รับเกณฑ์คะแนนจากระบบ
+       */
+      if (
+        Array.isArray(result.scoreCriteria) &&
+        result.scoreCriteria.length
+      ) {
+        scoreCriteria =
+          result.scoreCriteria.map(
+            function(item) {
+              return {
+                key: item.key,
+                title:
+                  item.label ||
+                  item.title ||
+                  "",
+                description:
+                  item.description || "",
+                maxScore:
+                  Number(item.maxScore) || 0
+              };
+            }
+          );
       }
-    });
+
+      applyJudgeInfo(result.judge);
+
+      /*
+       * สร้าง Dashboard จากข้อมูลที่ได้จาก Login
+       */
+      renderApplicants();
+
+      /*
+       * เปิดหน้า Dashboard หลังเตรียมข้อมูลเสร็จแล้ว
+       */
+      loginPage.classList.add("hidden");
+      evaluationPage.classList.add("hidden");
+      appPage.classList.remove("hidden");
+
+      history.replaceState(
+        { page: "dashboard" },
+        "",
+        "#dashboard"
+      );
+
+      showToast(
+        "เข้าสู่ระบบสำเร็จ",
+        "success"
+      );
+    } catch (error) {
+      authToken = "";
+      currentJudge = null;
+      applicants = [];
+
+      loginError.textContent =
+        error.message ||
+        "ไม่สามารถเข้าสู่ระบบได้";
+    } finally {
+      setLoading(false);
+    }
+  }
+);
 
     async function loadApplicants() {
       /*
@@ -2957,23 +3011,38 @@ try {
       showToast("รีเซ็ตตัวกรองเรียบร้อยแล้ว");
     });
 
-    reloadApplicantsButton.addEventListener("click", async function () {
-      if (!authToken) {
-        showToast("กรุณาเข้าสู่ระบบใหม่");
-        return;
-      }
+reloadApplicantsButton.addEventListener(
+  "click",
+  async function() {
+    if (!authToken) {
+      showToast(
+        "กรุณาเข้าสู่ระบบใหม่"
+      );
+      return;
+    }
 
-      setLoading(true, "กำลังโหลดรายการผู้เข้าแข่งขัน...");
+    setLoading(
+      true,
+      "กำลังอัปเดตสถานะคะแนน..."
+    );
 
-      try {
-        await loadApplicants();
-        showToast("โหลดข้อมูลล่าสุดเรียบร้อยแล้ว", "success");
-      } catch (error) {
-        showToast("โหลดข้อมูลไม่สำเร็จ: " + error.message);
-      } finally {
-        setLoading(false);
-      }
-    });
+    try {
+      await loadApplicants();
+
+      showToast(
+        "อัปเดตสถานะคะแนนเรียบร้อยแล้ว",
+        "success"
+      );
+    } catch (error) {
+      showToast(
+        "อัปเดตข้อมูลไม่สำเร็จ: " +
+        error.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+);
 
     function buildClientSummary(items) {
       const list = Array.isArray(items) ? items : [];
