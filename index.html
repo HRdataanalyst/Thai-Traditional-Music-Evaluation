@@ -87,45 +87,35 @@
 ========================= */
 
 .login-page {
+  width: 100%;
   min-height: 100vh;
-  padding: 34px 24px;
+  padding: 0;
 
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
 
-  background:
-    radial-gradient(
-      circle at 15% 18%,
-      rgba(93, 40, 95, 0.08),
-      transparent 24%
-    ),
-    radial-gradient(
-      circle at 86% 84%,
-      rgba(205, 169, 79, 0.11),
-      transparent 20%
-    ),
-    #f6f3f7;
+  background: #ffffff;
 }
 
 
-/* กล่อง Login หลัก */
 .login-shell {
-  width: min(980px, 100%);
-  min-height: 610px;
+  width: 100%;
+  min-height: 100vh;
 
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
+  grid-template-columns:
+    minmax(0, 1.05fr)
+    minmax(0, 0.95fr);
 
   overflow: hidden;
 
-  border: 1px solid rgba(230, 224, 231, 0.95);
-  border-radius: 26px;
+  border: none;
+  border-radius: 0;
 
   background: #ffffff;
 
-  box-shadow:
-    0 24px 70px rgba(55, 25, 58, 0.14);
+  box-shadow: none;
 }
 
 
@@ -137,11 +127,14 @@
   position: relative;
   overflow: hidden;
 
-  padding: 46px 48px;
+  padding:
+    46px
+    clamp(48px, 8vw, 120px);
 
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: flex-start;
 
   color: var(--white);
 
@@ -320,14 +313,14 @@
 ========================= */
 
 .login-panel {
+  min-width: 0;
   padding: 42px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  background:
-    rgba(255, 255, 255, 0.99);
+  background: #ffffff;
 }
 
 
@@ -547,14 +540,13 @@
 ========================= */
 
 @media (max-width: 1100px) {
-
   .login-page {
-    padding: 24px;
+    padding: 0;
   }
 
   .login-shell {
-    width: min(860px, 100%);
-    min-height: 570px;
+    width: 100%;
+    min-height: 100vh;
   }
 
   .login-brand {
@@ -564,25 +556,26 @@
   .login-panel {
     padding: 34px;
   }
-
 }
 
 
 @media (max-width: 760px) {
-
   .login-page {
     min-height: 100vh;
-    padding: 14px;
-    align-items: flex-start;
+    padding: 0;
+    align-items: stretch;
   }
 
   .login-shell {
     width: 100%;
-    min-height: 0;
+    min-height: 100vh;
 
     grid-template-columns: 1fr;
 
-    border-radius: 20px;
+    border: none;
+    border-radius: 0;
+
+    box-shadow: none;
   }
 
   .login-brand {
@@ -3581,6 +3574,7 @@ if (welcome) {
   welcome.textContent =
     `สวัสดี ${judge.name || "กรรมการ"}`;
 }
+    }
 
     passwordToggle.addEventListener("click", function () {
       const isPassword = passwordInput.type === "password";
