@@ -184,37 +184,36 @@
 }
 
 
-/* Logo ด้านซ้าย */
 .login-brand-logo {
   position: relative;
   z-index: 1;
 
-  width: 72px;
-  height: 72px;
+  width: clamp(220px, 18vw, 300px);
+  height: auto;
 
-  margin-bottom: 20px;
+  margin: 0 auto 24px;
+  align-self: center;
 
   overflow: hidden;
 
-  border:
-    3px solid rgba(255, 255, 255, 0.9);
-
+  border: none;
   border-radius: 18px;
 
-  background: #ffffff;
+  background: transparent;
 
   box-shadow:
-    0 10px 24px rgba(20, 8, 22, 0.22);
-}
+    0 14px 32px rgba(20, 8, 22, 0.24);
 
+  line-height: 0;
+}
 
 .login-brand-logo img {
   width: 100%;
-  height: 100%;
+  height: auto;
 
   display: block;
 
-  object-fit: cover;
+  border-radius: inherit;
 }
 
 
@@ -327,36 +326,27 @@
 .login-box {
   width: min(100%, 340px);
 }
-
-
-/* Logo ในฝั่ง Login */
-.login-logo-mobile {
+    
+    /* ไอคอนโน้ตดนตรีฝั่งเข้าสู่ระบบ */
+.login-icon {
   width: 58px;
   height: 58px;
 
   margin-bottom: 18px;
 
-  overflow: hidden;
-
-  border:
-    1px solid #eadfeb;
+  display: grid;
+  place-items: center;
 
   border-radius: 15px;
 
-  background: #ffffff;
+  background: var(--primary-light);
+  color: var(--primary);
+
+  font-size: 28px;
+  font-weight: 700;
 
   box-shadow:
     0 6px 18px rgba(61, 24, 63, 0.1);
-}
-
-
-.login-logo-mobile img {
-  width: 100%;
-  height: 100%;
-
-  display: block;
-
-  object-fit: cover;
 }
 
 
@@ -584,14 +574,14 @@
     padding: 28px 24px;
   }
 
-  .login-brand-logo {
-    width: 56px;
-    height: 56px;
+.login-brand-logo {
+  width: min(240px, 70vw);
+  height: auto;
 
-    margin-bottom: 14px;
+  margin: 0 auto 18px;
 
-    border-radius: 14px;
-  }
+  border-radius: 16px;
+}
 
   .brand-badge {
     margin-bottom: 14px;
@@ -623,15 +613,14 @@
     width: 100%;
   }
 
-  .login-logo-mobile {
-    display: none;
-  }
+.login-icon {
+  display: none;
+}
 
 }
 
 
 @media (max-width: 430px) {
-
   .login-page {
     padding: 0;
   }
@@ -644,9 +633,23 @@
     padding: 25px 20px;
   }
 
+  .login-brand-logo {
+    width: min(220px, 76vw);
+    height: auto;
+
+    margin-bottom: 16px;
+
+    border-radius: 14px;
+  }
+
   .brand-features {
     display: none;
   }
+
+  .login-panel {
+    padding: 26px 20px 32px;
+  }
+}
 
   .login-panel {
     padding: 26px 20px 32px;
@@ -2728,12 +2731,9 @@ padding: 4px;
 
       <div class="login-box">
 
-        <div class="login-logo-mobile">
-          <img
-            src="https://i.postimg.cc/k4GqcqNR/714631600-963961986511734-3695964638911489417-n.jpg"
-            alt="โลโก้โครงการ Big C ดนตรีไทย"
-          >
-        </div>
+<div class="login-icon">
+  ♫
+</div>
 
         <h2>เข้าสู่ระบบกรรมการ</h2>
 
