@@ -403,6 +403,50 @@
   color: var(--danger);
 }
 
+.judge-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(55, 25, 58, 0.14);
+}
+
+.judge-dropdown-option {
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-bottom: 1px solid #f0ebf1;
+  background: #ffffff;
+  color: var(--text-main);
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.judge-dropdown-option:last-child {
+  border-bottom: none;
+}
+
+.judge-dropdown-option:hover,
+.judge-dropdown-option:focus {
+  outline: none;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.judge-dropdown-empty {
+  padding: 12px;
+  color: var(--text-soft);
+  font-size: 11px;
+  text-align: center;
+}
+
 
 .input-wrapper {
   position: relative;
@@ -2850,11 +2894,18 @@ padding: 4px;
       id="username"
       class="form-control"
       type="text"
-      list="judgeNameList"
       placeholder="เลือกหรือพิมพ์ชื่อกรรมการ"
       autocomplete="off"
+      aria-autocomplete="list"
+      aria-controls="judgeDropdown"
       required
     >
+
+    <div
+      id="judgeDropdown"
+      class="judge-dropdown hidden"
+      role="listbox"
+    ></div>
 
     <datalist id="judgeNameList"></datalist>
 
@@ -3360,7 +3411,7 @@ padding: 4px;
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyKs7N1lfiP8jyLXl2FWF2PdYYp3iMZFWBzGudbDUAKlOM4ZU-P3F03WYbY9KS_Guyq/exec";
     const EXPECTED_API_VERSION =
-  "2026-08-06-v4";
+  "2026-08-06-v5";
     let apiHealthPromise = null;
 
     let applicants = [];
@@ -3386,6 +3437,13 @@ padding: 4px;
   document.getElementById(
     "judgeNameList"
   );
+
+const judgeDropdown =
+  document.getElementById(
+    "judgeDropdown"
+  );
+
+let judgeOptions = [];
 
 const judgeListMessage =
   document.getElementById(
@@ -3564,43 +3622,35 @@ async function loadJudgeOptions() {
     "judge-list-message";
 
   try {
-    const result =
-      await apiGet(
-        "judgeOptions",
-        {},
-        15000
-      );
+    const result = await apiGet(
+      "judgeOptions",
+      {},
+      15000
+    );
 
-    const judges =
-      Array.isArray(result.judges)
-        ? result.judges
-        : [];
+    judgeOptions = Array.isArray(result.judges)
+      ? result.judges
+      : [];
 
     judgeNameList.innerHTML = "";
 
-    judges.forEach(
-      function(judge) {
-        const option =
-          document.createElement(
-            "option"
-          );
+    judgeOptions.forEach(function(judge) {
+      const option = document.createElement("option");
+      option.value = judge.name || "";
+      judgeNameList.appendChild(option);
+    });
 
-        option.value =
-          judge.name || "";
-
-        judgeNameList.appendChild(
-          option
-        );
-      }
-    );
+    renderJudgeDropdown("");
 
     judgeListMessage.textContent =
-      `พบรายชื่อกรรมการ ${judges.length} คน`;
+      `พบรายชื่อกรรมการ ${judgeOptions.length} คน`;
 
     judgeListMessage.className =
       "judge-list-message ready";
   } catch (error) {
+    judgeOptions = [];
     judgeNameList.innerHTML = "";
+    judgeDropdown.innerHTML = "";
 
     judgeListMessage.textContent =
       "โหลดรายชื่อไม่สำเร็จ กรุณาติดต่อผู้ดูแลระบบ";
@@ -3608,14 +3658,69 @@ async function loadJudgeOptions() {
     judgeListMessage.className =
       "judge-list-message error";
 
-    console.error(
-      "loadJudgeOptions:",
-      error
-    );
+    console.error("loadJudgeOptions:", error);
   }
 }
-    
-    
+
+function renderJudgeDropdown(searchText = "") {
+  const search = String(searchText || "")
+    .trim()
+    .toLowerCase();
+
+  const filtered = judgeOptions.filter(function(judge) {
+    return !search ||
+      String(judge.name || "")
+        .toLowerCase()
+        .includes(search);
+  });
+
+  judgeDropdown.innerHTML = "";
+
+  if (!filtered.length) {
+    judgeDropdown.innerHTML =
+      '<div class="judge-dropdown-empty">ไม่พบรายชื่อกรรมการ</div>';
+    return;
+  }
+
+  filtered.forEach(function(judge) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "judge-dropdown-option";
+    button.textContent = judge.name;
+    button.setAttribute("role", "option");
+
+    button.addEventListener("mousedown", function(event) {
+      event.preventDefault();
+      usernameInput.value = judge.name;
+      judgeDropdown.classList.add("hidden");
+      passwordInput.focus();
+    });
+
+    judgeDropdown.appendChild(button);
+  });
+}
+
+usernameInput.addEventListener("focus", function() {
+  renderJudgeDropdown(usernameInput.value);
+  judgeDropdown.classList.remove("hidden");
+});
+
+usernameInput.addEventListener("click", function() {
+  renderJudgeDropdown(usernameInput.value);
+  judgeDropdown.classList.remove("hidden");
+});
+
+usernameInput.addEventListener("input", function() {
+  renderJudgeDropdown(usernameInput.value);
+  judgeDropdown.classList.remove("hidden");
+});
+
+document.addEventListener("click", function(event) {
+  if (!event.target.closest(".input-wrapper")) {
+    judgeDropdown.classList.add("hidden");
+  }
+});
+
 loginForm.addEventListener(
   "submit",
   async function(event) {
