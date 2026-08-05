@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>ระบบประเมินคลิปดนตรีไทย</title>
+  <title>ระบบประเมินการแข่งขันดนตรีไทย ปีที่ 5</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -82,239 +82,584 @@
       display: none !important;
     }
 
-    /* =========================
-       Login
-    ========================== */
+   /* =========================
+   Login - Compact Layout
+========================= */
 
-    .login-page {
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 1.08fr 0.92fr;
-      background:
-        radial-gradient(
-          circle at 18% 24%,
-          rgba(255, 255, 255, 0.14),
-          transparent 24%
-        ),
-        radial-gradient(
-          circle at 85% 15%,
-          rgba(213, 176, 79, 0.25),
-          transparent 17%
-        ),
-        linear-gradient(
-          145deg,
-          #321234,
-          #59285e 55%,
-          #3c183e
-        );
-    }
+.login-page {
+  min-height: 100vh;
+  padding: 34px 24px;
 
-    .login-brand {
-      position: relative;
-      overflow: hidden;
-      padding: 70px clamp(40px, 7vw, 110px);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      color: var(--white);
-    }
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    .login-brand::before,
-    .login-brand::after {
-      content: "";
-      position: absolute;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 50%;
-    }
+  background:
+    radial-gradient(
+      circle at 15% 18%,
+      rgba(93, 40, 95, 0.08),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 86% 84%,
+      rgba(205, 169, 79, 0.11),
+      transparent 20%
+    ),
+    #f6f3f7;
+}
 
-    .login-brand::before {
-      width: 420px;
-      height: 420px;
-      left: -230px;
-      bottom: -230px;
-    }
 
-    .login-brand::after {
-      width: 240px;
-      height: 240px;
-      right: -120px;
-      top: -100px;
-    }
+/* กล่อง Login หลัก */
+.login-shell {
+  width: min(980px, 100%);
+  min-height: 610px;
 
-    .brand-badge {
-      width: max-content;
-      margin-bottom: 28px;
-      padding: 9px 16px;
-      border: 1px solid rgba(255, 255, 255, 0.24);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      font-size: 14px;
-      font-weight: 600;
-    }
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
 
-    .login-brand h1 {
-      max-width: 700px;
-      font-size: clamp(38px, 5vw, 72px);
-      line-height: 1.15;
-      letter-spacing: -1.5px;
-      margin-bottom: 22px;
-    }
+  overflow: hidden;
 
-    .login-brand h1 span {
-      color: #f2d98d;
-    }
+  border: 1px solid rgba(230, 224, 231, 0.95);
+  border-radius: 26px;
 
-    .login-brand p {
-      max-width: 670px;
-      color: rgba(255, 255, 255, 0.82);
-      font-size: clamp(17px, 1.4vw, 21px);
-      line-height: 1.8;
-    }
+  background: #ffffff;
 
-    .brand-features {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 34px;
-    }
+  box-shadow:
+    0 24px 70px rgba(55, 25, 58, 0.14);
+}
 
-    .brand-feature {
-      padding: 10px 15px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 14px;
-    }
 
-    .login-panel {
-      padding: 35px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.97);
-      border-radius: 36px 0 0 36px;
-    }
+/* =========================
+   ฝั่งรายละเอียดโครงการ
+========================= */
 
-    .login-box {
-      width: min(100%, 440px);
-    }
+.login-brand {
+  position: relative;
+  overflow: hidden;
 
-    .login-icon {
-      width: 62px;
-      height: 62px;
-      margin-bottom: 22px;
-      display: grid;
-      place-items: center;
-      border-radius: 18px;
-      background: var(--primary-light);
-      color: var(--primary);
-      font-size: 30px;
-    }
+  padding: 46px 48px;
 
-    .login-box h2 {
-      margin-bottom: 8px;
-      font-size: 30px;
-    }
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 
-    .login-description {
-      margin-bottom: 30px;
-      color: var(--text-soft);
-      line-height: 1.7;
-    }
+  color: var(--white);
 
-    .form-group {
-      margin-bottom: 19px;
-    }
+  background:
+    radial-gradient(
+      circle at 88% 10%,
+      rgba(255, 255, 255, 0.12),
+      transparent 24%
+    ),
+    linear-gradient(
+      145deg,
+      #321234,
+      #59285e 58%,
+      #3c183e
+    );
+}
 
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: 600;
-    }
 
-    .input-wrapper {
-      position: relative;
-    }
+.login-brand::before,
+.login-brand::after {
+  content: "";
 
-    .input-wrapper .input-icon {
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #948d97;
-      pointer-events: none;
-    }
+  position: absolute;
 
-    .form-control {
-      width: 100%;
-      height: 52px;
-      padding: 0 16px 0 46px;
-      border: 1px solid var(--border);
-      border-radius: 13px;
-      outline: none;
-      background: #fff;
-      color: var(--text-main);
-      transition: 0.2s ease;
-    }
+  border:
+    1px solid rgba(255, 255, 255, 0.11);
 
-    .form-control:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(93, 40, 95, 0.1);
-    }
+  border-radius: 50%;
+}
 
-    .password-toggle {
-      position: absolute;
-      right: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      border: none;
-      background: transparent;
-      color: var(--text-soft);
-    }
 
-    .login-button {
-      width: 100%;
-      height: 54px;
-      margin-top: 8px;
-      border: none;
-      border-radius: 13px;
-      background:
-        linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: white;
-      font-weight: 700;
-      box-shadow: 0 10px 24px rgba(93, 40, 95, 0.24);
-      transition: 0.2s ease;
-    }
+.login-brand::before {
+  width: 300px;
+  height: 300px;
 
-    .login-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 14px 30px rgba(93, 40, 95, 0.3);
-    }
+  left: -180px;
+  bottom: -190px;
+}
 
-    .login-error {
-      min-height: 22px;
-      margin-top: 12px;
-      color: var(--danger);
-      font-size: 14px;
-      text-align: center;
-    }
 
-    .demo-account {
-      margin-top: 24px;
-      padding: 15px 17px;
-      border: 1px dashed #d9c7db;
-      border-radius: 13px;
-      background: #faf7fb;
-      color: var(--text-soft);
-      font-size: 14px;
-      line-height: 1.8;
-    }
+.login-brand::after {
+  width: 210px;
+  height: 210px;
 
-    .demo-account strong {
-      color: var(--primary);
-    }
+  right: -100px;
+  top: -100px;
+}
+
+
+/* Logo ด้านซ้าย */
+.login-brand-logo {
+  position: relative;
+  z-index: 1;
+
+  width: 72px;
+  height: 72px;
+
+  margin-bottom: 20px;
+
+  overflow: hidden;
+
+  border:
+    3px solid rgba(255, 255, 255, 0.9);
+
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 10px 24px rgba(20, 8, 22, 0.22);
+}
+
+
+.login-brand-logo img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+.brand-badge {
+  position: relative;
+  z-index: 1;
+
+  width: max-content;
+
+  margin-bottom: 20px;
+  padding: 7px 13px;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.25);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.1);
+
+  backdrop-filter: blur(10px);
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+
+.login-brand h1 {
+  position: relative;
+  z-index: 1;
+
+  max-width: 480px;
+
+  margin-bottom: 16px;
+
+  font-size: clamp(30px, 3.2vw, 44px);
+  line-height: 1.2;
+
+  letter-spacing: -0.8px;
+}
+
+
+.login-brand h1 span {
+  display: block;
+
+  margin-top: 4px;
+
+  color: #f2d98d;
+}
+
+
+.login-brand p {
+  position: relative;
+  z-index: 1;
+
+  max-width: 470px;
+
+  color:
+    rgba(255, 255, 255, 0.82);
+
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+
+.brand-features {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  margin-top: 24px;
+}
+
+
+.brand-feature {
+  padding: 8px 11px;
+
+  border-radius: 9px;
+
+  background:
+    rgba(255, 255, 255, 0.1);
+
+  color:
+    rgba(255, 255, 255, 0.9);
+
+  font-size: 10px;
+}
+
+
+/* =========================
+   ฝั่งแบบฟอร์ม Login
+========================= */
+
+.login-panel {
+  padding: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    rgba(255, 255, 255, 0.99);
+}
+
+
+.login-box {
+  width: min(100%, 340px);
+}
+
+
+/* Logo ในฝั่ง Login */
+.login-logo-mobile {
+  width: 58px;
+  height: 58px;
+
+  margin-bottom: 18px;
+
+  overflow: hidden;
+
+  border:
+    1px solid #eadfeb;
+
+  border-radius: 15px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 6px 18px rgba(61, 24, 63, 0.1);
+}
+
+
+.login-logo-mobile img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+.login-box h2 {
+  margin-bottom: 6px;
+
+  color: var(--primary-dark);
+
+  font-size: 24px;
+  line-height: 1.35;
+}
+
+
+.login-description {
+  margin-bottom: 22px;
+
+  color: var(--text-soft);
+
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+
+.form-group label {
+  display: block;
+
+  margin-bottom: 6px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+.input-wrapper {
+  position: relative;
+}
+
+
+.input-wrapper .input-icon {
+  position: absolute;
+
+  left: 13px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: #948d97;
+
+  font-size: 13px;
+
+  pointer-events: none;
+}
+
+
+.form-control {
+  width: 100%;
+  height: 44px;
+
+  padding:
+    0 42px 0 38px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #ffffff;
+  color: var(--text-main);
+
+  font-size: 12px;
+
+  transition: 0.2s ease;
+}
+
+
+.form-control:focus {
+  border-color: var(--primary);
+
+  box-shadow:
+    0 0 0 3px rgba(93, 40, 95, 0.09);
+}
+
+
+.password-toggle {
+  position: absolute;
+
+  right: 12px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  border: none;
+
+  background: transparent;
+  color: var(--text-soft);
+
+  font-size: 12px;
+}
+
+
+.login-button {
+  width: 100%;
+  height: 44px;
+
+  margin-top: 5px;
+
+  border: none;
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary),
+      var(--primary-dark)
+    );
+
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  box-shadow:
+    0 9px 20px rgba(93, 40, 95, 0.22);
+
+  transition: 0.2s ease;
+}
+
+
+.login-button:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 12px 26px rgba(93, 40, 95, 0.28);
+}
+
+
+.login-error {
+  min-height: 19px;
+
+  margin-top: 9px;
+
+  color: var(--danger);
+
+  font-size: 11px;
+  text-align: center;
+}
+
+
+.demo-account {
+  margin-top: 17px;
+  padding: 11px 13px;
+
+  border:
+    1px dashed #d9c7db;
+
+  border-radius: 10px;
+
+  background: #faf7fb;
+
+  color: var(--text-soft);
+
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+
+.demo-account strong {
+  color: var(--primary);
+}
+
+
+/* =========================
+   Responsive Login
+========================= */
+
+@media (max-width: 1100px) {
+
+  .login-page {
+    padding: 24px;
+  }
+
+  .login-shell {
+    width: min(860px, 100%);
+    min-height: 570px;
+  }
+
+  .login-brand {
+    padding: 38px;
+  }
+
+  .login-panel {
+    padding: 34px;
+  }
+
+}
+
+
+@media (max-width: 760px) {
+
+  .login-page {
+    min-height: 100vh;
+    padding: 14px;
+    align-items: flex-start;
+  }
+
+  .login-shell {
+    width: 100%;
+    min-height: 0;
+
+    grid-template-columns: 1fr;
+
+    border-radius: 20px;
+  }
+
+  .login-brand {
+    min-height: 0;
+
+    padding: 28px 24px;
+  }
+
+  .login-brand-logo {
+    width: 56px;
+    height: 56px;
+
+    margin-bottom: 14px;
+
+    border-radius: 14px;
+  }
+
+  .brand-badge {
+    margin-bottom: 14px;
+
+    font-size: 10px;
+  }
+
+  .login-brand h1 {
+    margin-bottom: 10px;
+
+    font-size: 29px;
+  }
+
+  .login-brand p {
+    font-size: 12px;
+  }
+
+  .brand-features {
+    margin-top: 16px;
+  }
+
+  .login-panel {
+    min-height: 0;
+
+    padding: 28px 24px;
+  }
+
+  .login-box {
+    width: 100%;
+  }
+
+  .login-logo-mobile {
+    display: none;
+  }
+
+}
+
+
+@media (max-width: 430px) {
+
+  .login-page {
+    padding: 0;
+  }
+
+  .login-shell {
+    border-radius: 0;
+  }
+
+  .login-brand {
+    padding: 25px 20px;
+  }
+
+  .brand-features {
+    display: none;
+  }
+
+  .login-panel {
+    padding: 26px 20px 32px;
+  }
+
+}
 
     /* =========================
        Main layout
@@ -344,18 +689,35 @@
       gap: 13px;
     }
 
-    .logo-mark {
-      width: 44px;
-      height: 44px;
-      display: grid;
-      place-items: center;
-      border-radius: 13px;
-      background:
-        linear-gradient(145deg, var(--primary), var(--primary-dark));
-      color: #f2d98d;
-      font-size: 22px;
-      box-shadow: var(--shadow-small);
-    }
+.logo-mark {
+  width: 44px;
+  height: 44px;
+
+  overflow: hidden;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid #eadfeb;
+
+  border-radius: 13px;
+
+  background: #ffffff;
+
+  box-shadow: var(--shadow-small);
+}
+
+
+.logo-mark img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: contain;
+padding: 4px;
+}
 
     .topbar-brand-text strong {
       display: block;
@@ -1850,20 +2212,6 @@
         justify-content: flex-start;
       }
 
-      .login-page {
-        grid-template-columns: 1fr;
-      }
-
-      .login-brand {
-        min-height: 360px;
-        padding: 55px 35px;
-      }
-
-      .login-panel {
-        min-height: 600px;
-        border-radius: 36px 36px 0 0;
-      }
-
       .summary-grid {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -2005,14 +2353,6 @@
         padding: 0 10px;
       }
 
-      .login-brand {
-        min-height: 310px;
-      }
-
-      .login-panel {
-        min-height: 570px;
-        padding: 32px 22px;
-      }
     }
 
     @media (max-width: 430px) {
@@ -2025,14 +2365,6 @@
         align-items: center;
       }
 
-
-      .login-brand h1 {
-        font-size: 35px;
-      }
-
-      .brand-features {
-        display: none;
-      }
     }
 
     .video-embed {
@@ -2351,50 +2683,77 @@
 <body>
 
   <!-- ====================================
-       หน้า Login
-  ===================================== -->
+ หน้า Login
+===================================== -->
+<section id="loginPage" class="login-page">
 
-  <section id="loginPage" class="login-page">
+  <div class="login-shell">
 
+    <!-- ฝั่งรายละเอียดโครงการ -->
     <div class="login-brand">
+
+      <div class="login-brand-logo">
+        <img
+          src="https://i.postimg.cc/k4GqcqNR/714631600-963961986511734-3695964638911489417-n.jpg"
+          alt="โลโก้โครงการ Big C ดนตรีไทย"
+        >
+      </div>
+
       <div class="brand-badge">
-        โครงการ Big C ดนตรีไทย ปี 5
+        โครงการ Big C ดนตรีไทย ปีที่ 5
       </div>
 
       <h1>
-        ระบบประเมิน<br>
-        <span>คลิปดนตรีไทย</span>
+        ระบบประเมินการแข่งขัน
+        <span>ดนตรีไทย ปีที่ 5</span>
       </h1>
 
       <p>
-        ระบบสำหรับคณะกรรมการพิจารณาและให้คะแนน
-        คลิปวิดีโอของผู้เข้าแข่งขัน โดยกรรมการแต่ละท่าน
-        จะเห็นเฉพาะรายการที่ได้รับมอบหมายเท่านั้น
+        ระบบสำหรับคณะกรรมการพิจารณาและให้คะแนนคลิปวิดีโอของผู้เข้าแข่งขัน
+        โดยกรรมการแต่ละท่านจะเห็นเฉพาะรายการที่ได้รับมอบหมายเท่านั้น
       </p>
 
       <div class="brand-features">
-        <div class="brand-feature">🔒 แยกสิทธิ์รายกรรมการ</div>
-        <div class="brand-feature">🎬 ประเมินผ่านวิดีโอ</div>
-        <div class="brand-feature">📊 คำนวณคะแนนอัตโนมัติ</div>
+        <div class="brand-feature">
+          🔒 แยกสิทธิ์รายกรรมการ
+        </div>
+
+        <div class="brand-feature">
+          🎬 ประเมินผ่านวิดีโอ
+        </div>
+
+        <div class="brand-feature">
+          📊 คำนวณคะแนนอัตโนมัติ
+        </div>
       </div>
+
     </div>
 
+
+    <!-- ฝั่ง Login -->
     <div class="login-panel">
+
       <div class="login-box">
 
-        <div class="login-icon">♫</div>
+        <div class="login-logo-mobile">
+          <img
+            src="https://i.postimg.cc/k4GqcqNR/714631600-963961986511734-3695964638911489417-n.jpg"
+            alt="โลโก้โครงการ Big C ดนตรีไทย"
+          >
+        </div>
 
         <h2>เข้าสู่ระบบกรรมการ</h2>
 
         <p class="login-description">
-          กรุณากรอกชื่อผู้ใช้งานและรหัสผ่าน
-          ที่ได้รับจากผู้ดูแลระบบ
+          กรุณากรอกชื่อผู้ใช้งานและรหัสผ่านที่ได้รับจากผู้ดูแลระบบ
         </p>
 
         <form id="loginForm">
 
           <div class="form-group">
-            <label for="username">ชื่อผู้ใช้งาน</label>
+            <label for="username">
+              ชื่อผู้ใช้งาน
+            </label>
 
             <div class="input-wrapper">
               <span class="input-icon">👤</span>
@@ -2410,8 +2769,11 @@
             </div>
           </div>
 
+
           <div class="form-group">
-            <label for="password">รหัสผ่าน</label>
+            <label for="password">
+              รหัสผ่าน
+            </label>
 
             <div class="input-wrapper">
               <span class="input-icon">🔑</span>
@@ -2436,13 +2798,21 @@
             </div>
           </div>
 
-          <button class="login-button" type="submit">
+
+          <button
+            class="login-button"
+            type="submit"
+          >
             เข้าสู่ระบบ
           </button>
 
-          <div id="loginError" class="login-error"></div>
+          <div
+            id="loginError"
+            class="login-error"
+          ></div>
 
         </form>
+
 
         <div class="demo-account">
           <strong>บัญชีสำหรับทดลอง</strong><br>
@@ -2451,9 +2821,12 @@
         </div>
 
       </div>
+
     </div>
 
-  </section>
+  </div>
+
+</section>
 
   <!-- ====================================
        หน้า Dashboard
@@ -2465,12 +2838,17 @@
 
       <div class="topbar-brand">
 
-        <div class="logo-mark">♫</div>
+        <div class="logo-mark">
+  <img
+    src="https://i.postimg.cc/k4GqcqNR/714631600-963961986511734-3695964638911489417-n.jpg"
+    alt="โลโก้โครงการ Big C ดนตรีไทย"
+  >
+</div>
 
-        <div class="topbar-brand-text">
-          <strong>ระบบประเมินคลิปดนตรีไทย</strong>
-          <span>โครงการ Big C ดนตรีไทย ปี 5</span>
-        </div>
+<div class="topbar-brand-text">
+  <strong>ระบบประเมินการแข่งขันดนตรีไทย</strong>
+  <span>โครงการ Big C ดนตรีไทย ปีที่ 5</span>
+</div>
 
       </div>
 
@@ -3199,8 +3577,10 @@ loginForm.addEventListener(
       document.getElementById("topbarJudgeRole").textContent = judge.role || "คณะกรรมการประเมิน";
       document.getElementById("topbarJudgeAvatar").textContent = judge.initials || "กท";
       const welcome = document.querySelector(".welcome-section h1");
-      if (welcome) welcome.textContent = `สวัสดี ${judge.name || "กรรมการ"}`;
-    }
+if (welcome) {
+  welcome.textContent =
+    `สวัสดี ${judge.name || "กรรมการ"}`;
+}
 
     passwordToggle.addEventListener("click", function () {
       const isPassword = passwordInput.type === "password";
