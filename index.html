@@ -417,16 +417,16 @@
       color: var(--danger);
     }
 
-    .main-content {
-      width: min(1440px, calc(100% - 36px));
-      margin: 0 auto;
-      padding: 34px 0 60px;
-    }
+.main-content {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 26px 0 48px;
+}
 
     .welcome-section {
       position: relative;
       overflow: hidden;
-      padding: 35px;
+      padding: 26px 28px;
       border-radius: var(--radius-large);
       color: white;
       background:
@@ -454,12 +454,12 @@
       transform: rotate(-12deg);
     }
 
-    .welcome-section h1 {
-      position: relative;
-      z-index: 1;
-      margin-bottom: 8px;
-      font-size: clamp(25px, 3vw, 38px);
-    }
+.welcome-section h1 {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 6px;
+  font-size: clamp(22px, 2.2vw, 30px);
+}
 
     .welcome-section p {
       position: relative;
@@ -469,12 +469,12 @@
       line-height: 1.7;
     }
 
-    .progress-wrapper {
-      position: relative;
-      z-index: 1;
-      margin-top: 26px;
-      max-width: 760px;
-    }
+.progress-wrapper {
+  position: relative;
+  z-index: 1;
+  margin-top: 18px;
+  max-width: 620px;
+}
 
     .progress-text {
       margin-bottom: 8px;
@@ -504,33 +504,33 @@
        Summary cards
     ========================== */
 
-    .summary-grid {
-      margin-top: 22px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
+.summary-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
 
-    .summary-card {
-      padding: 22px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
+.summary-card {
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
       border: 1px solid rgba(231, 225, 232, 0.9);
       border-radius: var(--radius-medium);
       background: white;
       box-shadow: var(--shadow-small);
     }
 
-    .summary-icon {
-      flex: 0 0 auto;
-      width: 50px;
-      height: 50px;
-      display: grid;
-      place-items: center;
-      border-radius: 15px;
-      font-size: 22px;
-    }
+.summary-icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 18px;
+}
 
     .summary-icon.total {
       background: var(--primary-light);
@@ -556,13 +556,13 @@
       color: var(--text-soft);
       font-size: 13px;
     }
-
-    .summary-content strong {
-      display: block;
-      margin-top: 3px;
-      font-size: 27px;
-      line-height: 1;
-    }
+    
+.summary-content strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 22px;
+  line-height: 1;
+}
 
     /* =========================
        Filters
@@ -665,40 +665,47 @@
        Applicant cards - 1 รายการต่อ 1 แถว
     ========================== */
 
-    .applicant-grid {
-      margin-top: 18px;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
-    }
+.applicant-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
 
-    .applicant-card {
-      position: relative;
-      overflow: hidden;
-      display: grid;
-      grid-template-columns:
-        minmax(145px, 0.9fr)
-        minmax(240px, 1.5fr)
-        minmax(175px, 1fr)
-        minmax(105px, 0.7fr)
-        minmax(90px, 0.6fr)
-        minmax(130px, 0.8fr)
-        222px;
-      align-items: center;
-      column-gap: 18px;
-      height: 102px;
-      min-height: 102px;
-      padding: 18px 24px;
-      border: 1px solid #ebe4ed;
-      border-radius: 16px;
-      background: #ffffff;
-      box-shadow: 0 6px 18px rgba(61, 24, 63, 0.06);
-      transition:
-        transform 0.2s ease,
-        border-color 0.2s ease,
-        box-shadow 0.2s ease;
-      cursor: pointer;
-    }
+.applicant-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+
+  grid-template-columns:
+    100px
+    minmax(180px, 1.55fr)
+    minmax(135px, 1fr)
+    85px
+    72px
+    105px
+    178px;
+
+  align-items: center;
+  column-gap: 12px;
+
+  height: 82px;
+  min-height: 82px;
+
+  padding: 13px 18px;
+
+  border: 1px solid #ebe4ed;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 5px 15px rgba(61, 24, 63, 0.05);
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  cursor: pointer;
+}
 
     .applicant-card.status-not-started,
     .applicant-card.status-draft,
@@ -722,58 +729,65 @@
       min-width: 0;
     }
 
-    .row-field span {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--text-soft);
-      font-size: 11px;
-      font-weight: 500;
-    }
+.row-field span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--text-soft);
+  font-size: 10px;
+  font-weight: 500;
+}
 
-    .row-field strong {
-      display: block;
-      overflow: hidden;
-      color: var(--text-main);
-      font-size: 13px;
-      font-weight: 600;
-      line-height: 1.45;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+.row-field strong {
+  display: block;
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
     .submission-field strong {
       color: var(--primary);
       font-weight: 700;
     }
 
-    .school-field strong {
-      font-size: 15px;
-      font-weight: 700;
-    }
+.school-field strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: normal;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 
-    .status-column {
-      display: grid;
-      grid-template-columns: 105px 105px;
-      align-items: center;
-      justify-content: end;
-      gap: 12px;
-      width: 222px;
-    }
+.status-column {
+  display: grid;
+  grid-template-columns: 84px 84px;
+  align-items: center;
+  justify-content: end;
+  gap: 10px;
+  width: 178px;
+}
 
-    .status-badge {
-      width: 105px;
-      min-height: 30px;
-      padding: 6px 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      line-height: 1.2;
-      text-align: center;
-      white-space: nowrap;
-    }
+.status-badge {
+  width: 84px;
+  min-height: 27px;
+  padding: 5px 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
 
     .status-badge.status-not-started {
       background: var(--primary-light);
@@ -790,24 +804,29 @@
       color: var(--success);
     }
 
-    .row-action {
-      width: 105px;
-      min-width: 105px;
-      height: 42px;
-      padding: 0 12px;
-      border: none;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: #ffffff;
-      font-size: 12px;
-      font-weight: 700;
-      white-space: nowrap;
-      box-shadow: 0 6px 14px rgba(93, 40, 95, 0.18);
-      transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        background 0.2s ease;
-    }
+.row-action {
+  width: 84px;
+  min-width: 84px;
+  height: 36px;
+  padding: 0 9px;
+  border: none;
+  border-radius: 9px;
+  background: linear-gradient(
+    135deg,
+    var(--primary),
+    var(--primary-dark)
+  );
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 5px 12px rgba(93, 40, 95, 0.16);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
 
     .row-action:hover {
       transform: translateY(-1px);
@@ -1354,11 +1373,11 @@
       font-size: 12px;
     }
 
-    .evaluation-page-content {
-      width: min(1440px, calc(100% - 36px));
-      margin: 0 auto;
-      padding: 26px 0 46px;
-    }
+.evaluation-page-content {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 22px 0 40px;
+}
 
     .evaluation-school-card {
       position: relative;
@@ -1543,12 +1562,14 @@
       line-height: 1.5;
     }
 
-    .evaluation-workspace {
-      display: grid;
-      grid-template-columns: minmax(0, 1.02fr) minmax(440px, 0.98fr);
-      gap: 18px;
-      align-items: stretch;
-    }
+.evaluation-workspace {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.08fr)
+    minmax(380px, 0.92fr);
+  gap: 14px;
+  align-items: stretch;
+}
 
     .evaluation-video-panel,
     .evaluation-score-panel {
@@ -1815,12 +1836,14 @@
        Responsive
     ========================== */
 
-    @media (max-width: 1100px) {
-      .applicant-card {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        height: auto;
-        min-height: 150px;
-      }
+@media (max-width: 1100px) {
+  .applicant-card {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+    height: auto;
+    min-height: 125px;
+    padding: 16px 18px;
+  }
 
       .status-column {
         width: auto;
