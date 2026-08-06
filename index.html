@@ -3654,46 +3654,45 @@ async function apiGet(
   return data;
 }
 
-    /**
- * เรียก Google Apps Script ด้วย POST
+  /**
+ * เรียก Google Apps Script API ผ่าน GET
  *
- * ใช้สำหรับ:
- * - login
- * - applicants
- * - ranking
- * - saveDraft
- * - submitScore
- * - logout
- */
-/**
- * เรียก Google Apps Script API
- *
- * ใช้ GET พร้อมส่ง payload เป็น JSON
- * เพื่อหลีกเลี่ยงปัญหา POST Redirect
- * จาก script.google.com ไป script.googleusercontent.com
+ * ใช้ชื่อ apiPost ต่อไปเพื่อไม่ต้องแก้
+ * จุดเรียกใช้งานอื่นในระบบ
  */
 async function apiPost(
   action,
   payload = {}
 ) {
-  let timeoutMs = 30000;
+  let timeoutMs =
+    30000;
 
+  /*
+   * โหลดรายการและ Ranking อาจมีข้อมูลมาก
+   */
   if (
     action === "applicants" ||
     action === "ranking"
   ) {
-    timeoutMs = 45000;
+    timeoutMs =
+      90000;
   }
 
+  /*
+   * การบันทึกคะแนนอาจต้องเขียนหลาย Sheet
+   */
   if (
     action === "saveDraft" ||
     action === "submitScore"
   ) {
-    timeoutMs = 45000;
+    timeoutMs =
+      60000;
   }
 
   const url =
-    new URL(API_URL);
+    new URL(
+      API_URL
+    );
 
   url.searchParams.set(
     "action",
@@ -3707,157 +3706,28 @@ async function apiPost(
     )
   );
 
-  /*
-   * ป้องกัน Browser จำผลลัพธ์ของ
-   * Login, Applicants และการบันทึกคะแนน
-   */
   url.searchParams.set(
     "_",
-    String(Date.now())
+    String(
+      Date.now()
+    )
   );
 
   const response =
     await fetchWithTimeout(
       url.toString(),
       {
-        method: "GET",
-        cache: "no-store",
-        redirect: "follow"
+        method:
+          "GET",
+
+        cache:
+          "no-store",
+
+        redirect:
+          "follow"
       },
       timeoutMs
     );
-
-  const data =
-    await parseApiResponse(
-      response
-    );
-
-  if (
-    !data ||
-    data.success !== true
-  ) {
-    throw new Error(
-      data && data.message
-        ? data.message
-        : "เกิดข้อผิดพลาดจากระบบ"
-    );
-  }
-
-  return data;
-}
-  let timeoutMs =
-    30000;
-
-  /*
-   * การโหลด Applicant หรือ Ranking
-   * อาจมีข้อมูลจำนวนมาก
-   */
-  if (
-    action === "applicants" ||
-    action === "ranking"
-  ) {
-    timeoutMs =
-      60000;
-  }
-
-  /*
-   * การบันทึกคะแนนอาจต้องเขียน Sheet
-   * และคำนวณ Result
-   */
-  if (
-    action === "saveDraft" ||
-    action === "submitScore"
-  ) {
-    timeoutMs =
-      45000;
-  }
-
-  let response;
-
-  try {
-    response =
-      await fetchWithTimeout(
-        API_URL,
-        {
-          method:
-            "POST",
-
-          /*
-           * ใช้ text/plain เพื่อลดปัญหา CORS Preflight
-           * กับ Google Apps Script Web App
-           */
-          headers: {
-            "Content-Type":
-              "text/plain;charset=utf-8"
-          },
-
-          body:
-            JSON.stringify({
-              action:
-                action,
-
-              ...payload
-            }),
-
-          /*
-           * POST ไม่ควรใช้ HTTP Browser Cache
-           */
-          cache:
-            "no-store"
-        },
-        timeoutMs
-      );
-
-  } catch (error) {
-    throw new Error(
-      error &&
-      error.message
-        ? error.message
-        : "ไม่สามารถเชื่อมต่อ Google Apps Script ได้"
-    );
-  }
-
-  /*
-   * ใช้ GET fallback เฉพาะเมื่อ Deployment
-   * ไม่รองรับ POST จริง ๆ
-   */
-  if (
-    response.status === 404 ||
-    response.status === 405
-  ) {
-    const fallbackUrl =
-      new URL(API_URL);
-
-    fallbackUrl.searchParams.set(
-      "action",
-      action
-    );
-
-    fallbackUrl.searchParams.set(
-      "payload",
-      JSON.stringify(
-        payload
-      )
-    );
-
-    fallbackUrl.searchParams.set(
-      "_",
-      Date.now()
-    );
-
-    response =
-      await fetchWithTimeout(
-        fallbackUrl.toString(),
-        {
-          method:
-            "GET",
-
-          cache:
-            "no-store"
-        },
-        timeoutMs
-      );
-  }
 
   const data =
     await parseApiResponse(
@@ -3877,8 +3747,7 @@ async function apiPost(
   }
 
   return data;
-}
-
+}  
     /**
  * อ่านรายชื่อกรรมการจาก LocalStorage
  *
@@ -4299,24 +4168,26 @@ document.addEventListener("click", function(event) {
   }
 });
 
-loginForm.addEventListener(
+    loginForm.addEventListener(
   "submit",
   async function(event) {
     event.preventDefault();
 
-    loginError.textContent = "";
+    loginError.textContent =
+      "";
 
     const loginButton =
-      loginForm.querySelector(".login-button");
+      loginForm.querySelector(
+        ".login-button"
+      );
 
-    loginButton.disabled = true;
-    loginButton.textContent = "กำลังเข้าสู่ระบบ...";
+    loginButton.disabled =
+      true;
 
-    setLoading(true, "กำลังตรวจสอบการเชื่อมต่อ...");
+    loginButton.textContent =
+      "กำลังเข้าสู่ระบบ...";
 
-try {
-
-
+    try {
       const selectedJudgeName =
         usernameInput.value.trim();
 
@@ -4327,12 +4198,16 @@ try {
       }
 
       const selectedJudge =
-        judgeOptions.find(function(judge) {
-          return (
-            String(judge.name || "").trim() ===
-            selectedJudgeName
-          );
-        });
+        judgeOptions.find(
+          function(judge) {
+            return (
+              String(
+                judge.name || ""
+              ).trim() ===
+              selectedJudgeName
+            );
+          }
+        );
 
       if (!selectedJudge) {
         throw new Error(
@@ -4349,32 +4224,49 @@ try {
         );
       }
 
-      selectedJudgeId = selectedJudge.judgeId;
+      selectedJudgeId =
+        selectedJudge.judgeId;
 
-      setLoading(true, "กำลังเข้าสู่ระบบ...");
+      /*
+       * ขั้นตอนที่ 1:
+       * ตรวจสอบ Login เท่านั้น
+       */
+      setLoading(
+        true,
+        "กำลังตรวจสอบชื่อและรหัสผ่าน..."
+      );
 
-  console.info(
-  "[LOGIN] 2/3 Sending login request...",
-  {
-    judgeId:
-      selectedJudgeId,
-
-    judgeName:
-      selectedJudgeName
-  }
-);
-
-      const result = await apiPost(
-        "login",
+      console.info(
+        "[LOGIN] Sending request",
         {
-          judgeId: selectedJudgeId,
-          username: selectedJudgeName,
-          password: enteredPassword
+          judgeId:
+            selectedJudgeId,
+
+          judgeName:
+            selectedJudgeName
         }
       );
 
-      authToken = result.token || "";
-      currentJudge = result.judge || null;
+      const loginResult =
+        await apiPost(
+          "login",
+          {
+            judgeId:
+              selectedJudgeId,
+
+            username:
+              selectedJudgeName,
+
+            password:
+              enteredPassword
+          }
+        );
+
+      authToken =
+        loginResult.token || "";
+
+      currentJudge =
+        loginResult.judge || null;
 
       if (!authToken) {
         throw new Error(
@@ -4383,98 +4275,232 @@ try {
       }
 
       if (
-        Array.isArray(result.scoreCriteria) &&
-        result.scoreCriteria.length
+        Array.isArray(
+          loginResult.scoreCriteria
+        ) &&
+        loginResult.scoreCriteria.length
       ) {
         scoreCriteria =
-          result.scoreCriteria.map(function(item) {
-            return {
-              key: item.key,
-              title: item.label || item.title || "",
-              description: item.description || "",
-              maxScore: Number(item.maxScore) || 0
-            };
-          });
+          loginResult.scoreCriteria.map(
+            function(item) {
+              return {
+                key:
+                  item.key,
+
+                title:
+                  item.label ||
+                  item.title ||
+                  "",
+
+                description:
+                  item.description ||
+                  "",
+
+                maxScore:
+                  Number(
+                    item.maxScore
+                  ) || 0
+              };
+            }
+          );
       }
 
       applyJudgeInfo(
-  currentJudge
+        currentJudge
+      );
+
+      /*
+       * แสดง Dashboard ทันทีหลัง Login สำเร็จ
+       */
+      loginPage.classList.add(
+        "hidden"
+      );
+
+      evaluationPage.classList.add(
+        "hidden"
+      );
+
+      rankingPage.classList.add(
+        "hidden"
+      );
+
+      appPage.classList.remove(
+        "hidden"
+      );
+
+      applicants =
+        [];
+
+      renderApplicants();
+
+      history.replaceState(
+        {
+          page:
+            "dashboard"
+        },
+        "",
+        "#dashboard"
+      );
+
+      /*
+       * ขั้นตอนที่ 2:
+       * โหลดรายการประเมินแยกจาก Login
+       */
+      setLoading(
+        true,
+        "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
+      );
+
+      try {
+        await loadApplicants();
+
+        showToast(
+          "เข้าสู่ระบบสำเร็จ",
+          "success"
+        );
+
+      } catch (loadError) {
+        console.error(
+          "loadApplicants failed:",
+          loadError
+        );
+
+        applicantGrid.innerHTML =
+          '<div class="empty-state">' +
+            '<strong>เข้าสู่ระบบสำเร็จ แต่โหลดรายการประเมินไม่สำเร็จ</strong>' +
+            '<p style="margin-top:6px;">' +
+              escapeHtml(
+                loadError.message ||
+                "กรุณาลองโหลดรายการใหม่"
+              ) +
+            '</p>' +
+          '</div>';
+
+        showToast(
+          loadError.message ||
+          "โหลดรายการประเมินไม่สำเร็จ"
+        );
+      }
+
+    } catch (error) {
+      authToken =
+        "";
+
+      currentJudge =
+        null;
+
+      applicants =
+        [];
+
+      appPage.classList.add(
+        "hidden"
+      );
+
+      evaluationPage.classList.add(
+        "hidden"
+      );
+
+      rankingPage.classList.add(
+        "hidden"
+      );
+
+      loginPage.classList.remove(
+        "hidden"
+      );
+
+      loginError.textContent =
+        error &&
+        error.message
+          ? error.message
+          : "ไม่สามารถเข้าสู่ระบบได้";
+
+    } finally {
+      setLoading(
+        false
+      );
+
+      loginButton.disabled =
+        false;
+
+      loginButton.textContent =
+        "เข้าสู่ระบบ";
+    }
+  }
 );
-
-/*
- * รับรายการประเมินจาก Login Response โดยตรง
- * ไม่เรียก API applicants ซ้ำ
- */
-applicants =
-  Array.isArray(
-    result.applicants
-  )
-    ? result.applicants
-    : [];
-
-loginPage.classList.add(
-  "hidden"
-);
-
-evaluationPage.classList.add(
-  "hidden"
-);
-
-rankingPage.classList.add(
-  "hidden"
-);
-
-appPage.classList.remove(
-  "hidden"
-);
-
-renderApplicants();
-
-if (result.summary) {
-  updateSummary(
-    result.summary
-  );
-}
-
-history.replaceState(
-  {
-    page:
-      "dashboard"
-  },
-  "",
-  "#dashboard"
-);
-
-showToast(
-  "เข้าสู่ระบบสำเร็จ",
-  "success"
-);
-
   
     async function loadApplicants() {
-      /*
-       * ใช้ POST สำหรับโหลดรายการ เพื่อเลี่ยงปัญหา GET/redirect
-       * ที่ทำให้บางครั้ง Login สำเร็จแต่รายการกลายเป็น 0
-       */
-      const result = await apiPost("applicants", {
-        token: authToken
-      });
+  if (!authToken) {
+    throw new Error(
+      "ไม่พบ Session กรุณาเข้าสู่ระบบใหม่"
+    );
+  }
 
-      applicants = Array.isArray(result.applicants)
-        ? result.applicants
-        : [];
-      scoreCriteria = (result.scoreCriteria || []).map(item => ({
-        key: item.key,
-        title: item.label,
-        description: item.description,
-        maxScore: Number(item.maxScore)
-      }));
-      if (result.judge) {
-        currentJudge = result.judge;
-        applyJudgeInfo(result.judge);
+  const result =
+    await apiPost(
+      "applicants",
+      {
+        token:
+          authToken
       }
-      renderApplicants();
-    }
+    );
+
+  applicants =
+    Array.isArray(
+      result.applicants
+    )
+      ? result.applicants
+      : [];
+
+  if (
+    Array.isArray(
+      result.scoreCriteria
+    ) &&
+    result.scoreCriteria.length
+  ) {
+    scoreCriteria =
+      result.scoreCriteria.map(
+        function(item) {
+          return {
+            key:
+              item.key,
+
+            title:
+              item.label ||
+              item.title ||
+              "",
+
+            description:
+              item.description ||
+              "",
+
+            maxScore:
+              Number(
+                item.maxScore
+              ) || 0
+          };
+        }
+      );
+  }
+
+  if (result.judge) {
+    currentJudge =
+      result.judge;
+
+    applyJudgeInfo(
+      result.judge
+    );
+  }
+
+  renderApplicants();
+
+  if (result.summary) {
+    updateSummary(
+      result.summary
+    );
+  }
+
+  return applicants;
+}
 
     function applyJudgeInfo(judge) {
       if (!judge) return;
