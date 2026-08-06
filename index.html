@@ -3341,7 +3341,8 @@ padding: 4px;
   </div>
 
   <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxAqztnLaE6S-J_KVd_kuOe_A6vV1LqXdxWdc3dIGIzfpLMgwKLl-5xNH8Q9fle4DlL/exec";
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbxAqztnLaE6S-J_KVd_kuOe_A6vV1LqXdxWdc3dIGIzfpLMgwKLl-5xNH8Q9fle4DlL/exec";
 
 const EXPECTED_API_VERSION =
   "2026-08-06-v12";
@@ -3641,6 +3642,155 @@ async function apiGet(
     throw new Error(
       data.message ||
       "เกิดข้อผิดพลาดจากระบบ"
+    );
+  }
+
+  return data;
+}
+
+    /**
+ * เรียก Google Apps Script ด้วย POST
+ *
+ * ใช้สำหรับ:
+ * - login
+ * - applicants
+ * - ranking
+ * - saveDraft
+ * - submitScore
+ * - logout
+ */
+async function apiPost(
+  action,
+  payload = {}
+) {
+  let timeoutMs =
+    30000;
+
+  /*
+   * การโหลด Applicant หรือ Ranking
+   * อาจมีข้อมูลจำนวนมาก
+   */
+  if (
+    action === "applicants" ||
+    action === "ranking"
+  ) {
+    timeoutMs =
+      60000;
+  }
+
+  /*
+   * การบันทึกคะแนนอาจต้องเขียน Sheet
+   * และคำนวณ Result
+   */
+  if (
+    action === "saveDraft" ||
+    action === "submitScore"
+  ) {
+    timeoutMs =
+      45000;
+  }
+
+  let response;
+
+  try {
+    response =
+      await fetchWithTimeout(
+        API_URL,
+        {
+          method:
+            "POST",
+
+          /*
+           * ใช้ text/plain เพื่อลดปัญหา CORS Preflight
+           * กับ Google Apps Script Web App
+           */
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
+
+          body:
+            JSON.stringify({
+              action:
+                action,
+
+              ...payload
+            }),
+
+          /*
+           * POST ไม่ควรใช้ HTTP Browser Cache
+           */
+          cache:
+            "no-store"
+        },
+        timeoutMs
+      );
+
+  } catch (error) {
+    throw new Error(
+      error &&
+      error.message
+        ? error.message
+        : "ไม่สามารถเชื่อมต่อ Google Apps Script ได้"
+    );
+  }
+
+  /*
+   * ใช้ GET fallback เฉพาะเมื่อ Deployment
+   * ไม่รองรับ POST จริง ๆ
+   */
+  if (
+    response.status === 404 ||
+    response.status === 405
+  ) {
+    const fallbackUrl =
+      new URL(API_URL);
+
+    fallbackUrl.searchParams.set(
+      "action",
+      action
+    );
+
+    fallbackUrl.searchParams.set(
+      "payload",
+      JSON.stringify(
+        payload
+      )
+    );
+
+    fallbackUrl.searchParams.set(
+      "_",
+      Date.now()
+    );
+
+    response =
+      await fetchWithTimeout(
+        fallbackUrl.toString(),
+        {
+          method:
+            "GET",
+
+          cache:
+            "no-store"
+        },
+        timeoutMs
+      );
+  }
+
+  const data =
+    await parseApiResponse(
+      response
+    );
+
+  if (
+    !data ||
+    data.success !== true
+  ) {
+    throw new Error(
+      data &&
+      data.message
+        ? data.message
+        : "เกิดข้อผิดพลาดจากระบบ"
     );
   }
 
@@ -4277,8 +4427,7 @@ if (welcome) {
       passwordToggle.textContent = isPassword ? "🙈" : "👁";
     });
 
-    document.getElementById("logoutButton").addEventListener("click", async function () {
-      document
+    document
   .getElementById(
     "logoutButton"
   )
@@ -4289,8 +4438,7 @@ if (welcome) {
         authToken;
 
       /*
-       * ล้างหน้าจอทันที
-       * ไม่ต้องรอ Server
+       * ล้างสถานะหน้าเว็บทันที
        */
       authToken =
         "";
@@ -4303,6 +4451,9 @@ if (welcome) {
 
       rankingRows =
         [];
+
+      currentApplicantId =
+        null;
 
       selectedJudgeId =
         "";
@@ -4341,7 +4492,7 @@ if (welcome) {
 
       /*
        * แจ้ง Server แบบ Background
-       * ไม่รอผลลัพธ์
+       * ไม่ต้องให้ผู้ใช้รอ
        */
       if (tokenToRemove) {
         apiPost(
@@ -4350,26 +4501,17 @@ if (welcome) {
             token:
               tokenToRemove
           }
-        ).catch(function(error) {
-          console.warn(
-            "Background logout failed:",
-            error
-          );
-        });
+        ).catch(
+          function(error) {
+            console.warn(
+              "Background logout failed:",
+              error
+            );
+          }
+        );
       }
     }
   );
-      authToken = "";
-      currentJudge = null;
-      applicants = [];
-      selectedJudgeId = "";
-      appPage.classList.add("hidden");
-      evaluationPage.classList.add("hidden");
-      rankingPage.classList.add("hidden");
-      loginPage.classList.remove("hidden");
-      loginForm.reset();
-      loginError.textContent = "";
-    });
 
     function renderApplicants() {
       const filteredApplicants = getFilteredApplicants();
@@ -5025,25 +5167,60 @@ history.replaceState(
 );
 
 /*
- * ขั้นตอนที่ 1:
- * โหลดจาก Browser Cache ทันที
- *
- * ไม่ต้องรอ Google Apps Script
+ * พยายามอ่านรายชื่อจาก Browser Cache ก่อน
  */
 const hasJudgeBrowserCache =
   loadJudgeOptionsFromBrowserCache();
 
-/*
- * ถ้า Browser ยังไม่มี Cache
- * จึงค่อยแสดง Loading และรอ API
- */
-if (!hasJudgeBrowserCache) {
+if (hasJudgeBrowserCache) {
+  /*
+   * มี Cache แล้ว:
+   * ใช้หน้า Login ได้ทันที
+   * และอัปเดตรายชื่อแบบ Background
+   */
+  setLoading(false);
+
+  loadJudgeOptions(false)
+    .catch(function(error) {
+      console.warn(
+        "Background judge refresh failed:",
+        error
+      );
+    });
+
+} else {
+  /*
+   * ยังไม่มี Cache:
+   * แสดง Loading ระหว่างโหลดครั้งแรก
+   */
   setLoading(
     true,
     "กำลังเตรียมรายชื่อกรรมการ..."
   );
 
+  /*
+   * Safety Timeout:
+   * ปิด Overlay หลัง 20 วินาที
+   * เพื่อไม่ให้หน้าจอค้างตลอด
+   */
+  const initialLoadingTimeout =
+    setTimeout(
+      function() {
+        setLoading(false);
+
+        if (!judgeOptions.length) {
+          loginError.textContent =
+            "กำลังเชื่อมต่อระบบ กรุณารอสักครู่แล้วลองเปิดรายชื่ออีกครั้ง";
+        }
+      },
+      20000
+    );
+
   loadJudgeOptions(false)
+    .then(function() {
+      loginError.textContent =
+        "";
+    })
     .catch(function(error) {
       console.error(
         "loadJudgeOptions failed:",
@@ -5051,28 +5228,17 @@ if (!hasJudgeBrowserCache) {
       );
 
       loginError.textContent =
-        error && error.message
+        error &&
+        error.message
           ? error.message
           : "ไม่สามารถโหลดรายชื่อกรรมการได้";
     })
     .finally(function() {
-      setLoading(false);
-    });
-
-} else {
-  /*
-   * Browser มีรายชื่อแล้ว
-   * ให้หน้า Login ใช้งานได้ทันที
-   *
-   * จากนั้นอัปเดตรายชื่อใหม่แบบ Background
-   * โดยไม่แสดง Loading Overlay
-   */
-  loadJudgeOptions(false)
-    .catch(function(error) {
-      console.warn(
-        "Background judge refresh failed:",
-        error
+      clearTimeout(
+        initialLoadingTimeout
       );
+
+      setLoading(false);
     });
 }
 
