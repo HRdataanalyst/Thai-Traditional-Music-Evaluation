@@ -3341,13 +3341,12 @@ padding: 4px;
   </div>
 
   <script>
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbxAqztnLaE6S-J_KVd_kuOe_A6vV1LqXdxWdc3dIGIzfpLMgwKLl-5xNH8Q9fle4DlL/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxAqztnLaE6S-J_KVd_kuOe_A6vV1LqXdxWdc3dIGIzfpLMgwKLl-5xNH8Q9fle4DlL/exec";
 const EXPECTED_API_VERSION =
-  "2026-08-06-v12";
+  "2026-08-06-v13";
 
     const HTML_BUILD_VERSION =
-  "2026-08-06-login-fix-01";
+  "2026-08-06-fast-login-v13";
 
 console.info(
   "[HTML BUILD]",
@@ -3666,10 +3665,86 @@ async function apiGet(
  * - submitScore
  * - logout
  */
+/**
+ * เรียก Google Apps Script API
+ *
+ * ใช้ GET พร้อมส่ง payload เป็น JSON
+ * เพื่อหลีกเลี่ยงปัญหา POST Redirect
+ * จาก script.google.com ไป script.googleusercontent.com
+ */
 async function apiPost(
   action,
   payload = {}
 ) {
+  let timeoutMs = 30000;
+
+  if (
+    action === "applicants" ||
+    action === "ranking"
+  ) {
+    timeoutMs = 45000;
+  }
+
+  if (
+    action === "saveDraft" ||
+    action === "submitScore"
+  ) {
+    timeoutMs = 45000;
+  }
+
+  const url =
+    new URL(API_URL);
+
+  url.searchParams.set(
+    "action",
+    action
+  );
+
+  url.searchParams.set(
+    "payload",
+    JSON.stringify(
+      payload || {}
+    )
+  );
+
+  /*
+   * ป้องกัน Browser จำผลลัพธ์ของ
+   * Login, Applicants และการบันทึกคะแนน
+   */
+  url.searchParams.set(
+    "_",
+    String(Date.now())
+  );
+
+  const response =
+    await fetchWithTimeout(
+      url.toString(),
+      {
+        method: "GET",
+        cache: "no-store",
+        redirect: "follow"
+      },
+      timeoutMs
+    );
+
+  const data =
+    await parseApiResponse(
+      response
+    );
+
+  if (
+    !data ||
+    data.success !== true
+  ) {
+    throw new Error(
+      data && data.message
+        ? data.message
+        : "เกิดข้อผิดพลาดจากระบบ"
+    );
+  }
+
+  return data;
+}
   let timeoutMs =
     30000;
 
@@ -4322,75 +4397,60 @@ try {
           });
       }
 
-      applyJudgeInfo(currentJudge);
-
-      loginPage.classList.add("hidden");
-      evaluationPage.classList.add("hidden");
-      rankingPage.classList.add("hidden");
-      appPage.classList.remove("hidden");
-
-      applicants = [];
-      renderApplicants();
-
-      history.replaceState(
-        { page: "dashboard" },
-        "",
-        "#dashboard"
-      );
-
-      setLoading(
-        true,
-        "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
-      );
-
-      try {
-        await loadApplicants();
-        showToast(
-          "เข้าสู่ระบบสำเร็จ",
-          "success"
-        );
-      } catch (loadError) {
-        console.error(
-          "loadApplicants failed:",
-          loadError
-        );
-
-        applicantGrid.innerHTML =
-          '<div class="empty-state">' +
-          '<strong>โหลดรายการประเมินไม่สำเร็จ</strong>' +
-          '<p style="margin-top:6px;">' +
-          escapeHtml(
-            loadError.message ||
-            "กรุณาลองเข้าสู่ระบบใหม่"
-          ) +
-          "</p></div>";
-
-        showToast(
-          loadError.message ||
-          "โหลดรายการประเมินไม่สำเร็จ"
-        );
-      }
-    } catch (error) {
-      authToken = "";
-      currentJudge = null;
-      applicants = [];
-
-      appPage.classList.add("hidden");
-      evaluationPage.classList.add("hidden");
-      rankingPage.classList.add("hidden");
-      loginPage.classList.remove("hidden");
-
-      loginError.textContent =
-        error.message ||
-        "ไม่สามารถเข้าสู่ระบบได้";
-    } finally {
-      setLoading(false);
-      loginButton.disabled = false;
-      loginButton.textContent = "เข้าสู่ระบบ";
-    }
-  }
+      applyJudgeInfo(
+  currentJudge
 );
 
+/*
+ * รับรายการประเมินจาก Login Response โดยตรง
+ * ไม่เรียก API applicants ซ้ำ
+ */
+applicants =
+  Array.isArray(
+    result.applicants
+  )
+    ? result.applicants
+    : [];
+
+loginPage.classList.add(
+  "hidden"
+);
+
+evaluationPage.classList.add(
+  "hidden"
+);
+
+rankingPage.classList.add(
+  "hidden"
+);
+
+appPage.classList.remove(
+  "hidden"
+);
+
+renderApplicants();
+
+if (result.summary) {
+  updateSummary(
+    result.summary
+  );
+}
+
+history.replaceState(
+  {
+    page:
+      "dashboard"
+  },
+  "",
+  "#dashboard"
+);
+
+showToast(
+  "เข้าสู่ระบบสำเร็จ",
+  "success"
+);
+
+  
     async function loadApplicants() {
       /*
        * ใช้ POST สำหรับโหลดรายการ เพื่อเลี่ยงปัญหา GET/redirect
@@ -5181,19 +5241,10 @@ const hasJudgeBrowserCache =
 
 if (hasJudgeBrowserCache) {
   /*
-   * มี Cache แล้ว:
-   * ใช้หน้า Login ได้ทันที
-   * และอัปเดตรายชื่อแบบ Background
+   * มีรายชื่อกรรมการใน Browser แล้ว
+   * ใช้งานทันทีโดยไม่เรียก API ซ้ำ
    */
   setLoading(false);
-
-  loadJudgeOptions(false)
-    .catch(function(error) {
-      console.warn(
-        "Background judge refresh failed:",
-        error
-      );
-    });
 
 } else {
   /*
