@@ -2503,6 +2503,185 @@ padding: 4px;
   }
 }
 
+
+/* =========================
+   Ranking page
+========================= */
+
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ranking-open-button {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--primary);
+  border-radius: 11px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  transition: 0.2s ease;
+}
+
+.ranking-open-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(93, 40, 95, 0.2);
+}
+
+.ranking-page {
+  min-height: 100vh;
+  background: var(--background);
+}
+
+.ranking-content {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 26px 0 48px;
+}
+
+.ranking-header-card {
+  padding: 26px 28px;
+  border-radius: var(--radius-large);
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  color: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.ranking-eyebrow {
+  display: block;
+  margin-bottom: 7px;
+  color: #f2d98d;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.ranking-header-card h1 {
+  font-size: clamp(23px, 2.4vw, 31px);
+}
+
+.ranking-header-card p {
+  max-width: 720px;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.ranking-filter-panel {
+  margin-top: 18px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-medium);
+  background: #ffffff;
+  box-shadow: var(--shadow-small);
+}
+
+.ranking-groups {
+  margin-top: 18px;
+  display: grid;
+  gap: 18px;
+}
+
+.ranking-group-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-medium);
+  background: #ffffff;
+  box-shadow: var(--shadow-small);
+}
+
+.ranking-group-header {
+  padding: 17px 20px;
+  border-bottom: 1px solid var(--border);
+  background: #faf7fb;
+}
+
+.ranking-group-header h3 {
+  color: var(--primary-dark);
+  font-size: 16px;
+}
+
+.ranking-group-header p {
+  margin-top: 4px;
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.ranking-table-wrap {
+  overflow-x: auto;
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: 13px 15px;
+  border-bottom: 1px solid #eee8ef;
+  font-size: 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ranking-table th {
+  color: var(--text-soft);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ranking-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ranking-position {
+  width: 65px;
+  color: var(--primary);
+  font-size: 16px !important;
+  font-weight: 800;
+  text-align: center !important;
+}
+
+.ranking-score {
+  color: var(--primary-dark);
+  font-size: 15px !important;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.ranking-status-waiting {
+  color: var(--warning);
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .section-header-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ranking-open-button {
+    width: 100%;
+  }
+
+  .ranking-content {
+    width: min(100% - 28px, 1180px);
+  }
+
+  .ranking-filter-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
 </style>
 
 </head>
@@ -2784,10 +2963,20 @@ padding: 4px;
 
         <div>
           <h2>รายการที่ได้รับมอบหมาย</h2>
-          <p>เลือกคลิปเพื่อเริ่มประเมินหรือดูผลที่บันทึกไว้</p>
+          <p>เลือกคลิปเพื่อเริ่มประเมิน ประเมินต่อ หรือแก้ไขคะแนนที่ส่งแล้ว</p>
         </div>
 
-        <div id="resultCount" class="result-count"></div>
+        <div class="section-header-actions">
+          <div id="resultCount" class="result-count"></div>
+
+          <button
+            id="openRankingButton"
+            class="ranking-open-button"
+            type="button"
+          >
+            🏆 ดูอันดับคะแนน
+          </button>
+        </div>
 
       </div>
 
@@ -2878,18 +3067,82 @@ padding: 4px;
             รีเซ็ตตัวกรอง
           </button>
 
-<button
-  id="reloadApplicantsButton"
-  class="filter-refresh-button reload-data-button"
-  type="button"
->
-  อัปเดตสถานะคะแนน
-</button>
+
         </div>
 
       </section>
 
       <section id="applicantGrid" class="applicant-grid"></section>
+
+    </main>
+
+  </div>
+
+  <!-- ====================================
+       หน้าอันดับคะแนน
+  ===================================== -->
+
+  <div id="rankingPage" class="ranking-page hidden">
+
+    <header class="evaluation-topbar">
+      <button
+        id="backFromRankingButton"
+        class="evaluation-back-button"
+        type="button"
+      >
+        ← กลับหน้ารายการ
+      </button>
+
+      <div class="evaluation-heading">
+        <h1>อันดับคะแนนการแข่งขัน</h1>
+        <p>แสดงเฉพาะกลุ่มการแข่งขันที่กรรมการท่านนี้ได้รับมอบหมาย</p>
+      </div>
+    </header>
+
+    <main class="ranking-content">
+
+      <section class="ranking-header-card">
+        <span class="ranking-eyebrow">RANKING</span>
+        <h1>อันดับคะแนนการแข่งขัน</h1>
+        <p>
+          เปรียบเทียบคะแนนภายในภูมิภาค รายการแข่งขัน รุ่นอายุ
+          และประเภทเครื่องดนตรีเดียวกัน
+        </p>
+      </section>
+
+      <section class="ranking-filter-panel">
+
+        <div class="filter-item">
+          <label for="rankingRegionFilter">ภูมิภาค</label>
+          <select id="rankingRegionFilter" class="filter-control">
+            <option value="">ทั้งหมด</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label for="rankingCompetitionFilter">รายการแข่งขัน</label>
+          <select id="rankingCompetitionFilter" class="filter-control">
+            <option value="">ทั้งหมด</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label for="rankingAgeFilter">รุ่นอายุ</label>
+          <select id="rankingAgeFilter" class="filter-control">
+            <option value="">ทั้งหมด</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label for="rankingInstrumentFilter">ประเภทเครื่องดนตรี</label>
+          <select id="rankingInstrumentFilter" class="filter-control">
+            <option value="">ทั้งหมด</option>
+          </select>
+        </div>
+
+      </section>
+
+      <section id="rankingGroups" class="ranking-groups"></section>
 
     </main>
 
@@ -3050,12 +3303,10 @@ padding: 4px;
 
       <div class="confirm-icon">!</div>
 
-      <h3>ยืนยันการส่งคะแนนหรือไม่</h3>
+      <h3 id="confirmTitle">ยืนยันการส่งคะแนนหรือไม่</h3>
 
-      <p>
-        เมื่อยืนยันแล้ว สถานะรายการจะเปลี่ยนเป็น
-        “ส่งคะแนนแล้ว” ในระบบจริงอาจกำหนดให้ไม่สามารถ
-        แก้ไขคะแนนได้จนกว่า Admin จะปลดล็อก
+      <p id="confirmDescription">
+        กรุณาตรวจสอบคะแนนให้ถูกต้องก่อนยืนยัน
       </p>
 
       <div class="confirm-actions">
@@ -3092,10 +3343,11 @@ padding: 4px;
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxAqztnLaE6S-J_KVd_kuOe_A6vV1LqXdxWdc3dIGIzfpLMgwKLl-5xNH8Q9fle4DlL/exec";
     const EXPECTED_API_VERSION =
-  "2026-08-06-v9";
+  "2026-08-06-v10";
     let apiHealthPromise = null;
 
     let applicants = [];
+    let rankingRows = [];
     let scoreCriteria = [
       { key: "musicianship", title: "ทักษะการบรรเลงดนตรี", description: "พิจารณาความถูกต้องของทำนอง จังหวะ และความแม่นยำในการบรรเลงตามมาตรฐาน", maxScore: 25 },
       { key: "technique", title: "เทคนิคและการใช้เครื่องดนตรี", description: "พิจารณาทักษะการใช้เทคนิคเฉพาะของเครื่องดนตรีได้อย่างเต็มประสิทธิภาพและเหมาะสมกับวัย", maxScore: 25 },
@@ -3232,7 +3484,14 @@ const judgeOptions = [
     const competitionFilter = document.getElementById("competitionFilter");
     const instrumentFilter = document.getElementById("instrumentFilter");
     const refreshFilterButton = document.getElementById("refreshFilterButton");
-    const reloadApplicantsButton = document.getElementById("reloadApplicantsButton");
+    const rankingPage = document.getElementById("rankingPage");
+    const openRankingButton = document.getElementById("openRankingButton");
+    const backFromRankingButton = document.getElementById("backFromRankingButton");
+    const rankingGroups = document.getElementById("rankingGroups");
+    const rankingRegionFilter = document.getElementById("rankingRegionFilter");
+    const rankingCompetitionFilter = document.getElementById("rankingCompetitionFilter");
+    const rankingAgeFilter = document.getElementById("rankingAgeFilter");
+    const rankingInstrumentFilter = document.getElementById("rankingInstrumentFilter");
     const confirmOverlay = document.getElementById("confirmOverlay");
     const scoreList = document.getElementById("scoreList");
     const judgeComment = document.getElementById("judgeComment");
@@ -3785,6 +4044,7 @@ if (welcome) {
       selectedJudgeId = "";
       appPage.classList.add("hidden");
       evaluationPage.classList.add("hidden");
+      rankingPage.classList.add("hidden");
       loginPage.classList.remove("hidden");
       loginForm.reset();
       loginError.textContent = "";
@@ -3848,7 +4108,7 @@ if (welcome) {
       return {
         "not-started": { label: "เริ่มประเมิน", className: "" },
         "draft": { label: "ประเมินต่อ", className: "edit" },
-        "submitted": { label: "ดูคะแนน", className: "view" }
+        "submitted": { label: "แก้ไขคะแนน", className: "edit" }
       }[status] || { label: "เริ่มประเมิน", className: "" };
     }
 
@@ -3885,39 +4145,6 @@ if (welcome) {
       showToast("รีเซ็ตตัวกรองเรียบร้อยแล้ว");
     });
 
-reloadApplicantsButton.addEventListener(
-  "click",
-  async function() {
-    if (!authToken) {
-      showToast(
-        "กรุณาเข้าสู่ระบบใหม่"
-      );
-      return;
-    }
-
-    setLoading(
-      true,
-      "กำลังอัปเดตสถานะคะแนน..."
-    );
-
-    try {
-      await loadApplicants();
-
-      showToast(
-        "อัปเดตสถานะคะแนนเรียบร้อยแล้ว",
-        "success"
-      );
-    } catch (error) {
-      showToast(
-        "อัปเดตข้อมูลไม่สำเร็จ: " +
-        error.message
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-);
-
     function buildClientSummary(items) {
       const list = Array.isArray(items) ? items : [];
 
@@ -3951,6 +4178,24 @@ reloadApplicantsButton.addEventListener(
       document.getElementById("submittedCount").textContent = value.submitted || 0;
       document.getElementById("progressText").textContent = `${value.progressPercent || 0}%`;
       document.getElementById("progressFill").style.width = `${value.progressPercent || 0}%`;
+    }
+
+    function updateEvaluationButtons(applicant) {
+      const saveDraftButton = document.getElementById("saveDraftButton");
+      const submitScoreButton = document.getElementById("submitScoreButton");
+      const isSubmitted = applicant && applicant.status === "submitted";
+
+      saveDraftButton.textContent = isSubmitted
+        ? "บันทึกการแก้ไข"
+        : "บันทึกร่าง";
+
+      submitScoreButton.textContent = isSubmitted
+        ? "ยืนยันแก้ไขคะแนน"
+        : "ยืนยันส่งคะแนน";
+
+      submitScoreButton.dataset.mode = isSubmitted
+        ? "edit"
+        : "submit";
     }
 
     function openEvaluation(applicantId, pushHistory = true) {
@@ -4146,6 +4391,21 @@ reloadApplicantsButton.addEventListener(
     });
 
     document.getElementById("submitScoreButton").addEventListener("click", function () {
+      const applicant = applicants.find(item => item.id === currentApplicantId);
+      const isEditing = applicant && applicant.status === "submitted";
+
+      document.getElementById("confirmTitle").textContent = isEditing
+        ? "ยืนยันการแก้ไขคะแนนหรือไม่"
+        : "ยืนยันการส่งคะแนนหรือไม่";
+
+      document.getElementById("confirmDescription").textContent = isEditing
+        ? "คะแนนเดิมจะถูกแทนที่ด้วยคะแนนที่แก้ไข และระบบจะคำนวณอันดับใหม่"
+        : "กรุณาตรวจสอบคะแนนให้ถูกต้องก่อนยืนยัน";
+
+      document.getElementById("confirmSubmitButton").textContent = isEditing
+        ? "ยืนยันแก้ไขคะแนน"
+        : "ยืนยันส่งคะแนน";
+
       confirmOverlay.classList.add("active");
     });
 
@@ -4175,6 +4435,7 @@ reloadApplicantsButton.addEventListener(
     function showDashboard(pushHistory = true) {
       currentApplicantId = null;
       evaluationPage.classList.add("hidden");
+      rankingPage.classList.add("hidden");
       appPage.classList.remove("hidden");
       window.scrollTo({ top: 0, behavior: "instant" });
       if (pushHistory) history.pushState({ page: "dashboard" }, "", "#dashboard");
@@ -4184,9 +4445,235 @@ reloadApplicantsButton.addEventListener(
     document.getElementById("cancelConfirmButton").addEventListener("click", () => confirmOverlay.classList.remove("active"));
     confirmOverlay.addEventListener("click", event => { if (event.target === confirmOverlay) confirmOverlay.classList.remove("active"); });
 
+
+    async function openRankingPage(pushHistory = true) {
+      if (!authToken) {
+        showToast("กรุณาเข้าสู่ระบบใหม่");
+        return;
+      }
+
+      setLoading(true, "กำลังโหลดอันดับคะแนน...");
+
+      try {
+        const result = await apiPost("ranking", {
+          token: authToken
+        });
+
+        rankingRows = Array.isArray(result.rows)
+          ? result.rows
+          : [];
+
+        populateRankingFilters();
+        renderRanking();
+
+        appPage.classList.add("hidden");
+        evaluationPage.classList.add("hidden");
+        rankingPage.classList.remove("hidden");
+
+        if (pushHistory) {
+          history.pushState(
+            { page: "ranking" },
+            "",
+            "#ranking"
+          );
+        }
+
+        window.scrollTo({
+          top: 0,
+          behavior: "instant"
+        });
+      } catch (error) {
+        showToast(
+          error.message ||
+          "ไม่สามารถโหลดอันดับคะแนนได้"
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function populateRankingFilters() {
+      setRankingSelectOptions(
+        rankingRegionFilter,
+        rankingRows.map(row => row.region)
+      );
+
+      setRankingSelectOptions(
+        rankingCompetitionFilter,
+        rankingRows.map(row => row.competition)
+      );
+
+      setRankingSelectOptions(
+        rankingAgeFilter,
+        rankingRows.map(row => row.ageGroup)
+      );
+
+      setRankingSelectOptions(
+        rankingInstrumentFilter,
+        rankingRows.map(row => row.instrumentCategory)
+      );
+    }
+
+    function setRankingSelectOptions(select, values) {
+      const currentValue = select.value;
+
+      const uniqueValues = Array.from(
+        new Set(
+          values
+            .map(value => String(value || "").trim())
+            .filter(Boolean)
+        )
+      ).sort((a, b) => a.localeCompare(b, "th"));
+
+      select.innerHTML = '<option value="">ทั้งหมด</option>';
+
+      uniqueValues.forEach(value => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      });
+
+      if (uniqueValues.includes(currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    function renderRanking() {
+      const filteredRows = rankingRows.filter(row => (
+        (!rankingRegionFilter.value ||
+          row.region === rankingRegionFilter.value) &&
+        (!rankingCompetitionFilter.value ||
+          row.competition === rankingCompetitionFilter.value) &&
+        (!rankingAgeFilter.value ||
+          row.ageGroup === rankingAgeFilter.value) &&
+        (!rankingInstrumentFilter.value ||
+          row.instrumentCategory === rankingInstrumentFilter.value)
+      ));
+
+      if (!filteredRows.length) {
+        rankingGroups.innerHTML = `
+          <div class="empty-state">
+            <strong>ยังไม่มีข้อมูลอันดับคะแนน</strong>
+            <p style="margin-top:6px;">
+              กรุณาเปลี่ยนตัวกรอง หรือตรวจสอบว่ามีรายการในกลุ่มนี้หรือไม่
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      const groups = {};
+
+      filteredRows.forEach(row => {
+        if (!groups[row.groupKey]) {
+          groups[row.groupKey] = [];
+        }
+
+        groups[row.groupKey].push(row);
+      });
+
+      rankingGroups.innerHTML = Object.keys(groups)
+        .sort((a, b) => a.localeCompare(b, "th"))
+        .map(groupKey => {
+          const rows = groups[groupKey];
+          const first = rows[0];
+
+          return `
+            <article class="ranking-group-card">
+              <header class="ranking-group-header">
+                <h3>
+                  ${escapeHtml(first.region || "-")}
+                  ·
+                  ${escapeHtml(first.competition || "-")}
+                </h3>
+                <p>
+                  ${escapeHtml(first.ageGroup || "-")}
+                  · ประเภท ${escapeHtml(first.instrumentCategory || "-")}
+                </p>
+              </header>
+
+              <div class="ranking-table-wrap">
+                <table class="ranking-table">
+                  <thead>
+                    <tr>
+                      <th>อันดับ</th>
+                      <th>Submission</th>
+                      <th>โรงเรียน</th>
+                      <th>เพลง</th>
+                      <th>ผู้เข้าแข่งขัน</th>
+                      <th>คะแนนรวม</th>
+                      <th>สถานะ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rows.map(renderRankingRow).join("")}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+    }
+
+    function renderRankingRow(row) {
+      const complete = row.resultStatus === "Complete";
+      const rankText = complete && row.rank
+        ? row.rank
+        : "–";
+
+      const scoreText = complete
+        ? `${row.combinedScore} / ${row.maximumCombinedScore || 100}`
+        : "รอคะแนน";
+
+      const remainingJudges = Math.max(
+        0,
+        Number(row.requiredJudgeCount || 0) -
+        Number(row.submittedJudgeCount || 0)
+      );
+
+      const statusText = complete
+        ? "คะแนนครบแล้ว"
+        : `รอกรรมการ ${remainingJudges} ท่าน`;
+
+      return `
+        <tr>
+          <td class="ranking-position">${escapeHtml(rankText)}</td>
+          <td>${escapeHtml(row.submissionNumber || row.applicantId)}</td>
+          <td><strong>${escapeHtml(row.schoolName || "-")}</strong></td>
+          <td>${escapeHtml(row.songTitle || "-")}</td>
+          <td>${escapeHtml(row.competitorNames || "-")}</td>
+          <td class="ranking-score">${escapeHtml(scoreText)}</td>
+          <td class="${complete ? "" : "ranking-status-waiting"}">
+            ${escapeHtml(statusText)}
+          </td>
+        </tr>
+      `;
+    }
+
+    openRankingButton.addEventListener("click", function () {
+      openRankingPage(true);
+    });
+
+    backFromRankingButton.addEventListener("click", function () {
+      showDashboard(true);
+    });
+
+    [
+      rankingRegionFilter,
+      rankingCompetitionFilter,
+      rankingAgeFilter,
+      rankingInstrumentFilter
+    ].forEach(select => {
+      select.addEventListener("change", renderRanking);
+    });
+
     window.addEventListener("popstate", function (event) {
       if (event.state && event.state.page === "evaluation" && event.state.applicantId) {
         openEvaluation(event.state.applicantId, false);
+      } else if (event.state && event.state.page === "ranking") {
+        openRankingPage(false);
       } else if (authToken) {
         showDashboard(false);
       }
