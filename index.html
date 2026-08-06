@@ -3363,10 +3363,10 @@ console.info(
  * ไม่เก็บ Password
  */
 const JUDGE_BROWSER_CACHE_KEY =
-  "THAI_MUSIC_JUDGE_OPTIONS_V12";
+  "THAI_MUSIC_JUDGE_OPTIONS_V13_NEW_API";
 
 const JUDGE_BROWSER_CACHE_TIME_KEY =
-  "THAI_MUSIC_JUDGE_OPTIONS_TIME_V12";
+  "THAI_MUSIC_JUDGE_OPTIONS_TIME_V13_NEW_API";
 
 /*
  * รายชื่อกรรมการค่อนข้างคงที่
@@ -4766,12 +4766,29 @@ if (welcome) {
       document.getElementById("evaluationSongTitle").textContent = applicant.songTitle || "ยังไม่ระบุชื่อเพลง";
       document.getElementById("evaluationInstrument").textContent = applicant.instrumentCategory || "-";
 
-      renderMembers(applicant);
-      renderVideo(applicant.videoUrl);
-      renderScoreCriteria(applicant);
-      judgeComment.value = applicant.comment || "";
-      /* อนุญาตให้แก้ไขได้ทุกสถานะ รวมถึงส่งคะแนนแล้ว */
-      setEvaluationDisabled(false);
+renderMembers(
+  applicant
+);
+
+renderVideo(
+  applicant.videoUrl
+);
+
+renderScoreCriteria(
+  applicant
+);
+
+judgeComment.value =
+  applicant.comment || "";
+
+updateEvaluationButtons(
+  applicant
+);
+
+/*
+ * อนุญาตให้แก้ไขได้ทุกสถานะ
+ */
+setEvaluationDisabled(false);
 
       appPage.classList.add("hidden");
       evaluationPage.classList.remove("hidden");
@@ -4977,7 +4994,15 @@ if (welcome) {
         const data = collectEvaluationData();
         const result = await apiPost(action, { token: authToken, applicantId: currentApplicantId, ...data });
         const index = applicants.findIndex(item => item.id === currentApplicantId);
-        if (index !== -1 && result.applicant) applicants[index] = result.applicant;
+        if (
+  index !== -1 &&
+  result.applicant
+) {
+  applicants[index] = {
+    ...applicants[index],
+    ...result.applicant
+  };
+}
         renderApplicants();
         showDashboard(false);
         showToast(result.message, toastType);
@@ -5250,81 +5275,90 @@ if (welcome) {
       return String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
     }
 
-history.replaceState(
+    history.replaceState(
   {
-    page:
-      "login"
+    page: "login"
   },
   "",
   location.pathname
 );
 
 /*
- * พยายามอ่านรายชื่อจาก Browser Cache ก่อน
+ * เริ่มต้นระบบหน้า Login
  */
-const hasJudgeBrowserCache =
-  loadJudgeOptionsFromBrowserCache();
-
-if (hasJudgeBrowserCache) {
-  /*
-   * มีรายชื่อกรรมการใน Browser แล้ว
-   * ใช้งานทันทีโดยไม่เรียก API ซ้ำ
-   */
-  setLoading(false);
-
-} else {
-  /*
-   * ยังไม่มี Cache:
-   * แสดง Loading ระหว่างโหลดครั้งแรก
-   */
+async function initializeLoginPage() {
   setLoading(
     true,
-    "กำลังเตรียมรายชื่อกรรมการ..."
+    "กำลังเชื่อมต่อระบบ..."
   );
 
-  /*
-   * Safety Timeout:
-   * ปิด Overlay หลัง 20 วินาที
-   * เพื่อไม่ให้หน้าจอค้างตลอด
-   */
-  const initialLoadingTimeout =
-    setTimeout(
-      function() {
-        setLoading(false);
+  loginError.textContent = "";
 
-        if (!judgeOptions.length) {
-          loginError.textContent =
-            "กำลังเชื่อมต่อระบบ กรุณารอสักครู่แล้วลองเปิดรายชื่ออีกครั้ง";
-        }
-      },
-      20000
+  try {
+    /*
+     * ตรวจสอบ Deployment ใหม่ก่อน
+     */
+    await checkApiHealth(true);
+
+    /*
+     * ลองใช้ Browser Cache หลังตรวจว่า API พร้อมแล้ว
+     */
+    const hasBrowserCache =
+      loadJudgeOptionsFromBrowserCache();
+
+    if (!hasBrowserCache) {
+      await loadJudgeOptions(true);
+    }
+
+    if (!judgeOptions.length) {
+      throw new Error(
+        "ไม่พบรายชื่อกรรมการในระบบ"
+      );
+    }
+
+    renderJudgeDropdown("");
+
+    console.info(
+      "[SYSTEM READY]",
+      {
+        apiVersion:
+          EXPECTED_API_VERSION,
+
+        judgeCount:
+          judgeOptions.length
+      }
     );
 
-  loadJudgeOptions(false)
-    .then(function() {
-      loginError.textContent =
-        "";
-    })
-    .catch(function(error) {
-      console.error(
-        "loadJudgeOptions failed:",
-        error
-      );
+  } catch (error) {
+    console.error(
+      "[INITIALIZATION ERROR]",
+      error
+    );
 
-      loginError.textContent =
-        error &&
-        error.message
-          ? error.message
-          : "ไม่สามารถโหลดรายชื่อกรรมการได้";
-    })
-    .finally(function() {
-      clearTimeout(
-        initialLoadingTimeout
-      );
+    /*
+     * ถ้า API ใหม่มีปัญหา แต่ Browser
+     * ยังมีรายชื่อ Cache ให้แสดงชื่อไว้ก่อนได้
+     */
+    const hasFallbackCache =
+      judgeOptions.length > 0 ||
+      loadJudgeOptionsFromBrowserCache();
 
-      setLoading(false);
-    });
+    loginError.textContent =
+      error && error.message
+        ? error.message
+        : "ไม่สามารถเชื่อมต่อระบบได้";
+
+    if (hasFallbackCache) {
+      renderJudgeDropdown("");
+    }
+
+  } finally {
+    setLoading(false);
+  }
 }
+
+initializeLoginPage();
+
 
 
   </script>
