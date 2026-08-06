@@ -3359,7 +3359,7 @@ padding: 4px;
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyKs7N1lfiP8jyLXl2FWF2PdYYp3iMZFWBzGudbDUAKlOM4ZU-P3F03WYbY9KS_Guyq/exec";
     const EXPECTED_API_VERSION =
-  "2026-08-06-v6";
+  "2026-08-06-v7";
     let apiHealthPromise = null;
 
     let applicants = [];
@@ -3637,7 +3637,7 @@ const response = await fetchWithTimeout(
             ...payload
           })
         },
-        action === "applicants" ? 120000 : 30000
+        action === "applicants" ? 120000 : 45000
       );
 
       const data = await parseApiResponse(response);
@@ -3854,17 +3854,7 @@ const result =
         result.judge;
 
       /*
-       * รับข้อมูลผู้สมัครจาก Login Response
-       */
-      applicants =
-        Array.isArray(
-          result.applicants
-        )
-          ? result.applicants
-          : [];
-
-      /*
-       * รับเกณฑ์คะแนนจากระบบ
+       * รับเกณฑ์คะแนนจากผล Login
        */
       if (
         Array.isArray(
@@ -3902,9 +3892,15 @@ const result =
       );
 
       /*
-       * สร้างรายการผู้สมัคร
+       * แยกโหลดรายการออกจาก Login
+       * Request นี้มี Timeout 120 วินาที
        */
-      renderApplicants();
+      setLoading(
+        true,
+        "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการที่ได้รับมอบหมาย..."
+      );
+
+      await loadApplicants();
 
       console.info(
         "Assigned applicants:",
