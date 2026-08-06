@@ -3765,26 +3765,39 @@ loginForm.addEventListener(
       /*
        * รับชื่อกรรมการจากช่อง Dropdown แบบพิมพ์ได้
        */
-      const selectedJudgeName =
-        usernameInput.value.trim();
+const selectedJudgeName =
+  usernameInput.value.trim();
 
-      if (!selectedJudgeName) {
-        throw new Error(
-          "กรุณาเลือกหรือพิมพ์ชื่อกรรมการ"
-        );
-      }
+if (!selectedJudgeName) {
+  throw new Error(
+    "กรุณาเลือกหรือพิมพ์ชื่อกรรมการ"
+  );
+}
 
-      /*
-       * รับรหัสผ่าน
-       */
-      const enteredPassword =
-        passwordInput.value.trim();
+const selectedJudgeExists =
+  judgeOptions.some(
+    function(judge) {
+      return (
+        judge.name ===
+        selectedJudgeName
+      );
+    }
+  );
 
-      if (!enteredPassword) {
-        throw new Error(
-          "กรุณากรอกรหัสผ่าน"
-        );
-      }
+if (!selectedJudgeExists) {
+  throw new Error(
+    "กรุณาเลือกชื่อกรรมการจากรายการ"
+  );
+}
+
+const enteredPassword =
+  passwordInput.value.trim();
+
+if (!enteredPassword) {
+  throw new Error(
+    "กรุณากรอกรหัสผ่าน"
+  );
+}
 
       /*
        * ส่งข้อมูลไปยัง Google Apps Script
