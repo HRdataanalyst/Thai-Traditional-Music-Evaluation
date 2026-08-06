@@ -3651,30 +3651,64 @@ const response = await fetchWithTimeout(
 async function apiPost(action, payload = {}) {
   let timeoutMs = 45000;
 
-  if (action === "login") {
-    timeoutMs = 45000;
-  }
-
-  if (action === "applicants") {
+  if (action === "applicants" || action === "ranking") {
     timeoutMs = 90000;
   }
 
-  const response = await fetchWithTimeout(
+  const requestBody = {
+    action,
+    ...payload
+  };
+
+  /*
+   * เรียก POST ก่อนตามปกติ
+   */
+  let response = await fetchWithTimeout(
     API_URL,
     {
       method: "POST",
       headers: {
         "Content-Type": "text/plain;charset=utf-8"
       },
-      body: JSON.stringify({
-        action,
-        ...payload
-      })
+      body: JSON.stringify(requestBody)
     },
     timeoutMs
   );
 
-  const data = await parseApiResponse(response);
+  /*
+   * Google Apps Script บางครั้งตอบ POST เป็น 404
+   * ทั้งที่ Deployment URL เดิมยังใช้งานได้
+   * จึงลอง GET กับ Deployment เดิมโดยอัตโนมัติ
+   */
+  if (response.status === 404) {
+    const fallbackUrl = new URL(API_URL);
+
+    fallbackUrl.searchParams.set(
+      "action",
+      action
+    );
+
+    fallbackUrl.searchParams.set(
+      "payload",
+      JSON.stringify(payload)
+    );
+
+    fallbackUrl.searchParams.set(
+      "_",
+      Date.now()
+    );
+
+    response = await fetchWithTimeout(
+      fallbackUrl.toString(),
+      {
+        method: "GET"
+      },
+      timeoutMs
+    );
+  }
+
+  const data =
+    await parseApiResponse(response);
 
   if (!data || data.success !== true) {
     throw new Error(
