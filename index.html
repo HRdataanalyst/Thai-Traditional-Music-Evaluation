@@ -3343,7 +3343,7 @@ padding: 4px;
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxAqztnLaE6S-J_KVd_kuOe_A6vV1LqXdxWdc3dIGIzfpLMgwKLl-5xNH8Q9fle4DlL/exec";
     const EXPECTED_API_VERSION =
-  "2026-08-06-v9";
+  "2026-08-06-v10";
     let apiHealthPromise = null;
 
     let applicants = [];
@@ -3377,7 +3377,7 @@ const judgeDropdown =
  * เก็บเฉพาะชื่อ ไม่มีรหัสผ่าน
  * จึงสามารถแสดงได้ทันทีโดยไม่ต้องเรียก API
  */
-const judgeOptions = [
+let judgeOptions = [
   {
     judgeId: "J001",
     name: "อาจารย์ นลินณิภา ดีทุม (ครูหมูแดง)"
@@ -3711,6 +3711,39 @@ async function apiPost(action, payload = {}) {
 }
 
 
+async function loadJudgeOptions() {
+  try {
+    const result = await apiGet(
+      "judgeOptions",
+      {},
+      15000
+    );
+
+    if (
+      Array.isArray(result.judges) &&
+      result.judges.length
+    ) {
+      judgeOptions = result.judges
+        .map(function(judge) {
+          return {
+            judgeId: String(judge.judgeId || "").trim(),
+            name: String(judge.name || "").trim()
+          };
+        })
+        .filter(function(judge) {
+          return judge.judgeId && judge.name;
+        });
+    }
+  } catch (error) {
+    console.warn(
+      "ไม่สามารถโหลดรายชื่อกรรมการจาก API:",
+      error
+    );
+  }
+
+  renderJudgeDropdown("");
+}
+
 function renderJudgeDropdown(
   searchText = ""
 ) {
@@ -3841,177 +3874,151 @@ loginForm.addEventListener(
 
     loginError.textContent = "";
 
-    setLoading(
-      true,
-      "กำลังเข้าสู่ระบบ..."
-    );
+    const loginButton =
+      loginForm.querySelector(".login-button");
+
+    loginButton.disabled = true;
+    loginButton.textContent = "กำลังเข้าสู่ระบบ...";
+
+    setLoading(true, "กำลังตรวจสอบการเชื่อมต่อ...");
 
     try {
-      /*
-       * ตรวจว่า Web App URL ใหม่พร้อมใช้งานก่อน Login
-       * ใช้ Promise เดิมซ้ำ จึงไม่เรียก Health ซ้ำโดยไม่จำเป็น
+      await checkApiHealth(true);
 
-      /*
-       * รับชื่อกรรมการจากช่อง Dropdown แบบพิมพ์ได้
-       */
-const selectedJudgeName =
-  usernameInput.value.trim();
+      const selectedJudgeName =
+        usernameInput.value.trim();
 
-if (!selectedJudgeName) {
-  throw new Error(
-    "กรุณาเลือกหรือพิมพ์ชื่อกรรมการ"
-  );
-}
+      if (!selectedJudgeName) {
+        throw new Error(
+          "กรุณาเลือกหรือพิมพ์ชื่อกรรมการ"
+        );
+      }
 
-const selectedJudge =
-  judgeOptions.find(
-    function(judge) {
-      return (
-        judge.name ===
-        selectedJudgeName
+      const selectedJudge =
+        judgeOptions.find(function(judge) {
+          return (
+            String(judge.name || "").trim() ===
+            selectedJudgeName
+          );
+        });
+
+      if (!selectedJudge) {
+        throw new Error(
+          "กรุณาเลือกชื่อกรรมการจากรายการ"
+        );
+      }
+
+      const enteredPassword =
+        passwordInput.value.trim();
+
+      if (!enteredPassword) {
+        throw new Error(
+          "กรุณากรอกรหัสผ่าน"
+        );
+      }
+
+      selectedJudgeId = selectedJudge.judgeId;
+
+      setLoading(true, "กำลังเข้าสู่ระบบ...");
+
+      const result = await apiPost(
+        "login",
+        {
+          judgeId: selectedJudgeId,
+          username: selectedJudgeName,
+          password: enteredPassword
+        }
       );
-    }
-  );
 
-if (!selectedJudge) {
-  throw new Error(
-    "กรุณาเลือกชื่อกรรมการจากรายการ"
-  );
-}
+      authToken = result.token || "";
+      currentJudge = result.judge || null;
 
-/*
- * รองรับกรณีเลือกชื่อด้วย Mouse
- * และกรณีพิมพ์ชื่อเต็มตรงกับรายการ
- */
-selectedJudgeId =
-  selectedJudge.judgeId;
+      if (!authToken) {
+        throw new Error(
+          "ระบบไม่ได้ส่ง Session Token กลับมา"
+        );
+      }
 
-const enteredPassword =
-  passwordInput.value.trim();
-
-if (!enteredPassword) {
-  throw new Error(
-    "กรุณากรอกรหัสผ่าน"
-  );
-}
-
-const result =
-  await apiPost(
-    "login",
-    {
-      judgeId:
-        selectedJudgeId,
-
-      username:
-        selectedJudgeName,
-
-      password:
-        enteredPassword
-    }
-  );
-
-      authToken =
-        result.token;
-
-      currentJudge =
-        result.judge;
-
-      /*
-       * รับเกณฑ์คะแนนจากผล Login
-       */
       if (
-        Array.isArray(
-          result.scoreCriteria
-        ) &&
+        Array.isArray(result.scoreCriteria) &&
         result.scoreCriteria.length
       ) {
         scoreCriteria =
-          result.scoreCriteria.map(
-            function(item) {
-              return {
-                key:
-                  item.key,
-
-                title:
-                  item.label ||
-                  item.title ||
-                  "",
-
-                description:
-                  item.description ||
-                  "",
-
-                maxScore:
-                  Number(
-                    item.maxScore
-                  ) || 0
-              };
-            }
-          );
+          result.scoreCriteria.map(function(item) {
+            return {
+              key: item.key,
+              title: item.label || item.title || "",
+              description: item.description || "",
+              maxScore: Number(item.maxScore) || 0
+            };
+          });
       }
 
-      applyJudgeInfo(
-        result.judge
-      );
+      applyJudgeInfo(currentJudge);
 
-/*
- * Login สำเร็จแล้ว ให้โหลดรายการผู้สมัครแยกอีก Request
- */
-setLoading(
-  true,
-  "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
-);
+      loginPage.classList.add("hidden");
+      evaluationPage.classList.add("hidden");
+      rankingPage.classList.add("hidden");
+      appPage.classList.remove("hidden");
 
-await loadApplicants();
-
-console.info(
-  "Assigned applicants:",
-  applicants.length,
-  "Judge:",
-  currentJudge && currentJudge.name
-);
-
-      /*
-       * ซ่อน Login และเปิด Dashboard
-       */
-      loginPage.classList.add(
-        "hidden"
-      );
-
-      evaluationPage.classList.add(
-        "hidden"
-      );
-
-      appPage.classList.remove(
-        "hidden"
-      );
+      applicants = [];
+      renderApplicants();
 
       history.replaceState(
-        {
-          page:
-            "dashboard"
-        },
+        { page: "dashboard" },
         "",
         "#dashboard"
       );
 
-      showToast(
-        "เข้าสู่ระบบสำเร็จ",
-        "success"
+      setLoading(
+        true,
+        "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
       );
+
+      try {
+        await loadApplicants();
+        showToast(
+          "เข้าสู่ระบบสำเร็จ",
+          "success"
+        );
+      } catch (loadError) {
+        console.error(
+          "loadApplicants failed:",
+          loadError
+        );
+
+        applicantGrid.innerHTML =
+          '<div class="empty-state">' +
+          '<strong>โหลดรายการประเมินไม่สำเร็จ</strong>' +
+          '<p style="margin-top:6px;">' +
+          escapeHtml(
+            loadError.message ||
+            "กรุณาลองเข้าสู่ระบบใหม่"
+          ) +
+          "</p></div>";
+
+        showToast(
+          loadError.message ||
+          "โหลดรายการประเมินไม่สำเร็จ"
+        );
+      }
     } catch (error) {
       authToken = "";
-
       currentJudge = null;
-
       applicants = [];
-      selectedJudgeId = "";
+
+      appPage.classList.add("hidden");
+      evaluationPage.classList.add("hidden");
+      rankingPage.classList.add("hidden");
+      loginPage.classList.remove("hidden");
 
       loginError.textContent =
         error.message ||
         "ไม่สามารถเข้าสู่ระบบได้";
     } finally {
       setLoading(false);
+      loginButton.disabled = false;
+      loginButton.textContent = "เข้าสู่ระบบ";
     }
   }
 );
