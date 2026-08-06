@@ -3242,26 +3242,50 @@ const judgeOptions = [
       apiLoading.querySelector(".api-loading-box").textContent = text;
       apiLoading.classList.toggle("show", show);
     }
-    async function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+async function fetchWithTimeout(
+  url,
+  options = {},
+  timeoutMs = 30000
+) {
+  const controller = new AbortController();
 
-      try {
-        return await fetch(url, {
-          ...options,
-          signal: controller.signal,
-          redirect: "follow",
-          cache: "no-store"
-        });
-      } catch (error) {
-        if (error.name === "AbortError") {
-          throw new Error("ระบบตอบกลับช้ากว่าปกติ กรุณากดเข้าสู่ระบบอีกครั้ง");
-        }
-        throw error;
-      } finally {
-        clearTimeout(timeoutId);
-      }
+  const timeoutId = setTimeout(
+    function() {
+      controller.abort();
+    },
+    timeoutMs
+  );
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      redirect: "follow",
+      cache: "no-store"
+    });
+  } catch (error) {
+    if (
+      error &&
+      error.name === "AbortError"
+    ) {
+      throw new Error(
+        "ระบบใช้เวลาประมวลผลนานกว่าปกติ กรุณาลองใหม่อีกครั้ง"
+      );
     }
+
+    if (
+      error instanceof TypeError
+    ) {
+      throw new Error(
+        "ไม่สามารถเชื่อมต่อระบบได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง"
+      );
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
     async function parseApiResponse(response) {
       const responseText = await response.text();
@@ -3365,36 +3389,44 @@ const response = await fetchWithTimeout(
 
       return data;
     }
-    async function apiPost(action, payload = {}) {
-      const response = await fetchWithTimeout(
-        API_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-          },
-          body: JSON.stringify({
-            action,
-            ...payload
-          })
-        },
-        action === "applicants"
-          ? 45000
-          : action === "login"
-            ? 20000
-            : 45000
-      );
+async function apiPost(action, payload = {}) {
+  let timeoutMs = 45000;
 
-      const data = await parseApiResponse(response);
+  if (action === "login") {
+    timeoutMs = 45000;
+  }
 
-      if (!data.success) {
-        throw new Error(
-          data.message || "เกิดข้อผิดพลาดจากระบบ"
-        );
-      }
+  if (action === "applicants") {
+    timeoutMs = 90000;
+  }
 
-      return data;
-    }
+  const response = await fetchWithTimeout(
+    API_URL,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        action,
+        ...payload
+      })
+    },
+    timeoutMs
+  );
+
+  const data = await parseApiResponse(response);
+
+  if (!data || data.success !== true) {
+    throw new Error(
+      data && data.message
+        ? data.message
+        : "เกิดข้อผิดพลาดจากระบบ"
+    );
+  }
+
+  return data;
+}
 
 
 function renderJudgeDropdown(
@@ -3536,8 +3568,6 @@ loginForm.addEventListener(
       /*
        * ตรวจว่า Web App URL ใหม่พร้อมใช้งานก่อน Login
        * ใช้ Promise เดิมซ้ำ จึงไม่เรียก Health ซ้ำโดยไม่จำเป็น
-       */
-      await checkApiHealth();
 
       /*
        * รับชื่อกรรมการจากช่อง Dropdown แบบพิมพ์ได้
@@ -3642,26 +3672,22 @@ const result =
         result.judge
       );
 
-      /*
-       * Login Response มีเฉพาะรายการของกรรมการคนนี้
-       * ซึ่งอ่านจาก Cache ที่สร้างไว้ล่วงหน้าทุก 2 ชั่วโมง
-       */
-      applicants =
-        Array.isArray(
-          result.applicants
-        )
-          ? result.applicants
-          : [];
+/*
+ * Login สำเร็จแล้ว ให้โหลดรายการผู้สมัครแยกอีก Request
+ */
+setLoading(
+  true,
+  "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
+);
 
-      renderApplicants();
+await loadApplicants();
 
-      console.info(
-        "Assigned applicants:",
-        applicants.length,
-        "Judge:",
-        currentJudge &&
-          currentJudge.name
-      );
+console.info(
+  "Assigned applicants:",
+  applicants.length,
+  "Judge:",
+  currentJudge && currentJudge.name
+);
 
       /*
        * ซ่อน Login และเปิด Dashboard
