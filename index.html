@@ -2603,7 +2603,6 @@ padding: 4px;
       role="listbox"
     ></div>
 
-    <datalist id="judgeNameList"></datalist>
 
   </div>
 
@@ -3091,9 +3090,9 @@ padding: 4px;
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyKs7N1lfiP8jyLXl2FWF2PdYYp3iMZFWBzGudbDUAKlOM4ZU-P3F03WYbY9KS_Guyq/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxAqztnLaE6S-J_KVd_kuOe_A6vV1LqXdxWdc3dIGIzfpLMgwKLl-5xNH8Q9fle4DlL/exec";
     const EXPECTED_API_VERSION =
-  "2026-08-06-v8";
+  "2026-08-06-v9";
     let apiHealthPromise = null;
 
     let applicants = [];
@@ -3535,6 +3534,12 @@ loginForm.addEventListener(
 
     try {
       /*
+       * ตรวจว่า Web App URL ใหม่พร้อมใช้งานก่อน Login
+       * ใช้ Promise เดิมซ้ำ จึงไม่เรียก Health ซ้ำโดยไม่จำเป็น
+       */
+      await checkApiHealth();
+
+      /*
        * รับชื่อกรรมการจากช่อง Dropdown แบบพิมพ์ได้
        */
 const selectedJudgeName =
@@ -3751,6 +3756,7 @@ if (welcome) {
       authToken = "";
       currentJudge = null;
       applicants = [];
+      selectedJudgeId = "";
       appPage.classList.add("hidden");
       evaluationPage.classList.add("hidden");
       loginPage.classList.remove("hidden");
