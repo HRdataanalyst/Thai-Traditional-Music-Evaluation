@@ -3655,48 +3655,38 @@ async function apiPost(action, payload = {}) {
     timeoutMs = 90000;
   }
 
-  const requestBody = {
-    action,
-    ...payload
-  };
+  let response;
 
-  /*
-   * เรียก POST ก่อนตามปกติ
-   */
-  let response = await fetchWithTimeout(
-    API_URL,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
+  try {
+    response = await fetchWithTimeout(
+      API_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          action,
+          ...payload
+        })
       },
-      body: JSON.stringify(requestBody)
-    },
-    timeoutMs
-  );
+      timeoutMs
+    );
+  } catch (postError) {
+    response = null;
+  }
 
   /*
-   * Google Apps Script บางครั้งตอบ POST เป็น 404
-   * ทั้งที่ Deployment URL เดิมยังใช้งานได้
-   * จึงลอง GET กับ Deployment เดิมโดยอัตโนมัติ
+   * Google Apps Script บางครั้งตอบ POST เป็น 404/405
+   * ทั้งที่ Deployment URL เดิมยังใช้งานผ่าน GET ได้
+   * จึงลอง GET URL เดิมอัตโนมัติ โดยไม่บังคับให้ Deploy ใหม่
    */
-  if (response.status === 404) {
+  if (!response || response.status === 404 || response.status === 405) {
     const fallbackUrl = new URL(API_URL);
 
-    fallbackUrl.searchParams.set(
-      "action",
-      action
-    );
-
-    fallbackUrl.searchParams.set(
-      "payload",
-      JSON.stringify(payload)
-    );
-
-    fallbackUrl.searchParams.set(
-      "_",
-      Date.now()
-    );
+    fallbackUrl.searchParams.set("action", action);
+    fallbackUrl.searchParams.set("payload", JSON.stringify(payload));
+    fallbackUrl.searchParams.set("_", Date.now());
 
     response = await fetchWithTimeout(
       fallbackUrl.toString(),
@@ -3707,8 +3697,7 @@ async function apiPost(action, payload = {}) {
     );
   }
 
-  const data =
-    await parseApiResponse(response);
+  const data = await parseApiResponse(response);
 
   if (!data || data.success !== true) {
     throw new Error(
