@@ -3093,7 +3093,7 @@ padding: 4px;
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyKs7N1lfiP8jyLXl2FWF2PdYYp3iMZFWBzGudbDUAKlOM4ZU-P3F03WYbY9KS_Guyq/exec";
     const EXPECTED_API_VERSION =
-  "2026-08-06-v7";
+  "2026-08-06-v8";
     let apiHealthPromise = null;
 
     let applicants = [];
@@ -3269,7 +3269,15 @@ const judgeOptions = [
       const trimmedText = responseText.trim();
 
       if (!response.ok) {
-        throw new Error(`API ตอบกลับ HTTP ${response.status}`);
+        if (response.status === 404) {
+          throw new Error(
+            "ไม่พบ Google Apps Script Web App กรุณา Deploy ใหม่และนำ URL /exec ล่าสุดมาใส่ใน API_URL"
+          );
+        }
+
+        throw new Error(
+          `API ตอบกลับ HTTP ${response.status}`
+        );
       }
 
       if (
@@ -3371,7 +3379,11 @@ const response = await fetchWithTimeout(
             ...payload
           })
         },
-        action === "applicants" ? 120000 : 45000
+        action === "applicants"
+          ? 45000
+          : action === "login"
+            ? 20000
+            : 45000
       );
 
       const data = await parseApiResponse(response);
@@ -3626,21 +3638,24 @@ const result =
       );
 
       /*
-       * แยกโหลดรายการออกจาก Login
-       * Request นี้มี Timeout 120 วินาที
+       * Login Response มีเฉพาะรายการของกรรมการคนนี้
+       * ซึ่งอ่านจาก Cache ที่สร้างไว้ล่วงหน้าทุก 2 ชั่วโมง
        */
-      setLoading(
-        true,
-        "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการที่ได้รับมอบหมาย..."
-      );
+      applicants =
+        Array.isArray(
+          result.applicants
+        )
+          ? result.applicants
+          : [];
 
-      await loadApplicants();
+      renderApplicants();
 
       console.info(
         "Assigned applicants:",
         applicants.length,
         "Judge:",
-        currentJudge && currentJudge.name
+        currentJudge &&
+          currentJudge.name
       );
 
       /*
