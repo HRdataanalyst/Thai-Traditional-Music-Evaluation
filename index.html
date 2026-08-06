@@ -313,7 +313,9 @@
 
 .login-panel {
   min-width: 0;
-  padding: 42px;
+  min-height: 100vh;
+
+  padding: 40px;
 
   display: flex;
   align-items: center;
@@ -324,7 +326,8 @@
 
 
 .login-box {
-  width: min(100%, 340px);
+  width: min(100%, 360px);
+  margin: auto;
 }
     
     /* ไอคอนโน้ตดนตรีฝั่งเข้าสู่ระบบ */
@@ -384,24 +387,6 @@
   font-weight: 600;
 }
     
-    .judge-list-message {
-  min-height: 16px;
-
-  margin-top: 5px;
-
-  color: var(--text-soft);
-
-  font-size: 9px;
-  line-height: 1.4;
-}
-
-.judge-list-message.ready {
-  color: var(--success);
-}
-
-.judge-list-message.error {
-  color: var(--danger);
-}
 
 .judge-dropdown {
   position: absolute;
@@ -562,29 +547,6 @@
 
   font-size: 11px;
   text-align: center;
-}
-
-
-.demo-account {
-  margin-top: 17px;
-  padding: 11px 13px;
-
-  border:
-    1px dashed #d9c7db;
-
-  border-radius: 10px;
-
-  background: #faf7fb;
-
-  color: var(--text-soft);
-
-  font-size: 11px;
-  line-height: 1.65;
-}
-
-
-.demo-account strong {
-  color: var(--primary);
 }
 
 
@@ -2911,13 +2873,6 @@ padding: 4px;
 
   </div>
 
-  <div
-    id="judgeListMessage"
-    class="judge-list-message"
-  >
-    กำลังโหลดรายชื่อกรรมการ...
-  </div>
-
 </div>
 
 
@@ -2963,13 +2918,6 @@ padding: 4px;
           ></div>
 
         </form>
-
-
-        <div class="demo-account">
-          <strong>บัญชีสำหรับทดลอง</strong><br>
-          Username: judge01<br>
-          Password: 1234
-        </div>
 
       </div>
 
@@ -3433,22 +3381,111 @@ padding: 4px;
     const loginForm = document.getElementById("loginForm");
     const usernameInput = document.getElementById("username");
     const passwordInput = document.getElementById("password");
-    const judgeNameList =
-  document.getElementById(
-    "judgeNameList"
-  );
-
 const judgeDropdown =
   document.getElementById(
     "judgeDropdown"
   );
 
-let judgeOptions = [];
-
-const judgeListMessage =
-  document.getElementById(
-    "judgeListMessage"
-  );
+/*
+ * รายชื่อกรรมการสำหรับแสดง Dropdown
+ *
+ * เก็บเฉพาะชื่อ ไม่มีรหัสผ่าน
+ * จึงสามารถแสดงได้ทันทีโดยไม่ต้องเรียก API
+ */
+const judgeOptions = [
+  {
+    name:
+      "อาจารย์ นลินณิภา ดีทุม (ครูหมูแดง)"
+  },
+  {
+    name:
+      "อาจารย์ อรจิรา อุดมจรรยา"
+  },
+  {
+    name:
+      "ผู้ช่วยศาสตราจารย์ ดร. สุรพงษ์ บ้านไกรทอง"
+  },
+  {
+    name:
+      "อาจารย์ เลอเกียรติ มหาวินิจฉัยมนตรี"
+  },
+  {
+    name:
+      "ว่าที่ร้อยตรี กามเทพ ธีรเลิศรัตน์"
+  },
+  {
+    name:
+      "รองศาสตราจารย์ ดร. อัศนีย์ เปลี่ยนศรี"
+  },
+  {
+    name:
+      "รองศาสตราจารย์ ดร. ภัทระ คมขำ"
+  },
+  {
+    name:
+      "อาจารย์ วินัย พงษ์ทอง (ครูบอม)"
+  },
+  {
+    name:
+      "อาจารย์ ชัยภัค ภัทรจินดา"
+  },
+  {
+    name:
+      "อาจารย์ เกรียงไกร อ่อนสำอางค์"
+  },
+  {
+    name:
+      "อาจารย์ นิพนธ์ กล่ำกล่อมจิตร"
+  },
+  {
+    name:
+      "อาจารย์ พิชชาณัฐ ตู้จินดา"
+  },
+  {
+    name:
+      "อาจารย์ สมนึก แสงอรุณ"
+  },
+  {
+    name:
+      "อาจารย์ บอย อัมพวา"
+  },
+  {
+    name:
+      "อาจารย์ กฤษฎาจาร จันทโชค"
+  },
+  {
+    name:
+      "อาจารย์ พงศ์พันธ์ เพชรทอง"
+  },
+  {
+    name:
+      "ผู้ช่วยศาสตราจารย์ ดร. ตั้งปณิธาน อารีย์"
+  },
+  {
+    name:
+      "อาจารย์ ภานุทัต อภิวินาจง"
+  },
+  {
+    name:
+      "อาจารย์ นาฏก ศรีบัณฑิตมงคล"
+  },
+  {
+    name:
+      "อาจารย์ ปรัชญา นันธะชัย"
+  },
+  {
+    name:
+      "รองศาสตราจารย์ ดร. ธรณ์ส ถิ่นอ่อน"
+  },
+  {
+    name:
+      "ผู้ช่วยศาสตราจารย์พิเศษ ประชา สามเสน"
+  },
+  {
+    name:
+      "อาจารย์ พงศพร อุปนิ"
+  }
+];
     const passwordToggle = document.getElementById("passwordToggle");
     const loginError = document.getElementById("loginError");
     const applicantGrid = document.getElementById("applicantGrid");
@@ -3610,94 +3647,85 @@ const response = await fetchWithTimeout(
 
       return data;
     }
-/**
- * โหลดรายชื่อกรรมการเพียงครั้งเดียว
- * ตอนเปิดหน้า Login
- */
-async function loadJudgeOptions() {
-  judgeListMessage.textContent =
-    "กำลังโหลดรายชื่อกรรมการ...";
 
-  judgeListMessage.className =
-    "judge-list-message";
 
-  try {
-    const result = await apiGet(
-      "judgeOptions",
-      {},
-      15000
+function renderJudgeDropdown(
+  searchText = ""
+) {
+  const search =
+    String(searchText || "")
+      .trim()
+      .toLowerCase();
+
+  const filtered =
+    judgeOptions.filter(
+      function(judge) {
+        return (
+          !search ||
+          String(
+            judge.name || ""
+          )
+            .toLowerCase()
+            .includes(search)
+        );
+      }
     );
-
-    judgeOptions = Array.isArray(result.judges)
-      ? result.judges
-      : [];
-
-    judgeNameList.innerHTML = "";
-
-    judgeOptions.forEach(function(judge) {
-      const option = document.createElement("option");
-      option.value = judge.name || "";
-      judgeNameList.appendChild(option);
-    });
-
-    renderJudgeDropdown("");
-
-    judgeListMessage.textContent =
-      `พบรายชื่อกรรมการ ${judgeOptions.length} คน`;
-
-    judgeListMessage.className =
-      "judge-list-message ready";
-  } catch (error) {
-    judgeOptions = [];
-    judgeNameList.innerHTML = "";
-    judgeDropdown.innerHTML = "";
-
-    judgeListMessage.textContent =
-      "โหลดรายชื่อไม่สำเร็จ กรุณาติดต่อผู้ดูแลระบบ";
-
-    judgeListMessage.className =
-      "judge-list-message error";
-
-    console.error("loadJudgeOptions:", error);
-  }
-}
-
-function renderJudgeDropdown(searchText = "") {
-  const search = String(searchText || "")
-    .trim()
-    .toLowerCase();
-
-  const filtered = judgeOptions.filter(function(judge) {
-    return !search ||
-      String(judge.name || "")
-        .toLowerCase()
-        .includes(search);
-  });
 
   judgeDropdown.innerHTML = "";
 
   if (!filtered.length) {
     judgeDropdown.innerHTML =
-      '<div class="judge-dropdown-empty">ไม่พบรายชื่อกรรมการ</div>';
+      '<div class="judge-dropdown-empty">' +
+      'ไม่พบรายชื่อกรรมการ' +
+      '</div>';
+
     return;
   }
 
-  filtered.forEach(function(judge) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "judge-dropdown-option";
-    button.textContent = judge.name;
-    button.setAttribute("role", "option");
+  filtered.forEach(
+    function(judge) {
+      const button =
+        document.createElement(
+          "button"
+        );
 
-    button.addEventListener("mousedown", function(event) {
-      event.preventDefault();
-      usernameInput.value = judge.name;
-      judgeDropdown.classList.add("hidden");
-      passwordInput.focus();
-    });
+      button.type =
+        "button";
 
-    judgeDropdown.appendChild(button);
-  });
+      button.className =
+        "judge-dropdown-option";
+
+      button.textContent =
+        judge.name;
+
+      button.setAttribute(
+        "role",
+        "option"
+      );
+
+      button.addEventListener(
+        "mousedown",
+        function(event) {
+          event.preventDefault();
+
+          usernameInput.value =
+            judge.name;
+
+          judgeDropdown.classList.add(
+            "hidden"
+          );
+
+          loginError.textContent = "";
+
+          passwordInput.focus();
+        }
+      );
+
+      judgeDropdown.appendChild(
+        button
+      );
+    }
+  );
 }
 
 usernameInput.addEventListener("focus", function() {
@@ -4355,13 +4383,17 @@ reloadApplicantsButton.addEventListener(
       return String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
     }
 
-    history.replaceState({ page: "login" }, "", location.pathname);
-    
-    /*
- * โหลดรายชื่อกรรมการครั้งเดียว
- * หลังหน้าเว็บพร้อมใช้งาน
+history.replaceState(
+  { page: "login" },
+  "",
+  location.pathname
+);
+
+/*
+ * เตรียม Dropdown จากรายชื่อที่อยู่ใน HTML
+ * ไม่เรียก Google Apps Script
  */
-loadJudgeOptions();
+renderJudgeDropdown("");
 
 
   </script>
