@@ -4870,7 +4870,13 @@ function applyJudgeInfo(judge) {
       `สวัสดี${judge.name || "กรรมการ"}`;
   }
 }
-    passwordToggle.addEventListener(
+
+
+/* =========================================================
+   PASSWORD
+========================================================= */
+
+passwordToggle.addEventListener(
   "click",
   function() {
 
@@ -4889,6 +4895,146 @@ function applyJudgeInfo(judge) {
         : "👁";
   }
 );
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+document
+  .getElementById(
+    "logoutButton"
+  )
+  .addEventListener(
+    "click",
+    function() {
+
+      const tokenToRemove =
+        authToken;
+
+      authToken = "";
+      currentJudge = null;
+      applicants = [];
+      rankingRows = [];
+      currentApplicantId = null;
+      selectedJudgeId = "";
+
+      /*
+       * ซ่อนหน้าทั้งหมด
+       */
+      appPage.classList.add(
+        "hidden"
+      );
+
+      evaluationPage.classList.add(
+        "hidden"
+      );
+
+      rankingPage.classList.add(
+        "hidden"
+      );
+
+      confirmOverlay.classList.remove(
+        "active"
+      );
+
+      /*
+       * แสดง Login
+       */
+      loginPage.classList.remove(
+        "hidden"
+      );
+
+      /*
+       * Reset Login
+       */
+      loginForm.reset();
+
+      judgeRegionSelect.value =
+        "";
+
+      usernameInput.value =
+        "";
+
+      usernameInput.disabled =
+        true;
+
+      usernameInput.placeholder =
+        "กรุณาเลือกภูมิภาคก่อน";
+
+      passwordInput.value =
+        "";
+
+      passwordInput.type =
+        "password";
+
+      passwordToggle.textContent =
+        "👁";
+
+      selectedJudgeId =
+        "";
+
+      loginError.textContent =
+        "";
+
+      judgeDropdown.classList.add(
+        "hidden"
+      );
+
+      /*
+       * Reset Filters
+       */
+      searchInput.value = "";
+      statusFilter.value = "";
+      regionFilter.value = "";
+      ageFilter.value = "";
+      competitionFilter.value = "";
+      instrumentFilter.value = "";
+
+      /*
+       * URL กลับหน้า Login
+       */
+      history.replaceState(
+        {
+          page:
+            "login"
+        },
+        "",
+        window.location.pathname
+      );
+
+      window.scrollTo(
+        0,
+        0
+      );
+
+      /*
+       * Logout Server Background
+       */
+      if (tokenToRemove) {
+
+        apiPost(
+          "logout",
+          {
+            token:
+              tokenToRemove
+          }
+        ).catch(
+          function(error) {
+
+            console.warn(
+              "Background logout failed:",
+              error
+            );
+
+          }
+        );
+
+      }
+
+    }
+  );
+
     
     
     function renderApplicants() {
