@@ -483,6 +483,18 @@
   box-shadow:
     0 0 0 3px rgba(93, 40, 95, 0.09);
 }
+    
+    select.form-control {
+  cursor: pointer;
+  padding-right: 38px;
+}
+
+input.form-control:disabled {
+  background: #f7f5f7;
+  color: #9b949d;
+  cursor: not-allowed;
+  opacity: 1;
+}
 
 
 .password-toggle {
@@ -2753,6 +2765,56 @@ padding: 4px;
 
         <form id="loginForm">
 
+<!-- ================================
+     เลือกภูมิภาค
+================================ -->
+<div class="form-group">
+
+  <label for="judgeRegion">
+    ภูมิภาค
+  </label>
+
+  <div class="input-wrapper">
+
+    <span class="input-icon">
+      🌏
+    </span>
+
+    <select
+      id="judgeRegion"
+      class="form-control"
+      required
+    >
+      <option value="">
+        เลือกภูมิภาค
+      </option>
+
+      <option value="ภาคกลางและภาคตะวันออก">
+        ภาคกลางและภาคตะวันออก
+      </option>
+
+      <option value="ภาคตะวันออกเฉียงเหนือ">
+        ภาคตะวันออกเฉียงเหนือ
+      </option>
+
+      <option value="ภาคใต้และภาคตะวันตก">
+        ภาคใต้และภาคตะวันตก
+      </option>
+
+      <option value="ภาคเหนือ">
+        ภาคเหนือ
+      </option>
+
+    </select>
+
+  </div>
+
+</div>
+
+
+<!-- ================================
+     เลือกกรรมการ
+================================ -->
 <div class="form-group">
 
   <label for="username">
@@ -2769,10 +2831,11 @@ padding: 4px;
       id="username"
       class="form-control"
       type="text"
-      placeholder="เลือกหรือพิมพ์ชื่อกรรมการ"
+      placeholder="กรุณาเลือกภูมิภาคก่อน"
       autocomplete="off"
       aria-autocomplete="list"
       aria-controls="judgeDropdown"
+      disabled
       required
     >
 
@@ -2781,7 +2844,6 @@ padding: 4px;
       class="judge-dropdown hidden"
       role="listbox"
     ></div>
-
 
   </div>
 
@@ -3343,10 +3405,10 @@ padding: 4px;
   <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzwsaq-xps1XLGqOEG8hW3sK1owJNLVQ9rggbk4uvKcUh6njpuVmzMrYdII6OB1wCl6/exec";
 const EXPECTED_API_VERSION =
-  "2026-08-06-v13";
+  "2026-08-08-v14";
 
-    const HTML_BUILD_VERSION =
-  "2026-08-06-fast-login-v13";
+const HTML_BUILD_VERSION =
+  "2026-08-08-region-login-v14";
 
 console.info(
   "[HTML BUILD]",
@@ -3363,10 +3425,10 @@ console.info(
  * ไม่เก็บ Password
  */
 const JUDGE_BROWSER_CACHE_KEY =
-  "THAI_MUSIC_JUDGE_OPTIONS_V12";
+  "THAI_MUSIC_JUDGE_OPTIONS_V14";
 
 const JUDGE_BROWSER_CACHE_TIME_KEY =
-  "THAI_MUSIC_JUDGE_OPTIONS_TIME_V12";
+  "THAI_MUSIC_JUDGE_OPTIONS_TIME_V14";
 
 /*
  * รายชื่อกรรมการค่อนข้างคงที่
@@ -3394,9 +3456,25 @@ let apiHealthPromise = null;
     const loginPage = document.getElementById("loginPage");
     const appPage = document.getElementById("appPage");
     const evaluationPage = document.getElementById("evaluationPage");
-    const loginForm = document.getElementById("loginForm");
-    const usernameInput = document.getElementById("username");
-    const passwordInput = document.getElementById("password");
+    const loginForm =
+  document.getElementById(
+    "loginForm"
+  );
+
+const judgeRegionSelect =
+  document.getElementById(
+    "judgeRegion"
+  );
+
+const usernameInput =
+  document.getElementById(
+    "username"
+  );
+
+const passwordInput =
+  document.getElementById(
+    "password"
+  );
 const judgeDropdown =
   document.getElementById(
     "judgeDropdown"
@@ -3799,21 +3877,38 @@ function loadJudgeOptionsFromBrowserCache() {
       return false;
     }
 
-    const validJudges =
-      cachedJudges
-        .map(function(judge) {
-          return {
-            judgeId:
-              String(
-                judge.judgeId || ""
-              ).trim(),
+const validJudges =
+  cachedJudges
+    .map(function(judge) {
 
-            name:
-              String(
-                judge.name || ""
-              ).trim()
-          };
-        })
+      return {
+
+        judgeId:
+          String(
+            judge.judgeId || ""
+          ).trim(),
+
+        name:
+          String(
+            judge.name || ""
+          ).trim(),
+
+        regions:
+          Array.isArray(
+            judge.regions
+          )
+            ? judge.regions
+                .map(function(region) {
+                  return String(
+                    region || ""
+                  ).trim();
+                })
+                .filter(Boolean)
+            : []
+
+      };
+
+    })
         .filter(function(judge) {
           return Boolean(
             judge.judgeId &&
@@ -3866,17 +3961,32 @@ function saveJudgeOptionsToBrowserCache(
         : []
       )
         .map(function(judge) {
-          return {
-            judgeId:
-              String(
-                judge.judgeId || ""
-              ).trim(),
+         return {
 
-            name:
-              String(
-                judge.name || ""
-              ).trim()
-          };
+  judgeId:
+    String(
+      judge.judgeId || ""
+    ).trim(),
+
+  name:
+    String(
+      judge.name || ""
+    ).trim(),
+
+  regions:
+    Array.isArray(
+      judge.regions
+    )
+      ? judge.regions
+          .map(function(region) {
+            return String(
+              region || ""
+            ).trim();
+          })
+          .filter(Boolean)
+      : []
+
+};
         })
         .filter(function(judge) {
           return Boolean(
@@ -3970,29 +4080,40 @@ async function loadJudgeOptions(
       );
     }
 
-    const loadedJudges =
-      result.judges
-        .map(function(judge) {
-          return {
-            judgeId:
-              String(
-                judge.judgeId || ""
-              ).trim(),
+const loadedJudges =
+  result.judges
+    .map(function(judge) {
 
-            name:
-              String(
-                judge.name || ""
-              ).trim()
-          };
-        })
-        .filter(function(judge) {
-          return Boolean(
-            judge.judgeId &&
-            judge.name
-          );
-        });
+      return {
 
-    if (!loadedJudges.length) {
+        judgeId:
+          String(
+            judge.judgeId || ""
+          ).trim(),
+
+        name:
+          String(
+            judge.name || ""
+          ).trim(),
+
+        regions:
+          Array.isArray(
+            judge.regions
+          )
+            ? judge.regions
+                .map(function(region) {
+                  return String(
+                    region || ""
+                  ).trim();
+                })
+                .filter(Boolean)
+            : []
+
+      };
+
+    });
+
+if (!loadedJudges.length) {
       throw new Error(
         "ข้อมูลรายชื่อกรรมการไม่ถูกต้อง"
       );
@@ -4048,38 +4169,90 @@ async function loadJudgeOptions(
 function renderJudgeDropdown(
   searchText = ""
 ) {
+
+  const selectedRegion =
+    String(
+      judgeRegionSelect.value || ""
+    ).trim();
+
   const search =
-    String(searchText || "")
+    String(
+      searchText || ""
+    )
       .trim()
       .toLowerCase();
 
+  judgeDropdown.innerHTML = "";
+
+  /*
+   * ยังไม่เลือกภูมิภาค
+   */
+  if (!selectedRegion) {
+
+    judgeDropdown.innerHTML =
+      '<div class="judge-dropdown-empty">' +
+      'กรุณาเลือกภูมิภาคก่อน' +
+      '</div>';
+
+    return;
+
+  }
+
+  /*
+   * Filter:
+   *
+   * 1. ต้องอยู่ในภูมิภาคที่เลือก
+   * 2. ถ้ามีการพิมพ์ชื่อ ให้ค้นหาจากชื่ออีกชั้น
+   */
   const filtered =
     judgeOptions.filter(
       function(judge) {
-        return (
+
+        const judgeRegions =
+          Array.isArray(
+            judge.regions
+          )
+            ? judge.regions
+            : [];
+
+        const matchRegion =
+          judgeRegions.includes(
+            selectedRegion
+          );
+
+        const matchSearch =
           !search ||
           String(
             judge.name || ""
           )
             .toLowerCase()
-            .includes(search)
+            .includes(search);
+
+        return (
+          matchRegion &&
+          matchSearch
         );
+
       }
     );
 
-  judgeDropdown.innerHTML = "";
-
+  /*
+   * ไม่มีกรรมการในภาคนี้
+   */
   if (!filtered.length) {
+
     judgeDropdown.innerHTML =
       '<div class="judge-dropdown-empty">' +
-      'ไม่พบรายชื่อกรรมการ' +
+      'ไม่พบรายชื่อกรรมการในภูมิภาคนี้' +
       '</div>';
 
     return;
+
   }
 
   filtered.forEach(
     function(judge) {
+
       const button =
         document.createElement(
           "button"
@@ -4099,22 +4272,53 @@ function renderJudgeDropdown(
         "option"
       );
 
-button.addEventListener(
-  "mousedown",
-  function(event) {
-    event.preventDefault();
+      button.addEventListener(
+        "mousedown",
+        function(event) {
 
-    /*
-     * แสดงชื่อในช่อง Login
-     */
-    usernameInput.value =
-      judge.name;
+          event.preventDefault();
 
-    /*
-     * เก็บรหัสกรรมการไว้ใช้ Login
-     */
-    selectedJudgeId =
-      judge.judgeId;
+          /*
+           * ใส่ชื่อในช่อง
+           */
+          usernameInput.value =
+            judge.name;
+
+          /*
+           * จำ Judge ID สำหรับ Login
+           */
+          selectedJudgeId =
+            judge.judgeId;
+
+          judgeDropdown.classList.add(
+            "hidden"
+          );
+
+          loginError.textContent =
+            "";
+
+          passwordInput.focus();
+
+        }
+      );
+
+      judgeDropdown.appendChild(
+        button
+      );
+
+    }
+  );
+}
+    /* =========================================================
+   REGION → JUDGE DROPDOWN
+========================================================= */
+
+judgeRegionSelect.addEventListener(
+  "change",
+  function() {
+
+    usernameInput.value = "";
+    selectedJudgeId = "";
 
     judgeDropdown.classList.add(
       "hidden"
@@ -4122,35 +4326,39 @@ button.addEventListener(
 
     loginError.textContent = "";
 
-    passwordInput.focus();
+    if (!judgeRegionSelect.value) {
+
+      usernameInput.disabled = true;
+
+      usernameInput.placeholder =
+        "กรุณาเลือกภูมิภาคก่อน";
+
+      return;
+    }
+
+    usernameInput.disabled = false;
+
+    usernameInput.placeholder =
+      "เลือกหรือพิมพ์ชื่อกรรมการ";
+
+    renderJudgeDropdown("");
+
+    usernameInput.focus();
   }
 );
 
-      judgeDropdown.appendChild(
-        button
-      );
-    }
-  );
-}
 
-usernameInput.addEventListener("focus", function() {
-  renderJudgeDropdown(usernameInput.value);
-  judgeDropdown.classList.remove("hidden");
-});
-
-usernameInput.addEventListener("click", function() {
-  renderJudgeDropdown(usernameInput.value);
-  judgeDropdown.classList.remove("hidden");
-});
+/* =========================================================
+   JUDGE NAME INPUT
+========================================================= */
 
 usernameInput.addEventListener(
-  "input",
+  "focus",
   function() {
-    /*
-     * เมื่อมีการพิมพ์แก้ชื่อ
-     * ต้องล้าง JudgeID ที่เลือกก่อนหน้า
-     */
-    selectedJudgeId = "";
+
+    if (!judgeRegionSelect.value) {
+      return;
+    }
 
     renderJudgeDropdown(
       usernameInput.value
@@ -4162,32 +4370,114 @@ usernameInput.addEventListener(
   }
 );
 
-document.addEventListener("click", function(event) {
-  if (!event.target.closest(".input-wrapper")) {
-    judgeDropdown.classList.add("hidden");
-  }
-});
 
-    loginForm.addEventListener(
+usernameInput.addEventListener(
+  "click",
+  function() {
+
+    if (!judgeRegionSelect.value) {
+      return;
+    }
+
+    renderJudgeDropdown(
+      usernameInput.value
+    );
+
+    judgeDropdown.classList.remove(
+      "hidden"
+    );
+  }
+);
+
+
+usernameInput.addEventListener(
+  "input",
+  function() {
+
+    selectedJudgeId = "";
+
+    if (!judgeRegionSelect.value) {
+      judgeDropdown.classList.add(
+        "hidden"
+      );
+      return;
+    }
+
+    renderJudgeDropdown(
+      usernameInput.value
+    );
+
+    judgeDropdown.classList.remove(
+      "hidden"
+    );
+  }
+);
+
+
+/* =========================================================
+   ปิด Dropdown เมื่อ Click ข้างนอก
+========================================================= */
+
+document.addEventListener(
+  "click",
+  function(event) {
+
+    if (
+      !event.target.closest(
+        ".input-wrapper"
+      )
+    ) {
+      judgeDropdown.classList.add(
+        "hidden"
+      );
+    }
+
+  }
+);
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+loginForm.addEventListener(
   "submit",
   async function(event) {
+
     event.preventDefault();
 
-    loginError.textContent =
-      "";
+    loginError.textContent = "";
 
     const loginButton =
       loginForm.querySelector(
         ".login-button"
       );
 
-    loginButton.disabled =
-      true;
+    loginButton.disabled = true;
 
     loginButton.textContent =
       "กำลังเข้าสู่ระบบ...";
 
     try {
+
+      /*
+       * 1. ตรวจภูมิภาค
+       */
+      const selectedRegion =
+        String(
+          judgeRegionSelect.value || ""
+        ).trim();
+
+      if (!selectedRegion) {
+        throw new Error(
+          "กรุณาเลือกภูมิภาค"
+        );
+      }
+
+
+      /*
+       * 2. ตรวจชื่อกรรมการ
+       */
       const selectedJudgeName =
         usernameInput.value.trim();
 
@@ -4197,55 +4487,73 @@ document.addEventListener("click", function(event) {
         );
       }
 
+
+      /*
+       * ต้องเป็นชื่อที่อยู่ในภาคที่เลือกเท่านั้น
+       */
       const selectedJudge =
         judgeOptions.find(
           function(judge) {
-            return (
+
+            const judgeName =
               String(
                 judge.name || ""
-              ).trim() ===
-              selectedJudgeName
+              ).trim();
+
+            const judgeRegions =
+              Array.isArray(
+                judge.regions
+              )
+                ? judge.regions
+                : [];
+
+            return (
+              judgeName ===
+                selectedJudgeName &&
+              judgeRegions.includes(
+                selectedRegion
+              )
             );
+
           }
         );
 
       if (!selectedJudge) {
+
         throw new Error(
-          "กรุณาเลือกชื่อกรรมการจากรายการ"
+          "ชื่อกรรมการไม่อยู่ในภูมิภาคที่เลือก กรุณาเลือกจากรายการ"
         );
+
       }
 
+
+      /*
+       * 3. ตรวจ Password
+       */
       const enteredPassword =
         passwordInput.value.trim();
 
       if (!enteredPassword) {
+
         throw new Error(
           "กรุณากรอกรหัสผ่าน"
         );
+
       }
+
 
       selectedJudgeId =
         selectedJudge.judgeId;
 
+
       /*
-       * ขั้นตอนที่ 1:
-       * ตรวจสอบ Login เท่านั้น
+       * 4. Login
        */
       setLoading(
         true,
         "กำลังตรวจสอบชื่อและรหัสผ่าน..."
       );
 
-      console.info(
-        "[LOGIN] Sending request",
-        {
-          judgeId:
-            selectedJudgeId,
-
-          judgeName:
-            selectedJudgeName
-        }
-      );
 
       const loginResult =
         await apiPost(
@@ -4262,27 +4570,37 @@ document.addEventListener("click", function(event) {
           }
         );
 
+
       authToken =
         loginResult.token || "";
 
       currentJudge =
         loginResult.judge || null;
 
+
       if (!authToken) {
+
         throw new Error(
           "ระบบไม่ได้ส่ง Session Token กลับมา"
         );
+
       }
 
+
+      /*
+       * Score Criteria
+       */
       if (
         Array.isArray(
           loginResult.scoreCriteria
         ) &&
         loginResult.scoreCriteria.length
       ) {
+
         scoreCriteria =
           loginResult.scoreCriteria.map(
             function(item) {
+
               return {
                 key:
                   item.key,
@@ -4301,16 +4619,20 @@ document.addEventListener("click", function(event) {
                     item.maxScore
                   ) || 0
               };
+
             }
           );
+
       }
+
 
       applyJudgeInfo(
         currentJudge
       );
 
+
       /*
-       * แสดง Dashboard ทันทีหลัง Login สำเร็จ
+       * เปิด Dashboard
        */
       loginPage.classList.add(
         "hidden"
@@ -4328,10 +4650,11 @@ document.addEventListener("click", function(event) {
         "hidden"
       );
 
-      applicants =
-        [];
+
+      applicants = [];
 
       renderApplicants();
+
 
       history.replaceState(
         {
@@ -4342,16 +4665,18 @@ document.addEventListener("click", function(event) {
         "#dashboard"
       );
 
+
       /*
-       * ขั้นตอนที่ 2:
-       * โหลดรายการประเมินแยกจาก Login
+       * โหลดรายการประเมิน
        */
       setLoading(
         true,
         "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
       );
 
+
       try {
+
         await loadApplicants();
 
         showToast(
@@ -4360,6 +4685,7 @@ document.addEventListener("click", function(event) {
         );
 
       } catch (loadError) {
+
         console.error(
           "loadApplicants failed:",
           loadError
@@ -4367,30 +4693,27 @@ document.addEventListener("click", function(event) {
 
         applicantGrid.innerHTML =
           '<div class="empty-state">' +
-            '<strong>เข้าสู่ระบบสำเร็จ แต่โหลดรายการประเมินไม่สำเร็จ</strong>' +
-            '<p style="margin-top:6px;">' +
-              escapeHtml(
-                loadError.message ||
-                "กรุณาลองโหลดรายการใหม่"
-              ) +
-            '</p>' +
+          '<strong>เข้าสู่ระบบสำเร็จ แต่โหลดรายการประเมินไม่สำเร็จ</strong>' +
+          '<p style="margin-top:6px;">' +
+          escapeHtml(
+            loadError.message ||
+            "กรุณาลองโหลดรายการใหม่"
+          ) +
+          '</p>' +
           '</div>';
 
         showToast(
           loadError.message ||
           "โหลดรายการประเมินไม่สำเร็จ"
         );
+
       }
 
     } catch (error) {
-      authToken =
-        "";
 
-      currentJudge =
-        null;
-
-      applicants =
-        [];
+      authToken = "";
+      currentJudge = null;
+      applicants = [];
 
       appPage.classList.add(
         "hidden"
@@ -4415,9 +4738,8 @@ document.addEventListener("click", function(event) {
           : "ไม่สามารถเข้าสู่ระบบได้";
 
     } finally {
-      setLoading(
-        false
-      );
+
+      setLoading(false);
 
       loginButton.disabled =
         false;
@@ -4427,8 +4749,9 @@ document.addEventListener("click", function(event) {
     }
   }
 );
-  
+    
     async function loadApplicants() {
+
   if (!authToken) {
     throw new Error(
       "ไม่พบ Session กรุณาเข้าสู่ระบบใหม่"
@@ -4457,9 +4780,11 @@ document.addEventListener("click", function(event) {
     ) &&
     result.scoreCriteria.length
   ) {
+
     scoreCriteria =
       result.scoreCriteria.map(
         function(item) {
+
           return {
             key:
               item.key,
@@ -4478,11 +4803,13 @@ document.addEventListener("click", function(event) {
                 item.maxScore
               ) || 0
           };
+
         }
       );
   }
 
   if (result.judge) {
+
     currentJudge =
       result.judge;
 
@@ -4502,110 +4829,68 @@ document.addEventListener("click", function(event) {
   return applicants;
 }
 
-    function applyJudgeInfo(judge) {
-      if (!judge) return;
-      document.getElementById("topbarJudgeName").textContent = judge.name || "กรรมการ";
-      document.getElementById("topbarJudgeRole").textContent = judge.role || "คณะกรรมการประเมิน";
-      document.getElementById("topbarJudgeAvatar").textContent = judge.initials || "กท";
-      const welcome = document.querySelector(".welcome-section h1");
-if (welcome) {
-  welcome.textContent =
-    `สวัสดี ${judge.name || "กรรมการ"}`;
+
+function applyJudgeInfo(judge) {
+
+  if (!judge) {
+    return;
+  }
+
+  document
+    .getElementById(
+      "topbarJudgeName"
+    )
+    .textContent =
+      judge.name ||
+      "กรรมการ";
+
+  document
+    .getElementById(
+      "topbarJudgeRole"
+    )
+    .textContent =
+      judge.role ||
+      "คณะกรรมการประเมิน";
+
+  document
+    .getElementById(
+      "topbarJudgeAvatar"
+    )
+    .textContent =
+      judge.initials ||
+      "กท";
+
+  const welcome =
+    document.querySelector(
+      ".welcome-section h1"
+    );
+
+  if (welcome) {
+    welcome.textContent =
+      `สวัสดี${judge.name || "กรรมการ"}`;
+  }
 }
-    }
+    passwordToggle.addEventListener(
+  "click",
+  function() {
 
-    passwordToggle.addEventListener("click", function () {
-      const isPassword = passwordInput.type === "password";
-      passwordInput.type = isPassword ? "text" : "password";
-      passwordToggle.textContent = isPassword ? "🙈" : "👁";
-    });
+    const isPassword =
+      passwordInput.type ===
+      "password";
 
-    document
-  .getElementById(
-    "logoutButton"
-  )
-  .addEventListener(
-    "click",
-    function() {
-      const tokenToRemove =
-        authToken;
+    passwordInput.type =
+      isPassword
+        ? "text"
+        : "password";
 
-      /*
-       * ล้างสถานะหน้าเว็บทันที
-       */
-      authToken =
-        "";
-
-      currentJudge =
-        null;
-
-      applicants =
-        [];
-
-      rankingRows =
-        [];
-
-      currentApplicantId =
-        null;
-
-      selectedJudgeId =
-        "";
-
-      appPage.classList.add(
-        "hidden"
-      );
-
-      evaluationPage.classList.add(
-        "hidden"
-      );
-
-      rankingPage.classList.add(
-        "hidden"
-      );
-
-      loginPage.classList.remove(
-        "hidden"
-      );
-
-      loginForm.reset();
-
-      loginError.textContent =
-        "";
-
-      renderJudgeDropdown("");
-
-      history.replaceState(
-        {
-          page:
-            "login"
-        },
-        "",
-        location.pathname
-      );
-
-      /*
-       * แจ้ง Server แบบ Background
-       * ไม่ต้องให้ผู้ใช้รอ
-       */
-      if (tokenToRemove) {
-        apiPost(
-          "logout",
-          {
-            token:
-              tokenToRemove
-          }
-        ).catch(
-          function(error) {
-            console.warn(
-              "Background logout failed:",
-              error
-            );
-          }
-        );
-      }
-    }
-  );
-
+    passwordToggle.textContent =
+      isPassword
+        ? "🙈"
+        : "👁";
+  }
+);
+    
+    
     function renderApplicants() {
       const filteredApplicants = getFilteredApplicants();
       applicantGrid.innerHTML = "";
