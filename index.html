@@ -2261,6 +2261,170 @@ padding: 4px;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
+    
+    /* =========================================================
+   Confirmation Modal - Responsive Fix
+   แก้ Popup ยืนยันส่งคะแนนบน Tablet / Mobile
+========================================================= */
+
+@media (max-width: 760px) {
+
+  /*
+   * modal-overlay ตัวอื่นในระบบใช้ align-items: stretch
+   * แต่ Popup ยืนยันคะแนนต้องอยู่กลางหน้าจอ
+   */
+  #confirmOverlay {
+    padding:
+      max(16px, env(safe-area-inset-top))
+      16px
+      max(16px, env(safe-area-inset-bottom));
+
+    align-items: center;
+    justify-content: center;
+  }
+
+
+  /*
+   * ป้องกันกล่อง Confirm ถูกยืดเต็มความสูง
+   */
+  #confirmOverlay .confirm-box {
+    width: min(430px, 100%);
+
+    height: auto;
+    min-height: 0;
+
+    max-height:
+      calc(
+        100dvh -
+        32px -
+        env(safe-area-inset-top) -
+        env(safe-area-inset-bottom)
+      );
+
+    padding: 24px 20px;
+
+    overflow-y: auto;
+
+    border-radius: 20px;
+
+    flex: 0 1 auto;
+  }
+
+
+  /*
+   * CSS Responsive เดิมของระบบ
+   * ซ่อน .secondary-button
+   *
+   * แต่ปุ่ม "กลับไปตรวจสอบ"
+   * ของ Confirm ต้องแสดง
+   */
+  #confirmOverlay .secondary-button {
+    display: block;
+  }
+
+
+  /*
+   * ให้ 2 ปุ่มอยู่ในแถวเดียวกัน
+   */
+  #confirmOverlay .confirm-actions {
+    width: 100%;
+
+    margin-top: 20px;
+
+    display: grid;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+
+    gap: 10px;
+  }
+
+
+  /*
+   * ให้ปุ่มมีขนาดเท่ากัน
+   */
+  #confirmOverlay .confirm-actions button {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+
+    padding: 0 12px;
+
+    font-size: 13px;
+    line-height: 1.4;
+
+    white-space: normal;
+  }
+
+}
+    
+    @media (max-width: 430px) {
+
+  #confirmOverlay {
+    padding:
+      max(14px, env(safe-area-inset-top))
+      14px
+      max(14px, env(safe-area-inset-bottom));
+  }
+
+
+  #confirmOverlay .confirm-box {
+    width: 100%;
+
+    padding: 22px 18px;
+
+    border-radius: 18px;
+  }
+
+
+  #confirmOverlay .confirm-icon {
+    width: 56px;
+    height: 56px;
+
+    margin-bottom: 14px;
+
+    font-size: 26px;
+  }
+
+
+  #confirmOverlay .confirm-box h3 {
+    font-size: 19px;
+    line-height: 1.4;
+  }
+
+
+  #confirmOverlay .confirm-box p {
+    margin-top: 7px;
+
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+
+  /*
+   * มือถือแคบมาก:
+   * ให้ปุ่มเรียงลงมาเพื่อไม่ให้ข้อความอัด
+   */
+  #confirmOverlay .confirm-actions {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+
+  /*
+   * ให้ปุ่มยืนยันอยู่ด้านบน
+   * และกลับไปตรวจสอบอยู่ด้านล่าง
+   */
+  #confirmOverlay #confirmSubmitButton {
+    order: 1;
+  }
+
+  #confirmOverlay #cancelConfirmButton {
+    order: 2;
+  }
+
+}
 
     /* =========================
        Toast
@@ -2461,7 +2625,7 @@ padding: 4px;
 
     }
 
-    @media (max-width: 430px) {
+@media (max-width: 360px) {
       .summary-grid {
         grid-template-columns: 1fr;
       }
