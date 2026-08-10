@@ -1279,6 +1279,89 @@ padding: 4px;
       margin-bottom: 12px;
       font-size: 42px;
     }
+    
+    /* =========================
+   Applicant Pagination
+========================= */
+
+.applicant-pagination {
+  width: 100%;
+
+  margin-top: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 7px;
+}
+
+
+.pagination-button {
+  min-width: 38px;
+  height: 38px;
+
+  padding: 0 11px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: var(--text-main);
+
+  font-size: 12px;
+  font-weight: 600;
+
+  transition: 0.2s ease;
+}
+
+
+.pagination-button:hover:not(:disabled) {
+  border-color: var(--primary);
+
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+
+.pagination-button.active {
+  border-color: var(--primary);
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary),
+      var(--primary-dark)
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 5px 14px
+    rgba(93, 40, 95, 0.18);
+}
+
+
+.pagination-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+
+.pagination-info {
+  margin: 0 5px;
+
+  color: var(--text-soft);
+
+  font-size: 11px;
+
+  white-space: nowrap;
+}
 
     /* =========================
        Evaluation modal
@@ -2857,6 +2940,41 @@ padding: 4px;
     grid-template-columns: 1fr;
   }
 }
+    
+    /* =========================
+   Pagination Responsive
+========================= */
+
+@media (max-width: 760px) {
+
+  .applicant-pagination {
+    margin-top: 18px;
+
+    gap: 5px;
+  }
+
+
+  .pagination-button {
+    min-width: 36px;
+    height: 36px;
+
+    padding: 0 9px;
+
+    font-size: 11px;
+  }
+
+
+  .pagination-info {
+    width: 100%;
+
+    margin: 4px 0 0;
+
+    text-align: center;
+
+    order: 10;
+  }
+
+}
 
 </style>
 
@@ -3298,7 +3416,19 @@ padding: 4px;
 
       </section>
 
-      <section id="applicantGrid" class="applicant-grid"></section>
+<!-- รายการผู้สมัคร -->
+<section
+  id="applicantGrid"
+  class="applicant-grid"
+></section>
+
+
+<!-- Pagination -->
+<nav
+  id="applicantPagination"
+  class="applicant-pagination hidden"
+  aria-label="เปลี่ยนหน้ารายการ"
+></nav>
 
     </main>
 
@@ -3603,9 +3733,43 @@ const JUDGE_BROWSER_CACHE_MAX_AGE =
 
 let apiHealthPromise = null;
 
-    let applicants = [];
-    let rankingRows = [];
-    let scoreCriteria = [
+let applicants = [];
+let rankingRows = [];
+
+
+/*
+ * =========================================================
+ * PAGINATION
+ *
+ * แสดงรายการครั้งละ 20 รายการ
+ * =========================================================
+ */
+
+const ITEMS_PER_PAGE = 20;
+
+let currentPage = 1;
+
+
+/*
+ * =========================================================
+ * STATUS ORDER
+ *
+ * 1. ยังไม่เริ่ม
+ * 2. บันทึกร่าง
+ * 3. ส่งคะแนนแล้ว
+ *
+ * ส่งคะแนนแล้วจะถูกย้ายไปท้ายสุด
+ * =========================================================
+ */
+
+const APPLICANT_STATUS_ORDER = {
+  "not-started": 1,
+  "draft": 2,
+  "submitted": 3
+};
+
+
+let scoreCriteria = [
       { key: "musicianship", title: "ทักษะการบรรเลงดนตรี", description: "พิจารณาความถูกต้องของทำนอง จังหวะ และความแม่นยำในการบรรเลงตามมาตรฐาน", maxScore: 25 },
       { key: "technique", title: "เทคนิคและการใช้เครื่องดนตรี", description: "พิจารณาทักษะการใช้เทคนิคเฉพาะของเครื่องดนตรีได้อย่างเต็มประสิทธิภาพและเหมาะสมกับวัย", maxScore: 25 },
       { key: "creativity", title: "ความคิดสร้างสรรค์", description: "การเรียบเรียงทำนองเพลง การออกแบบการนำเสนอ และความสอดคล้องของการผสมผสานเครื่องดนตรี", maxScore: 25 },
@@ -3658,7 +3822,15 @@ let selectedJudgeId = "";
     
     const passwordToggle = document.getElementById("passwordToggle");
     const loginError = document.getElementById("loginError");
-    const applicantGrid = document.getElementById("applicantGrid");
+    const applicantGrid =
+  document.getElementById(
+    "applicantGrid"
+  );
+
+const applicantPagination =
+  document.getElementById(
+    "applicantPagination"
+  );
     const searchInput = document.getElementById("searchInput");
     const statusFilter = document.getElementById("statusFilter");
     const regionFilter = document.getElementById("regionFilter");
@@ -4937,6 +5109,12 @@ loginForm.addEventListener(
     )
       ? result.applicants
       : [];
+      
+      /*
+ * Login / Reload รายการใหม่
+ * เริ่มจากหน้า 1
+ */
+currentPage = 1;
 
   if (
     Array.isArray(
@@ -5082,6 +5260,11 @@ document
       rankingRows = [];
       currentApplicantId = null;
       selectedJudgeId = "";
+      
+      /*
+ * Reset Pagination
+ */
+currentPage = 1;
 
       /*
        * ซ่อนหน้าทั้งหมด
@@ -5199,53 +5382,959 @@ document
     }
   );
 
-    
-    
-    function renderApplicants() {
-      const filteredApplicants = getFilteredApplicants();
-      applicantGrid.innerHTML = "";
-      document.getElementById("resultCount").textContent = `พบ ${filteredApplicants.length} รายการ`;
+function renderApplicants() {
+
+  /*
+   * =========================================================
+   * 1. Filter ตามค่าที่ผู้ใช้เลือก
+   * =========================================================
+   */
+
+  const filteredApplicants =
+    getFilteredApplicants();
+
+
+  /*
+   * =========================================================
+   * 2. เรียงสถานะ
+   *
+   * ยังไม่เริ่ม
+   * ↓
+   * บันทึกร่าง
+   * ↓
+   * ส่งคะแนนแล้ว
+   *
+   * ดังนั้นรายการที่ประเมินเสร็จแล้ว
+   * จะถูกย้ายไปอยู่ท้ายสุด
+   * =========================================================
+   */
+
+  const sortedApplicants =
+    sortApplicantsByStatus(
+      filteredApplicants
+    );
+
+
+  /*
+   * =========================================================
+   * 3. จำนวนหน้าทั้งหมด
+   * =========================================================
+   */
+
+  const totalItems =
+    sortedApplicants.length;
+
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(
+        totalItems /
+        ITEMS_PER_PAGE
+      )
+    );
+
+
+  /*
+   * ถ้าตัวกรองทำให้จำนวนหน้าลดลง
+   *
+   * เช่น:
+   * อยู่หน้า 5
+   * แล้ว Filter เหลือ 1 หน้า
+   *
+   * ให้กลับมาหน้าสุดท้ายที่มีจริง
+   */
+  if (
+    currentPage >
+    totalPages
+  ) {
+    currentPage =
+      totalPages;
+  }
+
+
+  if (
+    currentPage <
+    1
+  ) {
+    currentPage =
+      1;
+  }
+
+
+  /*
+   * =========================================================
+   * 4. เลือกเฉพาะ 20 รายการของหน้าปัจจุบัน
+   * =========================================================
+   */
+
+  const startIndex =
+    (
+      currentPage -
+      1
+    ) *
+    ITEMS_PER_PAGE;
+
+  const endIndex =
+    startIndex +
+    ITEMS_PER_PAGE;
+
+
+  const pageApplicants =
+    sortedApplicants.slice(
+      startIndex,
+      endIndex
+    );
+
+
+  /*
+   * =========================================================
+   * 5. Reset Grid
+   * =========================================================
+   */
+
+  applicantGrid.innerHTML =
+    "";
+
+
+  /*
+   * =========================================================
+   * 6. Result Count
+   * =========================================================
+   */
+
+  const resultCount =
+    document.getElementById(
+      "resultCount"
+    );
+
+
+  if (totalItems) {
+
+    const firstItemNumber =
+      startIndex + 1;
+
+    const lastItemNumber =
+      Math.min(
+        endIndex,
+        totalItems
+      );
+
+
+    resultCount.textContent =
+      `พบ ${totalItems} รายการ · แสดง ${firstItemNumber}-${lastItemNumber}`;
+
+  } else {
+
+    resultCount.textContent =
+      "พบ 0 รายการ";
+
+  }
+
+
+  /*
+   * =========================================================
+   * 7. Summary
+   *
+   * ยังนับจาก Applicant ทั้งหมด
+   * ไม่ใช่เฉพาะหน้าปัจจุบัน
+   * =========================================================
+   */
+
+  updateSummary(
+    buildClientSummary(
+      applicants
+    )
+  );
+
+
+  /*
+   * =========================================================
+   * 8. ไม่มีรายการ
+   * =========================================================
+   */
+
+  if (
+    !totalItems
+  ) {
+
+    applicantGrid.innerHTML =
+      `
+        <div class="empty-state">
+
+          <strong>
+            ไม่พบรายการที่ตรงกับเงื่อนไข
+          </strong>
+
+          <p style="margin-top:6px;">
+            ลองเปลี่ยนคำค้นหาหรือตัวกรองอีกครั้ง
+          </p>
+
+        </div>
+      `;
+
+
+    applicantPagination.classList.add(
+      "hidden"
+    );
+
+    applicantPagination.innerHTML =
+      "";
+
+    return;
+  }
+
+
+  /*
+   * =========================================================
+   * 9. Render เฉพาะ Applicant ในหน้าปัจจุบัน
+   * =========================================================
+   */
+
+  pageApplicants.forEach(
+    function(applicant) {
+
+      const statusInfo =
+        getStatusInfo(
+          applicant.status
+        );
+
+      const buttonInfo =
+        getButtonInfo(
+          applicant.status
+        );
+
+
+      const card =
+        document.createElement(
+          "article"
+        );
+
+
+      card.className =
+        `applicant-card status-${applicant.status}`;
+
+
+      card.tabIndex =
+        0;
+
+
+      card.setAttribute(
+        "role",
+        "button"
+      );
+
+
+      card.innerHTML =
+        `
+          <div class="row-field submission-field">
+
+            <span>
+              Submission Number
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                applicant.submissionNumber ||
+                applicant.id
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="row-field school-field">
+
+            <span>
+              ชื่อโรงเรียน
+            </span>
+
+            <strong
+              title="${escapeHtml(
+                applicant.schoolName
+              )}"
+            >
+              ${escapeHtml(
+                applicant.schoolName ||
+                "ไม่ระบุชื่อโรงเรียน"
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="row-field">
+
+            <span>
+              ภูมิภาค
+            </span>
+
+            <strong
+              title="${escapeHtml(
+                applicant.region
+              )}"
+            >
+              ${escapeHtml(
+                applicant.region ||
+                "-"
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="row-field">
+
+            <span>
+              รายการแข่งขัน
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                applicant.competition ||
+                "-"
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="row-field">
+
+            <span>
+              รุ่นอายุ
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                applicant.ageGroup ||
+                "-"
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="row-field">
+
+            <span>
+              ประเภทเครื่องดนตรี
+            </span>
+
+            <strong>
+              ${escapeHtml(
+                applicant.instrumentCategory ||
+                "-"
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="status-column">
+
+            <div
+              class="status-badge ${statusInfo.className}"
+            >
+              ${statusInfo.label}
+            </div>
+
+            <button
+              class="row-action ${buttonInfo.className}"
+              type="button"
+            >
+              ${buttonInfo.label}
+            </button>
+
+          </div>
+        `;
+
 
       /*
-       * Summary นับจากคลิปทั้งหมดที่กรรมการได้รับมอบหมาย
-       * ไม่เปลี่ยนตามคำค้นหาและตัวกรองบนหน้าเว็บ
+       * เปิดหน้าประเมินเมื่อ Click
        */
-      updateSummary(buildClientSummary(applicants));
+      card.addEventListener(
+        "click",
+        function() {
 
-      if (!filteredApplicants.length) {
-        applicantGrid.innerHTML = `<div class="empty-state"><strong>ไม่พบรายการที่ตรงกับเงื่อนไข</strong><p style="margin-top:6px;">ลองเปลี่ยนคำค้นหาหรือตัวกรองอีกครั้ง</p></div>`;
+          openEvaluation(
+            applicant.id
+          );
+
+        }
+      );
+
+
+      /*
+       * รองรับ Keyboard
+       */
+      card.addEventListener(
+        "keydown",
+        function(event) {
+
+          if (
+            event.key ===
+              "Enter" ||
+            event.key ===
+              " "
+          ) {
+
+            event.preventDefault();
+
+            openEvaluation(
+              applicant.id
+            );
+
+          }
+
+        }
+      );
+
+
+      applicantGrid.appendChild(
+        card
+      );
+
+    }
+  );
+
+
+  /*
+   * =========================================================
+   * 10. Render Pagination
+   * =========================================================
+   */
+
+  renderApplicantPagination(
+    totalPages,
+    totalItems
+  );
+}
+    
+    /*
+ * =========================================================
+ * SORT APPLICANTS BY STATUS
+ *
+ * ลำดับ:
+ * 1 = ยังไม่เริ่ม
+ * 2 = บันทึกร่าง
+ * 3 = ส่งคะแนนแล้ว
+ *
+ * ภายในสถานะเดียวกัน
+ * จะคงลำดับเดิมจาก API
+ * =========================================================
+ */
+
+function sortApplicantsByStatus(
+  items
+) {
+
+  const list =
+    Array.isArray(items)
+      ? items
+      : [];
+
+
+  return list
+
+    /*
+     * Copy Array ก่อน Sort
+     *
+     * เพื่อไม่แก้ applicants ตัวจริง
+     */
+    .map(
+      function(item, index) {
+
+        return {
+          item:
+            item,
+
+          originalIndex:
+            index
+        };
+
+      }
+    )
+
+    .sort(
+      function(a, b) {
+
+        const statusA =
+          APPLICANT_STATUS_ORDER[
+            a.item.status
+          ] || 99;
+
+
+        const statusB =
+          APPLICANT_STATUS_ORDER[
+            b.item.status
+          ] || 99;
+
+
+        /*
+         * เรียงตาม Status ก่อน
+         */
+        if (
+          statusA !==
+          statusB
+        ) {
+
+          return (
+            statusA -
+            statusB
+          );
+
+        }
+
+
+        /*
+         * Status เดียวกัน
+         * คงลำดับเดิม
+         */
+        return (
+          a.originalIndex -
+          b.originalIndex
+        );
+
+      }
+    )
+
+    .map(
+      function(entry) {
+
+        return entry.item;
+
+      }
+    );
+}
+    
+    /*
+ * =========================================================
+ * RENDER APPLICANT PAGINATION
+ * =========================================================
+ */
+
+function renderApplicantPagination(
+  totalPages,
+  totalItems
+) {
+
+  applicantPagination.innerHTML =
+    "";
+
+
+  /*
+   * ถ้ามีไม่เกิน 20 รายการ
+   * ไม่จำเป็นต้องแสดง Pagination
+   */
+  if (
+    totalItems <=
+    ITEMS_PER_PAGE
+  ) {
+
+    applicantPagination.classList.add(
+      "hidden"
+    );
+
+    return;
+  }
+
+
+  applicantPagination.classList.remove(
+    "hidden"
+  );
+
+
+  /*
+   * =======================================================
+   * ปุ่มก่อนหน้า
+   * =======================================================
+   */
+
+  const previousButton =
+    createPaginationButton(
+      "← ก่อนหน้า",
+      currentPage === 1,
+      false,
+      function() {
+
+        goToApplicantPage(
+          currentPage - 1
+        );
+
+      }
+    );
+
+
+  applicantPagination.appendChild(
+    previousButton
+  );
+
+
+  /*
+   * =======================================================
+   * เลขหน้า
+   *
+   * ไม่แสดงเลขทุกหน้า ถ้ามีเยอะมาก
+   *
+   * เช่น:
+   * 1 2 3 4 5
+   * หรือ
+   * 1 ... 4 5 6 ... 10
+   * =======================================================
+   */
+
+  const pageNumbers =
+    getVisiblePageNumbers(
+      totalPages,
+      currentPage
+    );
+
+
+  pageNumbers.forEach(
+    function(pageNumber) {
+
+      /*
+       * Ellipsis
+       */
+      if (
+        pageNumber ===
+        "..."
+      ) {
+
+        const dots =
+          document.createElement(
+            "span"
+          );
+
+        dots.className =
+          "pagination-info";
+
+        dots.textContent =
+          "…";
+
+        applicantPagination.appendChild(
+          dots
+        );
+
         return;
       }
 
-      filteredApplicants.forEach(function (applicant) {
-        const statusInfo = getStatusInfo(applicant.status);
-        const buttonInfo = getButtonInfo(applicant.status);
-        const card = document.createElement("article");
-        card.className = `applicant-card status-${applicant.status}`;
-        card.tabIndex = 0;
-        card.setAttribute("role", "button");
-        card.innerHTML = `
-          <div class="row-field submission-field"><span>Submission Number</span><strong>${escapeHtml(applicant.submissionNumber || applicant.id)}</strong></div>
-          <div class="row-field school-field"><span>ชื่อโรงเรียน</span><strong title="${escapeHtml(applicant.schoolName)}">${escapeHtml(applicant.schoolName || "ไม่ระบุชื่อโรงเรียน")}</strong></div>
-          <div class="row-field"><span>ภูมิภาค</span><strong title="${escapeHtml(applicant.region)}">${escapeHtml(applicant.region || "-")}</strong></div>
-          <div class="row-field"><span>รายการแข่งขัน</span><strong>${escapeHtml(applicant.competition || "-")}</strong></div>
-          <div class="row-field"><span>รุ่นอายุ</span><strong>${escapeHtml(applicant.ageGroup || "-")}</strong></div>
-          <div class="row-field"><span>ประเภทเครื่องดนตรี</span><strong>${escapeHtml(applicant.instrumentCategory || "-")}</strong></div>
-          <div class="status-column">
-            <div class="status-badge ${statusInfo.className}">${statusInfo.label}</div>
-            <button class="row-action ${buttonInfo.className}" type="button">${buttonInfo.label}</button>
-          </div>`;
 
-        card.addEventListener("click", () => openEvaluation(applicant.id));
-        card.addEventListener("keydown", event => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            openEvaluation(applicant.id);
+      /*
+       * เลขหน้า
+       */
+      const pageButton =
+        createPaginationButton(
+          String(
+            pageNumber
+          ),
+          false,
+          pageNumber ===
+            currentPage,
+          function() {
+
+            goToApplicantPage(
+              pageNumber
+            );
+
           }
-        });
-        applicantGrid.appendChild(card);
-      });
+        );
+
+
+      applicantPagination.appendChild(
+        pageButton
+      );
+
     }
+  );
+
+
+  /*
+   * =======================================================
+   * ปุ่มถัดไป
+   * =======================================================
+   */
+
+  const nextButton =
+    createPaginationButton(
+      "ถัดไป →",
+      currentPage ===
+        totalPages,
+      false,
+      function() {
+
+        goToApplicantPage(
+          currentPage + 1
+        );
+
+      }
+    );
+
+
+  applicantPagination.appendChild(
+    nextButton
+  );
+
+
+  /*
+   * =======================================================
+   * Page Info
+   * =======================================================
+   */
+
+  const pageInfo =
+    document.createElement(
+      "span"
+    );
+
+
+  pageInfo.className =
+    "pagination-info";
+
+
+  pageInfo.textContent =
+    `หน้า ${currentPage} / ${totalPages}`;
+
+
+  applicantPagination.appendChild(
+    pageInfo
+  );
+}
+    
+    /*
+ * สร้างปุ่ม Pagination
+ */
+function createPaginationButton(
+  label,
+  disabled,
+  active,
+  onClick
+) {
+
+  const button =
+    document.createElement(
+      "button"
+    );
+
+
+  button.type =
+    "button";
+
+
+  button.className =
+    "pagination-button";
+
+
+  button.textContent =
+    label;
+
+
+  if (disabled) {
+    button.disabled =
+      true;
+  }
+
+
+  if (active) {
+
+    button.classList.add(
+      "active"
+    );
+
+    button.setAttribute(
+      "aria-current",
+      "page"
+    );
+
+  }
+
+
+  button.addEventListener(
+    "click",
+    function() {
+
+      if (
+        !button.disabled
+      ) {
+
+        onClick();
+
+      }
+
+    }
+  );
+
+
+  return button;
+}
+
+
+/*
+ * =========================================================
+ * ไปยังหน้าที่เลือก
+ * =========================================================
+ */
+
+function goToApplicantPage(
+  pageNumber
+) {
+
+  const filteredApplicants =
+    sortApplicantsByStatus(
+      getFilteredApplicants()
+    );
+
+
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(
+        filteredApplicants.length /
+        ITEMS_PER_PAGE
+      )
+    );
+
+
+  currentPage =
+    Math.min(
+      Math.max(
+        Number(pageNumber) ||
+        1,
+        1
+      ),
+      totalPages
+    );
+
+
+  renderApplicants();
+
+
+  /*
+   * Scroll กลับขึ้นมาตรงหัวข้อรายการ
+   * ไม่กลับไปบนสุดของ Dashboard
+   */
+  const applicantSection =
+    document.querySelector(
+      ".section-header"
+    );
+
+
+  if (applicantSection) {
+
+    const offsetTop =
+      applicantSection
+        .getBoundingClientRect()
+        .top +
+      window.pageYOffset -
+      90;
+
+
+    window.scrollTo({
+      top:
+        Math.max(
+          0,
+          offsetTop
+        ),
+
+      behavior:
+        "smooth"
+    });
+
+  }
+}
+
+
+/*
+ * =========================================================
+ * เลือกเลขหน้าที่ควรแสดง
+ * =========================================================
+ */
+
+function getVisiblePageNumbers(
+  totalPages,
+  currentPage
+) {
+
+  /*
+   * มีไม่เกิน 7 หน้า
+   * แสดงทั้งหมด
+   */
+  if (
+    totalPages <= 7
+  ) {
+
+    return Array.from(
+      {
+        length:
+          totalPages
+      },
+      function(_, index) {
+
+        return (
+          index + 1
+        );
+
+      }
+    );
+
+  }
+
+
+  /*
+   * หน้าแรก ๆ
+   */
+  if (
+    currentPage <= 4
+  ) {
+
+    return [
+      1,
+      2,
+      3,
+      4,
+      5,
+      "...",
+      totalPages
+    ];
+
+  }
+
+
+  /*
+   * หน้าท้าย ๆ
+   */
+  if (
+    currentPage >=
+    totalPages - 3
+  ) {
+
+    return [
+      1,
+      "...",
+      totalPages - 4,
+      totalPages - 3,
+      totalPages - 2,
+      totalPages - 1,
+      totalPages
+    ];
+
+  }
+
+
+  /*
+   * อยู่กลาง ๆ
+   */
+  return [
+    1,
+    "...",
+    currentPage - 1,
+    currentPage,
+    currentPage + 1,
+    "...",
+    totalPages
+  ];
+}
+    
 
     function getStatusInfo(status) {
       return {
@@ -5277,24 +6366,93 @@ document
       });
     }
 
-    [searchInput, statusFilter, regionFilter, ageFilter, competitionFilter, instrumentFilter].forEach(element => {
-      element.addEventListener("input", renderApplicants);
-      element.addEventListener("change", renderApplicants);
-    });
+[
+  searchInput,
+  statusFilter,
+  regionFilter,
+  ageFilter,
+  competitionFilter,
+  instrumentFilter
 
-    refreshFilterButton.addEventListener("click", function () {
-      searchInput.value = "";
-      statusFilter.value = "";
-      regionFilter.value = "";
-      ageFilter.value = "";
-      competitionFilter.value = "";
-      instrumentFilter.value = "";
+].forEach(
+  function(element) {
 
-      renderApplicants();
-      searchInput.focus();
+    /*
+     * เวลา Search
+     */
+    element.addEventListener(
+      "input",
+      function() {
 
-      showToast("รีเซ็ตตัวกรองเรียบร้อยแล้ว");
-    });
+        currentPage =
+          1;
+
+        renderApplicants();
+
+      }
+    );
+
+
+    /*
+     * เวลาเปลี่ยน Filter
+     */
+    element.addEventListener(
+      "change",
+      function() {
+
+        currentPage =
+          1;
+
+        renderApplicants();
+
+      }
+    );
+
+  }
+);
+
+refreshFilterButton.addEventListener(
+  "click",
+  function() {
+
+    searchInput.value =
+      "";
+
+    statusFilter.value =
+      "";
+
+    regionFilter.value =
+      "";
+
+    ageFilter.value =
+      "";
+
+    competitionFilter.value =
+      "";
+
+    instrumentFilter.value =
+      "";
+
+
+    /*
+     * Reset กลับหน้าแรก
+     */
+    currentPage =
+      1;
+
+
+    renderApplicants();
+
+
+    searchInput.focus();
+
+
+    showToast(
+      "รีเซ็ตตัวกรองเรียบร้อยแล้ว"
+    );
+
+  }
+);
 
     function buildClientSummary(items) {
       const list = Array.isArray(items) ? items : [];
@@ -5571,10 +6729,50 @@ document
       try {
         const data = collectEvaluationData();
         const result = await apiPost(action, { token: authToken, applicantId: currentApplicantId, ...data });
-        const index = applicants.findIndex(item => item.id === currentApplicantId);
-        if (index !== -1 && result.applicant) applicants[index] = result.applicant;
-        renderApplicants();
-        showDashboard(false);
+        const index =
+  applicants.findIndex(
+    function(item) {
+
+      return (
+        item.id ===
+        currentApplicantId
+      );
+
+    }
+  );
+
+
+if (
+  index !== -1 &&
+  result.applicant
+) {
+
+  applicants[index] =
+    result.applicant;
+
+}
+
+
+/*
+ * ถ้าส่งคะแนนสำเร็จ
+ * กลับหน้าแรก
+ *
+ * เพราะรายการนี้จะถูกย้ายไปท้ายสุด
+ */
+if (
+  action ===
+  "submitScore"
+) {
+
+  currentPage =
+    1;
+
+}
+
+
+renderApplicants();
+
+showDashboard(false);
         showToast(result.message, toastType);
       } catch (error) {
         showToast(error.message);
