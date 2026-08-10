@@ -1603,6 +1603,88 @@ padding: 4px;
   line-height: 1.7;
 }
 
+    /* =========================================================
+   Score Guideline Ranges
+   ช่วงคะแนนตามลำดับผลงาน
+========================================================= */
+
+.score-guideline-ranges {
+  width: 100%;
+
+  margin-top: 11px;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 8px;
+}
+
+
+/* =========================================================
+   Score Guideline Range
+========================================================= */
+
+.score-guideline-range {
+  min-width: 0;
+
+  padding: 9px 11px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  border:
+    1px solid #eadfeb;
+
+  border-radius: 9px;
+
+  background:
+    #ffffff;
+}
+
+
+/* =========================================================
+   ชื่ออันดับ
+========================================================= */
+
+.score-guideline-range strong {
+  flex: 0 0 auto;
+
+  color:
+    var(--primary-dark);
+
+  font-size: 11px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   ช่วงคะแนน
+========================================================= */
+
+.score-guideline-range span {
+  min-width: 0;
+
+  color:
+    var(--primary);
+
+  font-size: 11px;
+  font-weight: 700;
+
+  line-height: 1.45;
+
+  text-align: right;
+}
+
     .video-comment-card label {
       margin-bottom: 9px;
       color: var(--primary-dark);
@@ -2294,10 +2376,16 @@ padding: 4px;
       margin-top: 20px;
     }
 
-    .evaluation-video-panel .video-comment-card {
-      margin-top: 0;
-      flex: 0 0 auto;
-    }
+.evaluation-video-panel .video-comment-card {
+  margin-top: 0;
+
+  /*
+   * ให้ Comment Card
+   * สามารถขยายรับพื้นที่ว่าง
+   * เพื่อช่วยให้ Panel ฝั่งซ้ายเต็มความสูง
+   */
+  flex: 1 1 auto;
+}
 
   .evaluation-action-bar {
   width: 100%;
@@ -2377,10 +2465,16 @@ padding: 4px;
       }
     }
 
-    @media (max-width: 760px) {
-      .evaluation-school-card {
-        padding: 20px 20px 20px 23px;
-      }
+@media (max-width: 760px) {
+
+  .score-guideline-ranges {
+    grid-template-columns: 1fr;
+  }
+
+
+  .evaluation-school-card {
+    padding: 20px 20px 20px 23px;
+  }
 
       .evaluation-school-card h2 {
         font-size: 23px;
@@ -3940,12 +4034,67 @@ padding: 4px;
 
     <p class="score-guideline-description">
 
-      เริ่มพิจารณาคะแนนรวมที่ประมาณ 60 คะแนน
-      และปรับเพิ่มตามคุณภาพของผลงานเพื่อสะท้อนลำดับการแข่งขัน
-      โดยผลงานระดับอันดับต้นควรอยู่ที่ประมาณ 80 คะแนนขึ้นไป
-      และลำดับถัดไปให้ลดหลั่นตามความเหมาะสม
+      คะแนนของกรรมการแต่ละท่านเป็นส่วนหนึ่งของผลการตัดสิน
+      โดยระบบจะนำคะแนนจากกรรมการทั้ง 2 ท่านมาพิจารณาร่วมกัน
+      กรุณาให้คะแนนโดยพิจารณาระดับผลงานและลำดับที่เห็นว่าเหมาะสม ดังนี้
 
     </p>
+
+
+    <div class="score-guideline-ranges">
+
+      <div class="score-guideline-range">
+
+        <strong>
+          อันดับ 1
+        </strong>
+
+        <span>
+          80–100 คะแนน
+        </span>
+
+      </div>
+
+
+      <div class="score-guideline-range">
+
+        <strong>
+          อันดับ 2
+        </strong>
+
+        <span>
+          70–79 คะแนน
+        </span>
+
+      </div>
+
+
+      <div class="score-guideline-range">
+
+        <strong>
+          อันดับ 3
+        </strong>
+
+        <span>
+          60–69 คะแนน
+        </span>
+
+      </div>
+
+
+      <div class="score-guideline-range">
+
+        <strong>
+          ลำดับถัดไป
+        </strong>
+
+        <span>
+          ต่ำกว่า 60 คะแนน หรือลดหลั่นตามความเหมาะสม
+        </span>
+
+      </div>
+
+    </div>
 
   </div>
 
