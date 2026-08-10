@@ -3976,10 +3976,65 @@ const applicantPagination =
     const ageFilter = document.getElementById("ageFilter");
     const competitionFilter = document.getElementById("competitionFilter");
     const instrumentFilter = document.getElementById("instrumentFilter");
-    const refreshFilterButton = document.getElementById("refreshFilterButton");
+const refreshFilterButton =
+  document.getElementById(
+    "refreshFilterButton"
+  );
+
+
+/* =========================================
+   RANKING PAGE
+========================================= */
+
+const rankingPage =
+  document.getElementById(
+    "rankingPage"
+  );
+
+const openRankingButton =
+  document.getElementById(
+    "openRankingButton"
+  );
+
+
 const rankingCombinedButton =
   document.getElementById(
     "rankingCombinedButton"
+  );
+
+const rankingMyScoreButton =
+  document.getElementById(
+    "rankingMyScoreButton"
+  );
+
+const backFromRankingButton =
+  document.getElementById(
+    "backFromRankingButton"
+  );
+
+const rankingGroups =
+  document.getElementById(
+    "rankingGroups"
+  );
+
+const rankingRegionFilter =
+  document.getElementById(
+    "rankingRegionFilter"
+  );
+
+const rankingCompetitionFilter =
+  document.getElementById(
+    "rankingCompetitionFilter"
+  );
+
+const rankingAgeFilter =
+  document.getElementById(
+    "rankingAgeFilter"
+  );
+
+const rankingInstrumentFilter =
+  document.getElementById(
+    "rankingInstrumentFilter"
   );
 
 const rankingMyScoreButton =
@@ -7393,6 +7448,175 @@ function renderRanking() {
     </tr>
   `;
 }
+    
+    /* =========================================================
+   UPDATE RANKING MODE BUTTON
+========================================================= */
+
+function updateRankingModeButtons() {
+
+  rankingCombinedButton
+    .classList.toggle(
+      "active",
+      rankingMode ===
+        "combined"
+    );
+
+
+  rankingMyScoreButton
+    .classList.toggle(
+      "active",
+      rankingMode ===
+        "mine"
+    );
+}
+
+
+/* =========================================================
+   OPEN RANKING PAGE
+========================================================= */
+
+openRankingButton.addEventListener(
+  "click",
+  function() {
+
+    openRankingPage(
+      true
+    );
+
+  }
+);
+
+
+/* =========================================================
+   BACK FROM RANKING
+========================================================= */
+
+backFromRankingButton.addEventListener(
+  "click",
+  function() {
+
+    showDashboard(
+      true
+    );
+
+  }
+);
+
+
+/* =========================================================
+   RANKING MODE: คะแนนรวม
+========================================================= */
+
+rankingCombinedButton.addEventListener(
+  "click",
+  function() {
+
+    rankingMode =
+      "combined";
+
+    updateRankingModeButtons();
+
+    populateRankingFilters();
+
+    renderRanking();
+
+  }
+);
+
+
+/* =========================================================
+   RANKING MODE: คะแนนของฉัน
+========================================================= */
+
+rankingMyScoreButton.addEventListener(
+  "click",
+  function() {
+
+    rankingMode =
+      "mine";
+
+    updateRankingModeButtons();
+
+    populateRankingFilters();
+
+    renderRanking();
+
+  }
+);
+
+
+/* =========================================================
+   RANKING FILTERS
+========================================================= */
+
+[
+  rankingRegionFilter,
+  rankingCompetitionFilter,
+  rankingAgeFilter,
+  rankingInstrumentFilter
+
+].forEach(
+  function(select) {
+
+    select.addEventListener(
+      "change",
+      renderRanking
+    );
+
+  }
+);
+    
+    /* =========================================================
+   BROWSER BACK / FORWARD
+========================================================= */
+
+window.addEventListener(
+  "popstate",
+  function(event) {
+
+    if (
+      event.state &&
+      event.state.page ===
+        "evaluation" &&
+      event.state.applicantId
+    ) {
+
+      openEvaluation(
+        event.state.applicantId,
+        false
+      );
+
+      return;
+    }
+
+
+    if (
+      event.state &&
+      event.state.page ===
+        "ranking"
+    ) {
+
+      openRankingPage(
+        false
+      );
+
+      return;
+    }
+
+
+    if (
+      authToken
+    ) {
+
+      showDashboard(
+        false
+      );
+
+    }
+
+  }
+);
 
     function showToast(message, type = "") {
       const toast = document.getElementById("toast");
