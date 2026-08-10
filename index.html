@@ -3996,7 +3996,6 @@ const openRankingButton =
     "openRankingButton"
   );
 
-
 const rankingCombinedButton =
   document.getElementById(
     "rankingCombinedButton"
@@ -4037,20 +4036,30 @@ const rankingInstrumentFilter =
     "rankingInstrumentFilter"
   );
 
-const rankingMyScoreButton =
+
+/* =========================================
+   CONFIRM / EVALUATION
+========================================= */
+
+const confirmOverlay =
   document.getElementById(
-    "rankingMyScoreButton"
+    "confirmOverlay"
   );
-    const backFromRankingButton = document.getElementById("backFromRankingButton");
-    const rankingGroups = document.getElementById("rankingGroups");
-    const rankingRegionFilter = document.getElementById("rankingRegionFilter");
-    const rankingCompetitionFilter = document.getElementById("rankingCompetitionFilter");
-    const rankingAgeFilter = document.getElementById("rankingAgeFilter");
-    const rankingInstrumentFilter = document.getElementById("rankingInstrumentFilter");
-    const confirmOverlay = document.getElementById("confirmOverlay");
-    const scoreList = document.getElementById("scoreList");
-    const judgeComment = document.getElementById("judgeComment");
-    const apiLoading = document.getElementById("apiLoading");
+
+const scoreList =
+  document.getElementById(
+    "scoreList"
+  );
+
+const judgeComment =
+  document.getElementById(
+    "judgeComment"
+  );
+
+const apiLoading =
+  document.getElementById(
+    "apiLoading"
+  );
 
     function setLoading(show, text = "กำลังโหลดข้อมูล...") {
       apiLoading.querySelector(".api-loading-box").textContent = text;
