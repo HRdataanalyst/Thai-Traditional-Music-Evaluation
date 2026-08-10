@@ -2829,6 +2829,95 @@ padding: 4px;
   font-size: 13px;
   line-height: 1.7;
 }
+    
+    /* =========================
+   Ranking Mode Switch
+========================= */
+
+.ranking-mode-switch {
+  margin-top: 16px;
+
+  padding: 5px;
+
+  display: inline-grid;
+
+  grid-template-columns:
+    1fr
+    1fr;
+
+  gap: 4px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  box-shadow:
+    var(--shadow-small);
+}
+
+
+.ranking-mode-button {
+  min-height: 40px;
+
+  padding:
+    0
+    18px;
+
+  border:
+    none;
+
+  border-radius:
+    9px;
+
+  background:
+    transparent;
+
+  color:
+    var(--text-soft);
+
+  font-size:
+    12px;
+
+  font-weight:
+    700;
+
+  transition:
+    0.2s ease;
+}
+
+
+.ranking-mode-button:hover {
+  background:
+    var(--primary-light);
+
+  color:
+    var(--primary);
+}
+
+
+.ranking-mode-button.active {
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary),
+      var(--primary-dark)
+    );
+
+  color:
+    #ffffff;
+
+  box-shadow:
+    0 4px 12px
+    rgba(
+      93,
+      40,
+      95,
+      0.18
+    );
+}
 
 .ranking-filter-panel {
   margin-top: 18px;
@@ -2939,6 +3028,16 @@ padding: 4px;
   .ranking-filter-panel {
     grid-template-columns: 1fr;
   }
+  .ranking-mode-switch {
+  width: 100%;
+  grid-template-columns: 1fr 1fr;
+}
+
+.ranking-mode-button {
+  padding: 0 10px;
+  font-size: 11px;
+}
+  
 }
     
     /* =========================
@@ -3465,6 +3564,27 @@ padding: 4px;
           และประเภทเครื่องดนตรีเดียวกัน
         </p>
       </section>
+      
+      <!-- เลือกประเภท Ranking -->
+      <div class="ranking-mode-switch">
+
+        <button
+          id="rankingCombinedButton"
+          class="ranking-mode-button active"
+          type="button"
+        >
+          คะแนนรวม 2 กรรมการ
+        </button>
+
+        <button
+          id="rankingMyScoreButton"
+          class="ranking-mode-button"
+          type="button"
+        >
+          คะแนนของฉัน
+        </button>
+
+      </div>
 
       <section class="ranking-filter-panel">
 
@@ -3734,7 +3854,26 @@ const JUDGE_BROWSER_CACHE_MAX_AGE =
 let apiHealthPromise = null;
 
 let applicants = [];
+
+
+/*
+ * Ranking รวม 2 กรรมการ
+ */
 let rankingRows = [];
+
+
+/*
+ * Ranking คะแนนกรรมการที่ Login
+ */
+let myRankingRows = [];
+
+
+/*
+ * combined = รวม 2 กรรมการ
+ * mine     = คะแนนของฉัน
+ */
+let rankingMode =
+  "combined";
 
 
 /*
@@ -3838,8 +3977,15 @@ const applicantPagination =
     const competitionFilter = document.getElementById("competitionFilter");
     const instrumentFilter = document.getElementById("instrumentFilter");
     const refreshFilterButton = document.getElementById("refreshFilterButton");
-    const rankingPage = document.getElementById("rankingPage");
-    const openRankingButton = document.getElementById("openRankingButton");
+const rankingCombinedButton =
+  document.getElementById(
+    "rankingCombinedButton"
+  );
+
+const rankingMyScoreButton =
+  document.getElementById(
+    "rankingMyScoreButton"
+  );
     const backFromRankingButton = document.getElementById("backFromRankingButton");
     const rankingGroups = document.getElementById("rankingGroups");
     const rankingRegionFilter = document.getElementById("rankingRegionFilter");
@@ -6808,9 +6954,35 @@ showDashboard(false);
           token: authToken
         });
 
-        rankingRows = Array.isArray(result.rows)
-          ? result.rows
-          : [];
+/*
+ * Ranking รวม
+ */
+rankingRows =
+  Array.isArray(
+    result.rows
+  )
+    ? result.rows
+    : [];
+
+
+/*
+ * Ranking คะแนนของกรรมการคนนี้
+ */
+myRankingRows =
+  Array.isArray(
+    result.myRows
+  )
+    ? result.myRows
+    : [];
+        
+        /*
+ * เปิดหน้า Ranking ครั้งแรก
+ * Default เป็นคะแนนรวม
+ */
+rankingMode =
+  "combined";
+
+updateRankingModeButtons();
 
         populateRankingFilters();
         renderRanking();
@@ -6840,28 +7012,63 @@ showDashboard(false);
         setLoading(false);
       }
     }
+    
+    function getCurrentRankingRows() {
 
-    function populateRankingFilters() {
-      setRankingSelectOptions(
-        rankingRegionFilter,
-        rankingRows.map(row => row.region)
-      );
+  if (
+    rankingMode ===
+    "mine"
+  ) {
 
-      setRankingSelectOptions(
-        rankingCompetitionFilter,
-        rankingRows.map(row => row.competition)
-      );
+    return myRankingRows;
 
-      setRankingSelectOptions(
-        rankingAgeFilter,
-        rankingRows.map(row => row.ageGroup)
-      );
+  }
 
-      setRankingSelectOptions(
-        rankingInstrumentFilter,
-        rankingRows.map(row => row.instrumentCategory)
-      );
-    }
+
+  return rankingRows;
+}
+
+function populateRankingFilters() {
+
+  const sourceRows =
+    getCurrentRankingRows();
+
+
+  setRankingSelectOptions(
+    rankingRegionFilter,
+    sourceRows.map(
+      row =>
+        row.region
+    )
+  );
+
+
+  setRankingSelectOptions(
+    rankingCompetitionFilter,
+    sourceRows.map(
+      row =>
+        row.competition
+    )
+  );
+
+
+  setRankingSelectOptions(
+    rankingAgeFilter,
+    sourceRows.map(
+      row =>
+        row.ageGroup
+    )
+  );
+
+
+  setRankingSelectOptions(
+    rankingInstrumentFilter,
+    sourceRows.map(
+      row =>
+        row.instrumentCategory
+    )
+  );
+}
 
     function setRankingSelectOptions(select, values) {
       const currentValue = select.value;
@@ -6888,8 +7095,16 @@ showDashboard(false);
       }
     }
 
-    function renderRanking() {
-      const filteredRows = rankingRows.filter(row => (
+function renderRanking() {
+
+  const sourceRows =
+    getCurrentRankingRows();
+
+
+  const filteredRows =
+    sourceRows.filter(
+      row => (
+        
         (!rankingRegionFilter.value ||
           row.region === rankingRegionFilter.value) &&
         (!rankingCompetitionFilter.value ||
@@ -6951,7 +7166,13 @@ showDashboard(false);
                       <th>โรงเรียน</th>
                       <th>เพลง</th>
                       <th>ผู้เข้าแข่งขัน</th>
-                      <th>คะแนนรวม</th>
+                      <th>
+  ${
+    rankingMode === "mine"
+      ? "คะแนนของฉัน"
+      : "คะแนนรวม"
+  }
+</th>
                       <th>สถานะ</th>
                     </tr>
                   </thead>
@@ -6966,67 +7187,212 @@ showDashboard(false);
         .join("");
     }
 
-    function renderRankingRow(row) {
-      const complete = row.resultStatus === "Complete";
-      const rankText = complete && row.rank
+    function renderRankingRow(
+  row
+) {
+
+  /*
+   * =========================================================
+   * MODE: คะแนนของฉัน
+   * =========================================================
+   */
+
+  if (
+    rankingMode ===
+    "mine"
+  ) {
+
+    const complete =
+      row.myResultStatus ===
+      "Complete";
+
+
+    const rankText =
+      complete &&
+      row.rank
         ? row.rank
         : "–";
 
-      const scoreText = complete
-        ? `${row.combinedScore} / ${row.maximumCombinedScore || 100}`
-        : "รอคะแนน";
 
-      const remainingJudges = Math.max(
-        0,
-        Number(row.requiredJudgeCount || 0) -
-        Number(row.submittedJudgeCount || 0)
-      );
+    const scoreText =
+      complete
+        ? `${row.myScore} / ${row.myMaximumScore || 100}`
+        : "ยังไม่ได้ส่งคะแนน";
 
-      const statusText = complete
-        ? "คะแนนครบแล้ว"
-        : `รอกรรมการ ${remainingJudges} ท่าน`;
 
-      return `
-        <tr>
-          <td class="ranking-position">${escapeHtml(rankText)}</td>
-          <td>${escapeHtml(row.submissionNumber || row.applicantId)}</td>
-          <td><strong>${escapeHtml(row.schoolName || "-")}</strong></td>
-          <td>${escapeHtml(row.songTitle || "-")}</td>
-          <td>${escapeHtml(row.competitorNames || "-")}</td>
-          <td class="ranking-score">${escapeHtml(scoreText)}</td>
-          <td class="${complete ? "" : "ranking-status-waiting"}">
-            ${escapeHtml(statusText)}
-          </td>
-        </tr>
-      `;
-    }
+    const statusText =
+      complete
+        ? "ส่งคะแนนแล้ว"
+        : "ยังไม่ได้ส่งคะแนน";
 
-    openRankingButton.addEventListener("click", function () {
-      openRankingPage(true);
-    });
 
-    backFromRankingButton.addEventListener("click", function () {
-      showDashboard(true);
-    });
+    return `
+      <tr>
 
-    [
-      rankingRegionFilter,
-      rankingCompetitionFilter,
-      rankingAgeFilter,
-      rankingInstrumentFilter
-    ].forEach(select => {
-      select.addEventListener("change", renderRanking);
-    });
+        <td class="ranking-position">
+          ${escapeHtml(
+            rankText
+          )}
+        </td>
 
-    window.addEventListener("popstate", function (event) {
-      if (event.state && event.state.page === "evaluation" && event.state.applicantId) {
-        openEvaluation(event.state.applicantId, false);
-      } else if (event.state && event.state.page === "ranking") {
-        openRankingPage(false);
-      } else if (authToken) {
-        showDashboard(false);
-      }
-    });
+        <td>
+          ${escapeHtml(
+            row.submissionNumber ||
+            row.applicantId
+          )}
+        </td>
+
+        <td>
+          <strong>
+            ${escapeHtml(
+              row.schoolName ||
+              "-"
+            )}
+          </strong>
+        </td>
+
+        <td>
+          ${escapeHtml(
+            row.songTitle ||
+            "-"
+          )}
+        </td>
+
+        <td>
+          ${escapeHtml(
+            row.competitorNames ||
+            "-"
+          )}
+        </td>
+
+        <td class="ranking-score">
+          ${escapeHtml(
+            scoreText
+          )}
+        </td>
+
+        <td
+          class="${
+            complete
+              ? ""
+              : "ranking-status-waiting"
+          }"
+        >
+          ${escapeHtml(
+            statusText
+          )}
+        </td>
+
+      </tr>
+    `;
+
+  }
+
+
+  /*
+   * =========================================================
+   * MODE: คะแนนรวม 2 กรรมการ
+   * =========================================================
+   */
+
+  const complete =
+    row.resultStatus ===
+    "Complete";
+
+
+  const rankText =
+    complete &&
+    row.rank
+      ? row.rank
+      : "–";
+
+
+  const scoreText =
+    complete
+      ? `${row.combinedScore} / ${row.maximumCombinedScore || 100}`
+      : "รอคะแนน";
+
+
+  const remainingJudges =
+    Math.max(
+      0,
+      Number(
+        row.requiredJudgeCount ||
+        0
+      ) -
+      Number(
+        row.submittedJudgeCount ||
+        0
+      )
+    );
+
+
+  const statusText =
+    complete
+      ? "คะแนนครบแล้ว"
+      : `รอกรรมการ ${remainingJudges} ท่าน`;
+
+
+  return `
+    <tr>
+
+      <td class="ranking-position">
+        ${escapeHtml(
+          rankText
+        )}
+      </td>
+
+      <td>
+        ${escapeHtml(
+          row.submissionNumber ||
+          row.applicantId
+        )}
+      </td>
+
+      <td>
+        <strong>
+          ${escapeHtml(
+            row.schoolName ||
+            "-"
+          )}
+        </strong>
+      </td>
+
+      <td>
+        ${escapeHtml(
+          row.songTitle ||
+          "-"
+        )}
+      </td>
+
+      <td>
+        ${escapeHtml(
+          row.competitorNames ||
+          "-"
+        )}
+      </td>
+
+      <td class="ranking-score">
+        ${escapeHtml(
+          scoreText
+        )}
+      </td>
+
+      <td
+        class="${
+          complete
+            ? ""
+            : "ranking-status-waiting"
+        }"
+      >
+        ${escapeHtml(
+          statusText
+        )}
+      </td>
+
+    </tr>
+  `;
+}
 
     function showToast(message, type = "") {
       const toast = document.getElementById("toast");
