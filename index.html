@@ -2897,51 +2897,220 @@ padding: 4px;
 }
 
 .ranking-table-wrap {
+  width: 100%;
   overflow-x: auto;
 }
 
 .ranking-table {
   width: 100%;
+
+  /*
+   * สำคัญมาก
+   *
+   * บังคับให้ทุก Ranking Table
+   * ใช้ความกว้างคอลัมน์ตามที่กำหนด
+   * ไม่คำนวณใหม่ตามความยาวของข้อมูล
+   */
+  table-layout: fixed;
+
   border-collapse: collapse;
 }
+
+
+/* =========================================================
+   Ranking Column Width
+   ทุกกล่องใช้สัดส่วนเดียวกัน
+========================================================= */
+
+/*
+ * 1. อันดับ
+ */
+.ranking-table col.ranking-col-position {
+  width: 6%;
+}
+
+
+/*
+ * 2. Submission
+ */
+.ranking-table col.ranking-col-submission {
+  width: 12%;
+}
+
+
+/*
+ * 3. โรงเรียน
+ */
+.ranking-table col.ranking-col-school {
+  width: 29%;
+}
+
+
+/*
+ * 4. เพลง
+ */
+.ranking-table col.ranking-col-song {
+  width: 17%;
+}
+
+
+/*
+ * 5. ผู้เข้าแข่งขัน
+ */
+.ranking-table col.ranking-col-competitor {
+  width: 25%;
+}
+
+
+/*
+ * 6. คะแนนของฉัน
+ */
+.ranking-table col.ranking-col-score {
+  width: 11%;
+}
+
 
 .ranking-table th,
 .ranking-table td {
   padding: 13px 15px;
-  border-bottom: 1px solid #eee8ef;
+
+  border-bottom:
+    1px solid #eee8ef;
+
   font-size: 12px;
+
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
+
+  /*
+   * ป้องกันข้อความยาว
+   * ดันความกว้างของคอลัมน์
+   */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
+
 
 .ranking-table th {
   color: var(--text-soft);
+
   font-weight: 700;
+
   white-space: nowrap;
 }
+
 
 .ranking-table tr:last-child td {
   border-bottom: none;
 }
 
-.ranking-position {
-  width: 65px;
-  color: var(--primary);
-  font-size: 16px !important;
-  font-weight: 800;
-  text-align: center !important;
+
+/* =========================================================
+   อันดับ
+========================================================= */
+
+.ranking-table th:nth-child(1),
+.ranking-table td:nth-child(1) {
+  text-align: center;
 }
 
-.ranking-score {
-  color: var(--primary-dark);
-  font-size: 15px !important;
+
+.ranking-position {
+  color: var(--primary);
+
+  font-size:
+    16px !important;
+
   font-weight: 800;
+
+  text-align:
+    center !important;
+}
+
+
+/* =========================================================
+   Submission
+========================================================= */
+
+.ranking-table th:nth-child(2),
+.ranking-table td:nth-child(2) {
   white-space: nowrap;
 }
 
-.ranking-status-waiting {
-  color: var(--warning);
-  font-weight: 700;
+
+/* =========================================================
+   โรงเรียน
+========================================================= */
+
+.ranking-table th:nth-child(3),
+.ranking-table td:nth-child(3) {
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+
+.ranking-table td:nth-child(3) strong {
+  display: block;
+
+  width: 100%;
+
+  line-height: 1.5;
+
+  white-space: normal;
+
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   เพลง
+========================================================= */
+
+.ranking-table th:nth-child(4),
+.ranking-table td:nth-child(4) {
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+
+/* =========================================================
+   ผู้เข้าแข่งขัน
+========================================================= */
+
+.ranking-table th:nth-child(5),
+.ranking-table td:nth-child(5) {
+  padding-left: 18px;
+  padding-right: 18px;
+
+  line-height: 1.5;
+
+  white-space: normal;
+}
+
+
+/* =========================================================
+   คะแนนของฉัน
+========================================================= */
+
+.ranking-table th:nth-child(6),
+.ranking-table td:nth-child(6) {
+  text-align: center;
+}
+
+
+.ranking-score {
+  color:
+    var(--primary-dark);
+
+  font-size:
+    15px !important;
+
+  font-weight: 800;
+
+  white-space: nowrap;
+
+  text-align:
+    center !important;
 }
 
 @media (max-width: 760px) {
@@ -7242,7 +7411,6 @@ function renderRanking() {
 
               </header>
 
-
               <div
                 class="ranking-table-wrap"
               >
@@ -7250,6 +7418,47 @@ function renderRanking() {
                 <table
                   class="ranking-table"
                 >
+
+                  <!--
+                    =========================================================
+                    กำหนดความกว้างคอลัมน์ให้ทุก Ranking Table เหมือนกัน
+
+                    1 = อันดับ
+                    2 = Submission
+                    3 = โรงเรียน
+                    4 = เพลง
+                    5 = ผู้เข้าแข่งขัน
+                    6 = คะแนนของฉัน
+                    =========================================================
+                  -->
+                  <colgroup>
+
+                    <col
+                      class="ranking-col-position"
+                    >
+
+                    <col
+                      class="ranking-col-submission"
+                    >
+
+                    <col
+                      class="ranking-col-school"
+                    >
+
+                    <col
+                      class="ranking-col-song"
+                    >
+
+                    <col
+                      class="ranking-col-competitor"
+                    >
+
+                    <col
+                      class="ranking-col-score"
+                    >
+
+                  </colgroup>
+
 
                   <thead>
 
