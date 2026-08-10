@@ -1479,23 +1479,128 @@ padding: 4px;
       color: var(--text-soft);
       font-size: 14px;
     }
-
 .video-comment-card {
   margin-top: 0;
+
   padding: 15px;
 
   display: flex;
-  flex: 0 0 auto;
+
+  /*
+   * ให้ความคิดเห็นสามารถขยาย
+   * รับพื้นที่ว่างที่เหลือของฝั่งซ้ายได้
+   */
+  flex: 1 1 auto;
+
   flex-direction: column;
 
   min-height: 155px;
 
-  border: 1px solid var(--border);
+  border:
+    1px solid var(--border);
+
   border-radius: 13px;
 
-  background: #ffffff;
+  background:
+    #ffffff;
 
   box-shadow: none;
+}
+    
+    /* =========================================================
+   Score Guideline Card
+   กล่องแนวทางการพิจารณาระดับคะแนน
+========================================================= */
+
+.score-guideline-card {
+  width: 100%;
+
+  padding: 15px 17px;
+
+  flex: 0 0 auto;
+
+  border:
+    1px solid #e3d7e5;
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #faf6fb,
+      #ffffff
+    );
+}
+
+
+/* =========================================================
+   Header
+========================================================= */
+
+.score-guideline-header {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  margin-bottom: 7px;
+}
+
+
+/* =========================================================
+   Icon
+========================================================= */
+
+.score-guideline-icon {
+  width: 25px;
+  height: 25px;
+
+  flex: 0 0 auto;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    var(--primary-light);
+
+  color:
+    var(--primary);
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   Title
+========================================================= */
+
+.score-guideline-title {
+  color:
+    var(--primary-dark);
+
+  font-size: 13px;
+  font-weight: 700;
+
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   Description
+========================================================= */
+
+.score-guideline-description {
+  margin: 0;
+
+  color:
+    var(--text-soft);
+
+  font-size: 11px;
+
+  line-height: 1.7;
 }
 
     .video-comment-card label {
@@ -1507,13 +1612,26 @@ padding: 4px;
 
 .video-comment-card textarea {
   width: 100%;
+
   min-height: 100px;
 
+  /*
+   * ขยายช่องความคิดเห็น
+   * รับพื้นที่ของ Comment Card
+   */
+  flex: 1 1 auto;
+
   resize: vertical;
-      border-color: #e7dce9;
-      background: #fcf9fc;
-      color: var(--text-main);
-    }
+
+  border-color:
+    #e7dce9;
+
+  background:
+    #fcf9fc;
+
+  color:
+    var(--text-main);
+}
 
     .video-comment-card textarea::placeholder {
       color: #9b8d9d;
@@ -2096,7 +2214,7 @@ padding: 4px;
       line-height: 1.5;
     }
 
-.evaluation-workspace {
+    .evaluation-workspace {
   display: grid;
 
   grid-template-columns:
@@ -2105,17 +2223,32 @@ padding: 4px;
 
   gap: 16px;
 
-  align-items: start;
+  /*
+   * ให้กล่องซ้ายและกล่องขวา
+   * ยืดความสูงเท่ากันตามกล่องที่สูงกว่า
+   */
+  align-items: stretch;
+}
+    
+.evaluation-video-panel,
+.evaluation-score-panel {
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 18px;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    var(--shadow-small);
 }
 
-    .evaluation-video-panel,
-    .evaluation-score-panel {
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: #ffffff;
-      box-shadow: var(--shadow-small);
-    }
 
     .evaluation-video-panel {
       padding: 20px;
@@ -2166,18 +2299,25 @@ padding: 4px;
       flex: 0 0 auto;
     }
 
-.evaluation-action-bar {
+  .evaluation-action-bar {
   width: 100%;
 
-  margin-top: 18px;
+  /*
+   * ดัน Action Bar
+   * ลงไปอยู่ด้านล่างสุดของ Panel
+   */
+  margin-top: auto;
+
   padding-top: 16px;
 
   display: flex;
   align-items: stretch;
   justify-content: stretch;
 
-  border-top: 1px solid var(--border);
-}
+  border-top:
+    1px solid var(--border);
+}  
+    
     .evaluation-action-back {
       min-height: 44px;
       padding: 0 4px;
@@ -3761,22 +3901,70 @@ padding: 4px;
 
 <div class="video-container">
 
-    <div id="videoPlayerContainer" class="mock-video">
-      <div style="text-align:center;">
-        <p>ยังไม่พบลิงก์วิดีโอ</p>
+  <!-- =========================================
+       วิดีโอผู้เข้าแข่งขัน
+  ========================================== -->
+  <div
+    id="videoPlayerContainer"
+    class="mock-video"
+  >
+
+    <div style="text-align:center;">
+
+      <p>
+        ยังไม่พบลิงก์วิดีโอ
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================
+       แนวทางการพิจารณาระดับคะแนน
+  ========================================== -->
+  <div class="score-guideline-card">
+
+    <div class="score-guideline-header">
+
+      <div class="score-guideline-icon">
+        i
       </div>
+
+      <div class="score-guideline-title">
+        แนวทางการพิจารณาระดับคะแนน
+      </div>
+
     </div>
 
-    <div class="comment-area video-comment-card">
-      <label for="judgeComment">
-        ความคิดเห็นเพิ่มเติมของกรรมการ
-      </label>
 
-      <textarea
-        id="judgeComment"
-        placeholder="ระบุความคิดเห็นหรือข้อเสนอแนะเพิ่มเติม..."
-      ></textarea>
-    </div>
+    <p class="score-guideline-description">
+
+      เริ่มพิจารณาคะแนนรวมที่ประมาณ 60 คะแนน
+      และปรับเพิ่มตามคุณภาพของผลงานเพื่อสะท้อนลำดับการแข่งขัน
+      โดยผลงานระดับอันดับต้นควรอยู่ที่ประมาณ 80 คะแนนขึ้นไป
+      และลำดับถัดไปให้ลดหลั่นตามความเหมาะสม
+
+    </p>
+
+  </div>
+
+
+  <!-- =========================================
+       ความคิดเห็นเพิ่มเติมของกรรมการ
+  ========================================== -->
+  <div class="comment-area video-comment-card">
+
+    <label for="judgeComment">
+      ความคิดเห็นเพิ่มเติมของกรรมการ
+    </label>
+
+    <textarea
+      id="judgeComment"
+      placeholder="ระบุความคิดเห็นหรือข้อเสนอแนะเพิ่มเติม..."
+    ></textarea>
+
+  </div>
 
 </div>
 
