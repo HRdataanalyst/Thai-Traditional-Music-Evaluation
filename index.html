@@ -1590,6 +1590,161 @@ padding: 4px;
     );
 }
 
+    /* =========================================================
+   Medal Row Colors
+   สีพื้นหลังของแต่ละระดับเหรียญ
+========================================================= */
+
+
+/* =========================================================
+   ระดับเหรียญทอง
+========================================================= */
+
+.score-medal-row.medal-gold {
+  border-color:
+    #ead79a;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff8df,
+      #fffdf5
+    );
+}
+
+
+/*
+ * สีข้อความ "ระดับเหรียญทอง"
+ */
+.score-medal-row.medal-gold
+.score-medal-name {
+  color:
+    #9a7418;
+
+  font-weight:
+    800;
+}
+
+
+/*
+ * สีช่วงคะแนนของเหรียญทอง
+ */
+.score-medal-row.medal-gold
+.score-medal-range {
+  color:
+    #76580f;
+}
+
+
+/*
+ * สีคำอธิบาย
+ */
+.score-medal-row.medal-gold
+.score-medal-description {
+  color:
+    #74653c;
+}
+
+
+/* =========================================================
+   ระดับเหรียญเงิน
+========================================================= */
+
+.score-medal-row.medal-silver {
+  border-color:
+    #d4d7dc;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f1f2f4,
+      #fafafa
+    );
+}
+
+
+/*
+ * สีข้อความ "ระดับเหรียญเงิน"
+ */
+.score-medal-row.medal-silver
+.score-medal-name {
+  color:
+    #636973;
+
+  font-weight:
+    800;
+}
+
+
+/*
+ * สีช่วงคะแนนของเหรียญเงิน
+ */
+.score-medal-row.medal-silver
+.score-medal-range {
+  color:
+    #535861;
+}
+
+
+/*
+ * สีคำอธิบาย
+ */
+.score-medal-row.medal-silver
+.score-medal-description {
+  color:
+    #71757c;
+}
+
+
+/* =========================================================
+   ระดับเหรียญทองแดง
+========================================================= */
+
+.score-medal-row.medal-bronze {
+  border-color:
+    #dfb59a;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fae8dd,
+      #fff8f3
+    );
+}
+
+
+/*
+ * สีข้อความ "ระดับเหรียญทองแดง"
+ */
+.score-medal-row.medal-bronze
+.score-medal-name {
+  color:
+    #9a5838;
+
+  font-weight:
+    800;
+}
+
+
+/*
+ * สีช่วงคะแนนของเหรียญทองแดง
+ */
+.score-medal-row.medal-bronze
+.score-medal-range {
+  color:
+    #7d452d;
+}
+
+
+/*
+ * สีคำอธิบาย
+ */
+.score-medal-row.medal-bronze
+.score-medal-description {
+  color:
+    #795e50;
+}
+
 
 /* =========================================================
    ช่วงคะแนน
@@ -4006,59 +4161,58 @@ padding: 4px;
   ====================================== -->
   <div class="score-medal-list">
 
+<!-- ระดับเหรียญทอง -->
+<div class="score-medal-row medal-gold">
 
-    <!-- ระดับเหรียญทอง -->
-    <div class="score-medal-row">
+  <div class="score-medal-range">
+    80–100 คะแนน
+  </div>
 
-      <div class="score-medal-range">
-        80–100 คะแนน
-      </div>
+  <div class="score-medal-name">
+    ระดับเหรียญทอง
+  </div>
 
-      <div class="score-medal-name">
-        ระดับเหรียญทอง
-      </div>
+  <div class="score-medal-description">
+    ระดับผลงานเกณฑ์ดีเยี่ยม
+  </div>
 
-      <div class="score-medal-description">
-        ระดับผลงานเกณฑ์ดีเยี่ยม
-      </div>
-
-    </div>
-
-
-    <!-- ระดัับเหรียญเงิน -->
-    <div class="score-medal-row">
-
-      <div class="score-medal-range">
-        70–79 คะแนน
-      </div>
-
-      <div class="score-medal-name">
-        ระดับเหรียญเงิน
-      </div>
-
-      <div class="score-medal-description">
-        ผลงานเกณฑ์ดี
-      </div>
-
-    </div>
+</div>
 
 
-    <!-- ระดับเหรียญทองแดง -->
-    <div class="score-medal-row">
+<!-- ระดับเหรียญเงิน -->
+<div class="score-medal-row medal-silver">
 
-      <div class="score-medal-range">
-        ต่ำกว่า 60–69 คะแนน
-      </div>
+  <div class="score-medal-range">
+    70–79 คะแนน
+  </div>
 
-      <div class="score-medal-name">
-        ระดับเหรียญทองแดง
-      </div>
+  <div class="score-medal-name">
+    ระดับเหรียญเงิน
+  </div>
 
-      <div class="score-medal-description">
-        ผลงานเกณฑ์ผ่านมาตรฐาน
-      </div>
+  <div class="score-medal-description">
+    ผลงานเกณฑ์ดี
+  </div>
 
-    </div>
+</div>
+
+
+<!-- ระดับเหรียญทองแดง -->
+<div class="score-medal-row medal-bronze">
+
+  <div class="score-medal-range">
+    ต่ำกว่า 60–69 คะแนน
+  </div>
+
+  <div class="score-medal-name">
+    ระดับเหรียญทองแดง
+  </div>
+
+  <div class="score-medal-description">
+    ผลงานเกณฑ์ผ่านมาตรฐาน
+  </div>
+
+</div>
 
   </div>
 
