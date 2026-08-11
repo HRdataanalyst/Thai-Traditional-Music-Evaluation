@@ -1462,15 +1462,15 @@ padding: 4px;
   box-shadow: none;
 }
     
-    /* =========================================================
+/* =========================================================
    Score Guideline Card
-   กล่องแนวทางการพิจารณาระดับคะแนน
+   กล่องเกณฑ์การตัดสินระดับเหรียญรางวัล
 ========================================================= */
 
 .score-guideline-card {
   width: 100%;
 
-  padding: 15px 17px;
+  padding: 16px 17px;
 
   flex: 0 0 auto;
 
@@ -1498,7 +1498,7 @@ padding: 4px;
 
   gap: 9px;
 
-  margin-bottom: 7px;
+  margin-bottom: 12px;
 }
 
 
@@ -1507,8 +1507,8 @@ padding: 4px;
 ========================================================= */
 
 .score-guideline-icon {
-  width: 25px;
-  height: 25px;
+  width: 27px;
+  height: 27px;
 
   flex: 0 0 auto;
 
@@ -1544,18 +1544,187 @@ padding: 4px;
 
 
 /* =========================================================
-   Description
+   Medal List
 ========================================================= */
 
-.score-guideline-description {
-  margin: 0;
+.score-medal-list {
+  display: grid;
+
+  gap: 7px;
+}
+
+
+/* =========================================================
+   Medal Row
+========================================================= */
+
+.score-medal-row {
+  width: 100%;
+
+  min-height: 38px;
+
+  padding: 8px 11px;
+
+  display: grid;
+
+  grid-template-columns:
+    88px
+    105px
+    minmax(0, 1fr);
+
+  align-items: center;
+
+  gap: 9px;
+
+  border:
+    1px solid #ece4ed;
+
+  border-radius: 9px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.88
+    );
+}
+
+
+/* =========================================================
+   ช่วงคะแนน
+========================================================= */
+
+.score-medal-range {
+  color:
+    var(--primary-dark);
+
+  font-size: 11px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   ชื่อเหรียญ
+========================================================= */
+
+.score-medal-name {
+  color:
+    var(--primary);
+
+  font-size: 11px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   คำอธิบายระดับผลงาน
+========================================================= */
+
+.score-medal-description {
+  color:
+    var(--text-soft);
+
+  font-size: 10px;
+  font-weight: 500;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   หมายเหตุการคิดคะแนน
+========================================================= */
+
+.score-guideline-note {
+  margin-top: 10px;
+
+  padding:
+    9px 11px;
+
+  border-left:
+    3px solid var(--primary);
+
+  border-radius:
+    0 8px 8px 0;
+
+  background:
+    var(--primary-light);
 
   color:
     var(--text-soft);
 
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1.65;
+}
 
-  line-height: 1.7;
+
+/* =========================================================
+   เน้นข้อความสำคัญในหมายเหตุ
+========================================================= */
+
+.score-guideline-note strong {
+  color:
+    var(--primary-dark);
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   Responsive
+========================================================= */
+
+@media (max-width: 760px) {
+
+  .score-medal-row {
+    grid-template-columns:
+      80px
+      95px
+      minmax(0, 1fr);
+
+    gap: 7px;
+
+    padding:
+      8px 9px;
+  }
+
+
+  .score-medal-range,
+  .score-medal-name {
+    font-size:
+      10px;
+  }
+
+
+  .score-medal-description {
+    font-size:
+      9px;
+  }
+
+}
+
+
+@media (max-width: 480px) {
+
+  .score-medal-row {
+    grid-template-columns:
+      1fr;
+
+    gap: 2px;
+  }
+
+
+  .score-medal-range,
+  .score-medal-name {
+    white-space:
+      normal;
+  }
+
 }
 
     .video-comment-card label {
@@ -3811,10 +3980,13 @@ padding: 4px;
   </div>
 
 <!-- =========================================
-     หมายเหตุการพิจารณาคะแนน
+     เกณฑ์การตัดสินระดับเหรียญรางวัล
 ========================================== -->
 <div class="score-guideline-card">
 
+  <!-- =====================================
+       Header
+  ====================================== -->
   <div class="score-guideline-header">
 
     <div class="score-guideline-icon">
@@ -3822,19 +3994,87 @@ padding: 4px;
     </div>
 
     <div class="score-guideline-title">
-      หมายเหตุการพิจารณาคะแนน
+      เกณฑ์การตัดสินระดับเหรียญรางวัล
+      (คะแนนเต็ม 100 คะแนน)
     </div>
 
   </div>
 
 
-  <p class="score-guideline-description">
+  <!-- =====================================
+       ระดับเหรียญ
+  ====================================== -->
+  <div class="score-medal-list">
 
-    คะแนนที่ท่านให้เป็นส่วนหนึ่งของกระบวนการตัดสิน
-    โดยจะนำไปพิจารณาร่วมกับคะแนนจากกรรมการอีกท่านตามหลักเกณฑ์ของการแข่งขัน
-    กรุณาพิจารณาและให้คะแนนในแต่ละหัวข้อตามคุณภาพของผลงานอย่างเหมาะสม
 
-  </p>
+    <!-- เหรียญทอง -->
+    <div class="score-medal-row">
+
+      <div class="score-medal-range">
+        80–100 คะแนน
+      </div>
+
+      <div class="score-medal-name">
+        เหรียญทอง
+      </div>
+
+      <div class="score-medal-description">
+        ผลงานเกณฑ์ดีเยี่ยม
+      </div>
+
+    </div>
+
+
+    <!-- เหรียญเงิน -->
+    <div class="score-medal-row">
+
+      <div class="score-medal-range">
+        70–79 คะแนน
+      </div>
+
+      <div class="score-medal-name">
+        เหรียญเงิน
+      </div>
+
+      <div class="score-medal-description">
+        ผลงานเกณฑ์ดี
+      </div>
+
+    </div>
+
+
+    <!-- เหรียญทองแดง -->
+    <div class="score-medal-row">
+
+      <div class="score-medal-range">
+        60–69 คะแนน
+      </div>
+
+      <div class="score-medal-name">
+        เหรียญทองแดง
+      </div>
+
+      <div class="score-medal-description">
+        ผลงานเกณฑ์ผ่านมาตรฐาน
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================
+       หมายเหตุการคิดคะแนน
+  ====================================== -->
+  <div class="score-guideline-note">
+
+    <strong>* การคิดคะแนน:</strong>
+    จะนำคะแนนรวมจากกรรมการทั้ง 2 ท่าน
+    มาคำนวณเป็น
+    <strong>“คะแนนเฉลี่ย”</strong>
+    ก่อนนำไปจัดระดับเหรียญรางวัล
+
+  </div>
 
 </div>
   
