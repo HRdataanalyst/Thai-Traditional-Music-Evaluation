@@ -5355,27 +5355,46 @@ async function apiPost(
 
 }
 
-    /* =========================================================
+/* =========================================================
    LOGIN
    เข้าสู่ระบบด้วย Password อย่างเดียว
+
+   ขั้นตอนใหม่:
+   1. ตรวจ Password
+   2. รับ Session Token
+   3. เปิด Dashboard
+   4. โหลด Applicants แยกอีก Request
 ========================================================= */
 
 loginForm.addEventListener(
   "submit",
   async function(event) {
 
+    /*
+     * =====================================================
+     * ป้องกัน Form Reload หน้าเว็บ
+     * =====================================================
+     */
+
     event.preventDefault();
 
+
     /*
+     * =====================================================
      * ล้าง Error เดิม
+     * =====================================================
      */
+
     loginError.textContent =
       "";
 
 
     /*
+     * =====================================================
      * ปุ่ม Login
+     * =====================================================
      */
+
     const loginButton =
       loginForm.querySelector(
         ".login-button"
@@ -5383,10 +5402,14 @@ loginForm.addEventListener(
 
 
     /*
-     * ป้องกันการกด Login ซ้ำ
+     * =====================================================
+     * ป้องกันกด Login ซ้ำ
+     * =====================================================
      */
+
     loginButton.disabled =
       true;
+
 
     loginButton.textContent =
       "กำลังเข้าสู่ระบบ...";
@@ -5402,17 +5425,20 @@ loginForm.addEventListener(
 
       const enteredPassword =
         String(
-          passwordInput.value || ""
+          passwordInput.value ||
+          ""
         ).trim();
 
 
       /*
        * =====================================================
-       * 2. ตรวจว่ามี Password หรือไม่
+       * 2. ตรวจว่ากรอกรหัสผ่านหรือไม่
        * =====================================================
        */
 
-      if (!enteredPassword) {
+      if (
+        !enteredPassword
+      ) {
 
         throw new Error(
           "กรุณากรอกรหัสผ่าน"
@@ -5423,23 +5449,25 @@ loginForm.addEventListener(
 
       /*
        * =====================================================
-       * 3. แสดง Loading
+       * 3. แสดง Loading เฉพาะขั้น Login
+       *
+       * ตอนนี้ Backend จะตรวจ Password
+       * และสร้าง Session เท่านั้น
+       * ไม่โหลด Applicant ในขั้นนี้แล้ว
        * =====================================================
        */
 
       setLoading(
         true,
-        "กำลังตรวจสอบรหัสผ่าน..."
+        "กำลังเข้าสู่ระบบ..."
       );
 
 
       /*
        * =====================================================
-       * 4. ส่ง Password ไป Google Apps Script
+       * 4. Login
        *
-       * ไม่ส่ง JudgeID
-       * ไม่ส่ง Username
-       * ไม่ส่ง Region
+       * ส่ง Password ไป Backend
        * =====================================================
        */
 
@@ -5455,43 +5483,62 @@ loginForm.addEventListener(
 
       /*
        * =====================================================
-       * 5. รับ Session Token
+       * 5. ตรวจ Token
+       * =====================================================
+       */
+
+      if (
+        !loginResult ||
+        !loginResult.token
+      ) {
+
+        throw new Error(
+          "เข้าสู่ระบบไม่สำเร็จ เนื่องจากไม่พบ Session"
+        );
+
+      }
+
+
+      /*
+       * =====================================================
+       * 6. เก็บ Session Token
+       *
+       * Token นี้จะใช้สำหรับ:
+       * - Applicants
+       * - Ranking
+       * - Save Draft
+       * - Submit Score
+       * - Logout
        * =====================================================
        */
 
       authToken =
-        loginResult.token ||
-        "";
+        loginResult.token;
 
 
       /*
-       * Backend จะส่งข้อมูลกรรมการ
-       * ที่ค้นพบจาก Password กลับมา
+       * =====================================================
+       * 7. เก็บข้อมูลกรรมการ
+       * =====================================================
        */
+
       currentJudge =
         loginResult.judge ||
         null;
 
 
       /*
-       * ตรวจ Token
+       * =====================================================
+       * 8. Update ข้อมูลกรรมการบนหน้าเว็บ
+       * =====================================================
        */
-      if (!authToken) {
 
-        throw new Error(
-          "ระบบไม่ได้ส่ง Session Token กลับมา"
-        );
+      if (
+        currentJudge
+      ) {
 
-      }
-
-
-      /*
-       * ตรวจข้อมูลกรรมการ
-       */
-      if (!currentJudge) {
-
-        throw new Error(
-          "ระบบไม่พบข้อมูลกรรมการ"
+        applyJudgeInfo(
+          currentJudge
         );
 
       }
@@ -5499,7 +5546,11 @@ loginForm.addEventListener(
 
       /*
        * =====================================================
-       * 6. รับ Score Criteria
+       * 9. รับ Score Criteria จาก Login
+       *
+       * ถึงแม้ loadApplicants()
+       * จะส่ง scoreCriteria มาอีกครั้ง
+       * แต่เราสามารถรับไว้ได้ตั้งแต่ Login
        * =====================================================
        */
 
@@ -5543,34 +5594,16 @@ loginForm.addEventListener(
 
       /*
        * =====================================================
-       * 7. ใส่ข้อมูลกรรมการบนหน้า Dashboard
-       * =====================================================
-       */
-
-      applyJudgeInfo(
-        currentJudge
-      );
-      /*
-       * =====================================================
-       * 8. รับ Applicant ที่ได้มาพร้อม Login
+       * 10. ล้าง Applicant เดิม
        *
-       * ไม่ต้องยิง API applicants รอบที่สองแล้ว
+       * ยังไม่ render 0
+       * เพื่อไม่ให้ Dashboard กระพริบเลข 0
        * =====================================================
        */
 
       applicants =
-        Array.isArray(
-          loginResult.applicants
-        )
-          ? loginResult.applicants
-          : [];
+        [];
 
-
-      /*
-       * =====================================================
-       * 9. Reset Pagination
-       * =====================================================
-       */
 
       currentPage =
         1;
@@ -5578,7 +5611,10 @@ loginForm.addEventListener(
 
       /*
        * =====================================================
-       * 10. เปิด Dashboard
+       * 11. เปลี่ยนจาก Login ไป Dashboard
+       *
+       * Password ผ่านแล้ว
+       * จึงให้ผู้ใช้เข้าหน้า Dashboard ได้ทันที
        * =====================================================
        */
 
@@ -5586,13 +5622,16 @@ loginForm.addEventListener(
         "hidden"
       );
 
+
       evaluationPage.classList.add(
         "hidden"
       );
 
+
       rankingPage.classList.add(
         "hidden"
       );
+
 
       appPage.classList.remove(
         "hidden"
@@ -5601,120 +5640,80 @@ loginForm.addEventListener(
 
       /*
        * =====================================================
-       * 11. Render Applicant
+       * 12. แสดงสถานะกำลังโหลดรายการ
        *
-       * จุดนี้ applicants มีข้อมูลแล้ว
-       * จึงไม่แสดงหน้า 0 ก่อน
+       * ไม่เรียก renderApplicants() ก่อน
+       * เพราะ applicants ยังเป็น []
+       *
+       * ป้องกัน Dashboard แสดงว่า
+       * "รายการทั้งหมด 0"
+       * ทั้งที่กำลังโหลดอยู่
        * =====================================================
        */
 
-      renderApplicants();
+      applicantGrid.innerHTML =
+        '<div class="empty-state">' +
+        '<div class="empty-state-icon">🎵</div>' +
+        '<strong>กำลังโหลดรายการประเมิน...</strong>' +
+        '<p style="margin-top:6px;">กรุณารอสักครู่</p>' +
+        '</div>';
 
 
       /*
        * =====================================================
-       * 12. Update Summary
+       * 13. ล้าง Summary ชั่วคราว
+       *
+       * ใช้ "-" แทนเลข 0
+       * เพื่อไม่ให้ผู้ใช้เข้าใจว่าไม่มีรายการ
        * =====================================================
        */
 
-      if (
-        loginResult.summary
-      ) {
-
-        updateSummary(
-          loginResult.summary
-        );
-
-      } else {
-
-        /*
-         * Fallback
-         *
-         * เผื่อ Backend ไม่ส่ง Summary
-         */
-        const total =
-          applicants.length;
+      document
+        .getElementById(
+          "totalCount"
+        )
+        .textContent =
+          "-";
 
 
-        const pending =
-          applicants.filter(
-            function(item) {
-
-              return (
-                item.status ===
-                "not-started"
-              );
-
-            }
-          ).length;
+      document
+        .getElementById(
+          "pendingCount"
+        )
+        .textContent =
+          "-";
 
 
-        const draft =
-          applicants.filter(
-            function(item) {
-
-              return (
-                item.status ===
-                "draft"
-              );
-
-            }
-          ).length;
+      document
+        .getElementById(
+          "draftCount"
+        )
+        .textContent =
+          "-";
 
 
-        const submitted =
-          applicants.filter(
-            function(item) {
-
-              return (
-                item.status ===
-                "submitted"
-              );
-
-            }
-          ).length;
+      document
+        .getElementById(
+          "submittedCount"
+        )
+        .textContent =
+          "-";
 
 
-        updateSummary(
-          {
-
-            total:
-              total,
-
-            pending:
-              pending,
-
-            draft:
-              draft,
-
-            submitted:
-              submitted,
-
-            progressPercent:
-              total
-                ? Math.round(
-                    (
-                      submitted /
-                      total
-                    ) *
-                    100
-                  )
-                : 0
-
-          }
-        );
-
-      }
+      document
+        .getElementById(
+          "progressText"
+        )
+        .textContent =
+          "-";
 
 
-      /*
-       * =====================================================
-       * 13. ล้าง Password
-       * =====================================================
-       */
-
-      passwordInput.value =
-        "";
+      document
+        .getElementById(
+          "progressFill"
+        )
+        .style.width =
+          "0%";
 
 
       /*
@@ -5735,7 +5734,34 @@ loginForm.addEventListener(
 
       /*
        * =====================================================
-       * 15. Login สำเร็จ
+       * 15. ล้าง Password
+       *
+       * Password ถูกตรวจเสร็จแล้ว
+       * ไม่จำเป็นต้องเก็บไว้ใน Browser
+       * =====================================================
+       */
+
+      passwordInput.value =
+        "";
+
+
+      /*
+       * =====================================================
+       * 16. ปิด Loading ของขั้น Login
+       *
+       * ณ จุดนี้ Password ผ่านแล้ว
+       * และ Dashboard เปิดแล้ว
+       * =====================================================
+       */
+
+      setLoading(
+        false
+      );
+
+
+      /*
+       * =====================================================
+       * 17. แจ้ง Login สำเร็จ
        * =====================================================
        */
 
@@ -5744,34 +5770,203 @@ loginForm.addEventListener(
         "success"
       );
 
-    } catch (error) {
+
+      /*
+       * =====================================================
+       * 18. โหลด Applicant แยก
+       *
+       * ตอนนี้ Login ไม่ต้องรอ Applicant แล้ว
+       * =====================================================
+       */
+
+      try {
+
+        /*
+         * แสดง Loading เฉพาะการโหลดรายการ
+         */
+        setLoading(
+          true,
+          "กำลังโหลดรายการประเมิน..."
+        );
+
+
+        /*
+         * loadApplicants()
+         * จะ:
+         *
+         * - ใช้ authToken
+         * - เรียก action applicants
+         * - รับ applicants
+         * - รับ summary
+         * - รับ judge
+         * - รับ scoreCriteria
+         * - renderApplicants()
+         * - updateSummary()
+         */
+        await loadApplicants();
+
+
+      } catch (
+        loadError
+      ) {
+
+        /*
+         * ===================================================
+         * Login ผ่านแล้ว
+         * แต่โหลด Applicant ไม่สำเร็จ
+         *
+         * ไม่ Logout ผู้ใช้
+         * ไม่ล้าง Session
+         *
+         * เพื่อให้สามารถลองโหลดใหม่ได้
+         * ===================================================
+         */
+
+        console.error(
+          "loadApplicants failed:",
+          loadError
+        );
+
+
+        applicantGrid.innerHTML =
+          '<div class="empty-state">' +
+          '<div class="empty-state-icon">⚠️</div>' +
+          '<strong>โหลดรายการประเมินไม่สำเร็จ</strong>' +
+          '<p style="margin-top:6px;">' +
+          escapeHtml(
+            loadError &&
+            loadError.message
+              ? loadError.message
+              : "กรุณาลองใหม่อีกครั้ง"
+          ) +
+          '</p>' +
+          '</div>';
+
+
+        /*
+         * Summary แสดง "-"
+         * แทน 0
+         */
+        document
+          .getElementById(
+            "totalCount"
+          )
+          .textContent =
+            "-";
+
+
+        document
+          .getElementById(
+            "pendingCount"
+          )
+          .textContent =
+            "-";
+
+
+        document
+          .getElementById(
+            "draftCount"
+          )
+          .textContent =
+            "-";
+
+
+        document
+          .getElementById(
+            "submittedCount"
+          )
+          .textContent =
+            "-";
+
+
+        document
+          .getElementById(
+            "progressText"
+          )
+          .textContent =
+            "-";
+
+
+        document
+          .getElementById(
+            "progressFill"
+          )
+          .style.width =
+            "0%";
+
+
+        /*
+         * แจ้ง Error
+         */
+        showToast(
+          loadError &&
+          loadError.message
+            ? loadError.message
+            : "โหลดรายการประเมินไม่สำเร็จ"
+        );
+
+      } finally {
+
+        /*
+         * ปิด Loading ของ Applicant
+         */
+        setLoading(
+          false
+        );
+
+      }
+
+
+    } catch (
+      error
+    ) {
 
       /*
        * =====================================================
        * Login ไม่สำเร็จ
+       *
+       * จุดนี้หมายถึง:
+       * - Password ผิด
+       * - ไม่ได้รับ Token
+       * - เชื่อมต่อ Login API ไม่ได้
        * =====================================================
        */
 
       authToken =
         "";
 
+
       currentJudge =
         null;
+
 
       applicants =
         [];
 
 
+      rankingRows =
+        [];
+
+
+      currentPage =
+        1;
+
+
       /*
+       * =====================================================
        * ซ่อนหน้าอื่น
+       * =====================================================
        */
+
       appPage.classList.add(
         "hidden"
       );
 
+
       evaluationPage.classList.add(
         "hidden"
       );
+
 
       rankingPage.classList.add(
         "hidden"
@@ -5779,16 +5974,22 @@ loginForm.addEventListener(
 
 
       /*
+       * =====================================================
        * แสดงหน้า Login
+       * =====================================================
        */
+
       loginPage.classList.remove(
         "hidden"
       );
 
 
       /*
-       * แสดงข้อความ Error
+       * =====================================================
+       * แสดง Error
+       * =====================================================
        */
+
       loginError.textContent =
         error &&
         error.message
@@ -5799,14 +6000,17 @@ loginForm.addEventListener(
 
 
       /*
-       * Focus กลับช่อง Password
+       * =====================================================
+       * Focus Password
+       * =====================================================
        */
+
       passwordInput.focus();
 
 
       /*
-       * เลือกข้อความเดิม
-       * เพื่อพิมพ์รหัสใหม่ได้ทันที
+       * เลือกรหัสเดิม
+       * เพื่อพิมพ์ใหม่ได้ง่าย
        */
       passwordInput.select();
 
@@ -5814,16 +6018,25 @@ loginForm.addEventListener(
     } finally {
 
       /*
+       * =====================================================
        * ปิด Loading
+       *
+       * เผื่อ Error เกิดก่อนเข้าสู่
+       * Applicant Loading
+       * =====================================================
        */
+
       setLoading(
         false
       );
 
 
       /*
+       * =====================================================
        * เปิดปุ่ม Login
+       * =====================================================
        */
+
       loginButton.disabled =
         false;
 
