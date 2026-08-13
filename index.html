@@ -4650,6 +4650,113 @@ async function fetchWithTimeout(
   }
 }
 
+    /* =========================================================
+ RETRY REQUEST
+ หากเชื่อมต่อ Google Apps Script ไม่สำเร็จชั่วคราว
+ ให้ลองใหม่อัตโนมัติ 1 ครั้ง
+========================================================= */
+
+async function fetchWithRetry(
+ url,
+ options = {},
+ timeoutMs = 30000,
+ maxAttempts = 2
+) {
+
+ let lastError =
+ null;
+
+ for (
+ let attempt = 1;
+ attempt <= maxAttempts;
+ attempt++
+ ) {
+
+ try {
+
+ const response =
+ await fetchWithTimeout(
+ url,
+ options,
+ timeoutMs
+ );
+
+ /*
+  * Retry เฉพาะ Error ชั่วคราว
+  */
+ if (
+ (
+ response.status === 404 ||
+ response.status >= 500
+ ) &&
+ attempt < maxAttempts
+ ) {
+
+ await new Promise(
+ function(resolve) {
+
+ setTimeout(
+ resolve,
+ 700
+ );
+
+ }
+ );
+
+ continue;
+
+ }
+
+ return response;
+
+ } catch (
+ error
+ ) {
+
+ lastError =
+ error;
+
+ /*
+  * ถ้าครบจำนวนครั้งแล้ว
+  * ส่ง Error กลับ
+  */
+ if (
+ attempt >= maxAttempts
+ ) {
+
+ throw error;
+
+ }
+
+ /*
+  * รอ 0.7 วินาที
+  * แล้วลองใหม่
+  */
+ await new Promise(
+ function(resolve) {
+
+ setTimeout(
+ resolve,
+ 700
+ );
+
+ }
+ );
+
+ }
+
+ }
+
+ throw (
+ lastError ||
+ new Error(
+ "ไม่สามารถเชื่อมต่อระบบได้"
+ )
+ );
+
+}
+
+
     async function parseApiResponse(response) {
       const responseText = await response.text();
       const trimmedText = responseText.trim();
@@ -4764,23 +4871,31 @@ async function apiGet(
     );
   }
 
-  const response =
-    await fetchWithTimeout(
-      url.toString(),
-      {
-        method:
-          "GET",
+const response =
+ await fetchWithRetry(
+   API_URL,
+   {
+     method: "POST",
 
-        /*
-         * judgeOptions สามารถใช้ Cache ได้
-         */
-        cache:
-          forceFresh
-            ? "no-store"
-            : "default"
-      },
-      timeoutMs
-    );
+     headers: {
+       "Content-Type":
+         "text/plain;charset=utf-8"
+     },
+
+     body:
+       JSON.stringify(
+         requestBody
+       ),
+
+     cache:
+       "no-store",
+
+     redirect:
+       "follow"
+   },
+   timeoutMs,
+   2
+ );
 
   const data =
     await parseApiResponse(
@@ -4807,61 +4922,56 @@ async function apiPost(
   action,
   payload = {}
 ) {
-  let timeoutMs =
-    30000;
+
+  let timeoutMs = 30000;
 
   /*
-   * โหลดรายการและ Ranking อาจมีข้อมูลมาก
+   * รายการ / Ranking
    */
   if (
     action === "applicants" ||
     action === "ranking"
   ) {
-    timeoutMs =
-      90000;
+    timeoutMs = 60000;
   }
 
   /*
-   * การบันทึกคะแนนอาจต้องเขียนหลาย Sheet
+   * บันทึกคะแนน
    */
   if (
     action === "saveDraft" ||
     action === "submitScore"
   ) {
-    timeoutMs =
-      60000;
+    timeoutMs = 60000;
   }
 
-  const url =
-    new URL(
-      API_URL
-    );
-
-  url.searchParams.set(
-    "action",
-    action
-  );
-
-  url.searchParams.set(
-    "payload",
-    JSON.stringify(
-      payload || {}
-    )
-  );
-
-  url.searchParams.set(
-    "_",
-    String(
-      Date.now()
-    )
+  const requestBody = Object.assign(
+    {},
+    payload || {},
+    {
+      action: action
+    }
   );
 
   const response =
     await fetchWithTimeout(
-      url.toString(),
+      API_URL,
       {
-        method:
-          "GET",
+        method: "POST",
+
+        /*
+         * ใช้ text/plain
+         * และส่ง JSON จริงใน Body
+         */
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+
+        body:
+          JSON.stringify(
+            requestBody
+          ),
 
         cache:
           "no-store",
@@ -4881,16 +4991,18 @@ async function apiPost(
     !data ||
     data.success !== true
   ) {
+
     throw new Error(
       data &&
       data.message
         ? data.message
         : "เกิดข้อผิดพลาดจากระบบ"
     );
+
   }
 
   return data;
-}  
+} 
 
     /* =========================================================
    LOGIN
@@ -5143,63 +5255,70 @@ loginForm.addEventListener(
       );
 
 
-      /*
-       * =====================================================
-       * 9. โหลดรายการประเมิน
-       *
-       * loadApplicants()
-       * จะใช้ authToken
-       *
-       * Backend จะอ่าน JudgeID
-       * จาก Session ที่สร้างไว้
-       * =====================================================
-       */
+if (
+  Array.isArray(
+    loginResult.applicants
+  )
+) {
 
-      setLoading(
-        true,
-        "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
-      );
+  applicants =
+    loginResult.applicants;
 
+  currentPage = 1;
 
-      try {
+  renderApplicants();
 
-        await loadApplicants();
+  /*
+   * ใช้การคำนวณจาก applicants
+   * ตามระบบ render เดิม
+   */
 
+  showToast(
+    "เข้าสู่ระบบสำเร็จ",
+    "success"
+  );
 
-        showToast(
-          "เข้าสู่ระบบสำเร็จ",
-          "success"
-        );
+} else {
 
+  setLoading(
+    true,
+    "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
+  );
 
-      } catch (loadError) {
+  try {
 
-        console.error(
-          "loadApplicants failed:",
-          loadError
-        );
+    await loadApplicants();
 
+    showToast(
+      "เข้าสู่ระบบสำเร็จ",
+      "success"
+    );
 
-        applicantGrid.innerHTML =
-          '<div class="empty-state">' +
-          '<strong>' +
-          'เข้าสู่ระบบสำเร็จ แต่โหลดรายการประเมินไม่สำเร็จ' +
-          '</strong>' +
-          '<p style="margin-top:6px;">' +
-          escapeHtml(
-            loadError.message ||
-            "กรุณาลองโหลดรายการใหม่"
-          ) +
-          '</p>' +
-          '</div>';
+  } catch (
+    loadError
+  ) {
 
+    console.error(
+      "loadApplicants failed:",
+      loadError
+    );
 
-        showToast(
-          loadError.message ||
-          "โหลดรายการประเมินไม่สำเร็จ"
-        );
+    applicantGrid.innerHTML =
+      '<div class="empty-state">' +
+      '<strong>' +
+      'เข้าสู่ระบบสำเร็จ แต่โหลดรายการประเมินไม่สำเร็จ' +
+      '</strong>' +
+      '<p style="margin-top:6px;">' +
+      escapeHtml(
+        loadError.message ||
+        "กรุณาลองโหลดรายการใหม่"
+      ) +
+      '</p>' +
+      '</div>';
 
-      }
+  }
+
+}
 
 
     } catch (error) {
