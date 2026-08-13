@@ -4761,44 +4761,17 @@ async function fetchWithRetry(
       const responseText = await response.text();
       const trimmedText = responseText.trim();
 
-if (!response.ok) {
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(
+            "ไม่พบ Google Apps Script Web App กรุณา Deploy ใหม่และนำ URL /exec ล่าสุดมาใส่ใน API_URL"
+          );
+        }
 
-  /*
-   * 404 บางครั้งอาจเป็นการตอบกลับชั่วคราว
-   * จากปลายทาง/redirect
-   *
-   * ไม่ควรสรุปทันทีว่า Deployment หาย
-   */
-  if (
-    response.status === 404
-  ) {
-
-    throw new Error(
-      "ไม่สามารถเชื่อมต่อระบบได้ชั่วคราว กรุณาลองเข้าสู่ระบบอีกครั้ง"
-    );
-
-  }
-
-
-  /*
-   * Google Apps Script / Server Error
-   */
-  if (
-    response.status >= 500
-  ) {
-
-    throw new Error(
-      "ระบบไม่พร้อมใช้งานชั่วคราว กรุณาลองใหม่อีกครั้ง"
-    );
-
-  }
-
-
-  throw new Error(
-    `ไม่สามารถเชื่อมต่อระบบได้ (HTTP ${response.status})`
-  );
-
-}
+        throw new Error(
+          `API ตอบกลับ HTTP ${response.status}`
+        );
+      }
 
       if (
         trimmedText.startsWith("<!DOCTYPE") ||
@@ -4928,7 +4901,7 @@ async function apiGet(
           "follow"
       },
       timeoutMs,
-      1
+      2
     );
 
 
@@ -4970,57 +4943,25 @@ async function apiLoginFast(
   password
 ) {
 
-  /*
-   * =========================================================
-   * FAST LOGIN
-   *
-   * ใช้ GET เฉพาะ Login
-   * เพราะ Code.gs รองรับ doGet(action=login) อยู่แล้ว
-   * และ Payload มีแค่ Password
-   * =========================================================
-   */
-
-  const cleanPassword =
-    String(
-      password || ""
-    ).trim();
-
-
-  if (!cleanPassword) {
-
-    throw new Error(
-      "กรุณากรอกรหัสผ่าน"
-    );
-
-  }
-
-
   const url =
     new URL(
       API_URL
     );
 
 
-  /*
-   * action
-   */
   url.searchParams.set(
     "action",
     "login"
   );
 
 
-  /*
-   * payload
-   *
-   * Code.gs parseGetPayload_()
-   * รองรับรูปแบบนี้อยู่แล้ว
-   */
   url.searchParams.set(
     "payload",
     JSON.stringify({
       password:
-        cleanPassword
+        String(
+          password || ""
+        ).trim()
     })
   );
 
@@ -5036,15 +4977,6 @@ async function apiLoginFast(
   );
 
 
-  /*
-   * =========================================================
-   * Login Request
-   *
-   * รอบแรกให้เวลา 15 วินาที
-   * Retry สูงสุด 2 ครั้ง
-   * =========================================================
-   */
-
   const response =
     await fetchWithRetry(
       url.toString(),
@@ -5059,9 +4991,16 @@ async function apiLoginFast(
           "follow"
       },
 
+      /*
+       * Login ใหม่ควรเบามาก
+       * ไม่ควรรอ 30 วินาที
+       */
       12000,
 
-      1
+      /*
+       * ลองใหม่สูงสุด 2 ครั้ง
+       */
+      2
     );
 
 
@@ -5388,22 +5327,47 @@ const loginResult =
         "hidden"
       );
 
-appPage.classList.remove(
-  "hidden"
-);
+      appPage.classList.remove(
+        "hidden"
+      );
 
 
-/*
- * ล้าง Password ออกจากช่อง
- * หลัง Login สำเร็จ
- */
-passwordInput.value =
-  "";
+      /*
+       * ล้าง Password ออกจากช่อง
+       * หลัง Login สำเร็จ
+       */
+      passwordInput.value =
+        "";
 
+
+      /*
+       * Reset Applicant ก่อนโหลดข้อมูล
+       */
+      applicants =
+        [];
+
+
+      renderApplicants();
+
+
+      /*
+       * URL → Dashboard
+       */
+      history.replaceState(
+        {
+          page:
+            "dashboard"
+        },
+        "",
+        "#dashboard"
+      );
 
 /*
  * =====================================================
- * Reset Applicant ก่อนโหลดข้อมูลจริง
+ * 9. Login สำเร็จ
+ *
+ * เปิด Dashboard ทันที
+ * ไม่รอ Applicant API
  * =====================================================
  */
 
@@ -5415,100 +5379,10 @@ currentPage =
 
 
 /*
- * =====================================================
- * ระหว่างโหลดข้อมูลจริง
- *
- * ห้าม renderApplicants() ตอนนี้
- * เพราะ applicants ยังเป็น []
- *
- * ถ้า render ตอนนี้
- * Summary จะกลายเป็น 0 ทั้งหมด
- * =====================================================
+ * เปิดหน้า Dashboard ก่อน
  */
+renderApplicants();
 
-document
-  .getElementById(
-    "totalCount"
-  )
-  .textContent =
-    "—";
-
-
-document
-  .getElementById(
-    "pendingCount"
-  )
-  .textContent =
-    "—";
-
-
-document
-  .getElementById(
-    "draftCount"
-  )
-  .textContent =
-    "—";
-
-
-document
-  .getElementById(
-    "submittedCount"
-  )
-  .textContent =
-    "—";
-
-
-document
-  .getElementById(
-    "progressText"
-  )
-  .textContent =
-    "กำลังโหลด...";
-
-
-document
-  .getElementById(
-    "progressFill"
-  )
-  .style.width =
-    "0%";
-
-
-/*
- * =====================================================
- * แสดงข้อความกำลังโหลด
- * ในพื้นที่รายการ
- * =====================================================
- */
-
-applicantGrid.innerHTML =
-  '<div class="empty-state">' +
-  '<strong>กำลังโหลดรายการประเมิน...</strong>' +
-  '<p style="margin-top:6px;">กรุณารอสักครู่</p>' +
-  '</div>';
-
-
-/*
- * =====================================================
- * เปลี่ยน URL เป็น Dashboard
- * =====================================================
- */
-
-history.replaceState(
-  {
-    page:
-      "dashboard"
-  },
-  "",
-  "#dashboard"
-);
-
-
-/*
- * =====================================================
- * Login สำเร็จ
- * =====================================================
- */
 
 showToast(
   "เข้าสู่ระบบสำเร็จ",
@@ -5680,16 +5554,14 @@ loadApplicants()
     );
   }
 
-const result =
-  await apiGet(
-    "applicants",
-    {
-      token:
-        authToken
-    },
-    20000,
-    true
-  );
+  const result =
+    await apiPost(
+      "applicants",
+      {
+        token:
+          authToken
+      }
+    );
 
   applicants =
     Array.isArray(
