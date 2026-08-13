@@ -5205,7 +5205,7 @@ async function apiPost(
 
   /*
    * =========================================================
-   * Timeout
+   * 1. กำหนด Timeout
    * =========================================================
    */
 
@@ -5214,7 +5214,43 @@ async function apiPost(
 
 
   /*
-   * โหลด Ranking อาจใช้เวลามากกว่า Login
+   * Login ควรเป็น Request ที่เบามาก
+   *
+   * Backend ตอนนี้ทำเพียง:
+   * - ตรวจ Password
+   * - สร้าง Session
+   * - ส่ง Token
+   *
+   * จึงไม่ควรรอนานถึง 30 วินาที
+   */
+  if (
+    action ===
+      "login"
+  ) {
+
+    timeoutMs =
+      15000;
+
+  }
+
+
+  /*
+   * Applicant อาจมีข้อมูลมากกว่า Login
+   */
+  if (
+    action ===
+      "applicants"
+  ) {
+
+    timeoutMs =
+      60000;
+
+  }
+
+
+  /*
+   * Ranking อาจอ่านข้อมูลคะแนน
+   * และใช้เวลานานกว่า
    */
   if (
     action ===
@@ -5228,7 +5264,8 @@ async function apiPost(
 
 
   /*
-   * การบันทึกคะแนน
+   * Save / Submit
+   * มีการเขียน Google Sheet
    */
   if (
     action ===
@@ -5245,12 +5282,7 @@ async function apiPost(
 
   /*
    * =========================================================
-   * เตรียม Request Body
-   *
-   * ส่ง action รวมอยู่ใน JSON Body
-   *
-   * Code.gs → doPost()
-   * จะอ่านผ่าน parseRequestBody_(e)
+   * 2. เตรียม Request Body สำหรับ POST
    * =========================================================
    */
 
@@ -5269,14 +5301,13 @@ async function apiPost(
 
   /*
    * =========================================================
-   * เรียก Google Apps Script ผ่าน POST จริง
-   *
-   * ไม่ส่ง payload ผ่าน URL แล้ว
+   * 3. ฟังก์ชันเรียก POST
    * =========================================================
    */
 
-  const response =
-    await fetchWithTimeout(
+  async function sendPostRequest() {
+
+    return await fetchWithTimeout(
       API_URL,
       {
 
@@ -5288,9 +5319,7 @@ async function apiPost(
 
             /*
              * ใช้ text/plain
-             *
-             * ลดปัญหา CORS Preflight
-             * กับ Google Apps Script Web App
+             * เพื่อไม่ให้ Browser ทำ CORS Preflight
              */
             "Content-Type":
               "text/plain;charset=utf-8"
@@ -5302,6 +5331,10 @@ async function apiPost(
             requestBody
           ),
 
+        /*
+         * Request Login / Save
+         * ไม่ควรใช้ Browser Cache
+         */
         cache:
           "no-store",
 
@@ -5312,10 +5345,222 @@ async function apiPost(
       timeoutMs
     );
 
+  }
+
 
   /*
    * =========================================================
-   * อ่าน Response
+   * 4. ฟังก์ชัน GET Fallback
+   *
+   * Code.gs ของระบบรองรับอยู่แล้วผ่าน:
+   *
+   * doGet()
+   * +
+   * parseGetPayload_(e)
+   *
+   * ใช้เมื่อ POST ถูกตอบ HTTP 404
+   * =========================================================
+   */
+
+  async function sendGetFallbackRequest() {
+
+    const fallbackUrl =
+      new URL(
+        API_URL
+      );
+
+
+    /*
+     * Action
+     */
+    fallbackUrl.searchParams.set(
+      "action",
+      action
+    );
+
+
+    /*
+     * ส่ง Payload เป็น JSON
+     *
+     * Code.gs จะอ่านจาก:
+     *
+     * parseGetPayload_(e)
+     */
+    fallbackUrl.searchParams.set(
+      "payload",
+      JSON.stringify(
+        payload ||
+        {}
+      )
+    );
+
+
+    /*
+     * ป้องกัน Browser Cache
+     */
+    fallbackUrl.searchParams.set(
+      "_",
+      String(
+        Date.now()
+      )
+    );
+
+
+    return await fetchWithTimeout(
+      fallbackUrl.toString(),
+      {
+
+        method:
+          "GET",
+
+        cache:
+          "no-store",
+
+        redirect:
+          "follow"
+
+      },
+      timeoutMs
+    );
+
+  }
+
+
+  /*
+   * =========================================================
+   * 5. เริ่ม Request ด้วย POST ก่อน
+   * =========================================================
+   */
+
+  let response;
+
+
+  try {
+
+    response =
+      await sendPostRequest();
+
+  } catch (postNetworkError) {
+
+    /*
+     * =======================================================
+     * POST ติดต่อ Google ไม่สำเร็จในระดับ Network
+     *
+     * ลอง GET สำรองหนึ่งครั้ง
+     * =======================================================
+     */
+
+    console.warn(
+      "[API POST NETWORK ERROR - USE GET FALLBACK]",
+      {
+        action:
+          action,
+
+        error:
+          postNetworkError
+      }
+    );
+
+
+    response =
+      await sendGetFallbackRequest();
+
+  }
+
+
+  /*
+   * =========================================================
+   * 6. ถ้า POST ถูกตอบ HTTP 404
+   *
+   * สำคัญ:
+   *
+   * อย่าส่งเข้า parseApiResponse() ทันที
+   *
+   * เพราะ parseApiResponse()
+   * จะ Throw Error แล้วจบ Login
+   *
+   * ให้ใช้ GET fallback ก่อน
+   * =========================================================
+   */
+
+  if (
+    response &&
+    response.status ===
+      404
+  ) {
+
+    console.warn(
+      "[API POST 404 - USE GET FALLBACK]",
+      {
+        action:
+          action,
+
+        url:
+          response.url
+      }
+    );
+
+
+    response =
+      await sendGetFallbackRequest();
+
+  }
+
+
+  /*
+   * =========================================================
+   * 7. กรณี Google ตอบ 502 / 503 / 504 ชั่วคราว
+   *
+   * ลอง GET อีกหนึ่งครั้ง
+   * =========================================================
+   */
+
+  if (
+    response &&
+    (
+      response.status ===
+        502 ||
+
+      response.status ===
+        503 ||
+
+      response.status ===
+        504
+    )
+  ) {
+
+    console.warn(
+      "[API TEMPORARY ERROR - USE GET FALLBACK]",
+      {
+        action:
+          action,
+
+        status:
+          response.status,
+
+        url:
+          response.url
+      }
+    );
+
+
+    response =
+      await sendGetFallbackRequest();
+
+  }
+
+
+  /*
+   * =========================================================
+   * 8. อ่าน Response
+   *
+   * ณ จุดนี้:
+   *
+   * - POST ปกติ → ใช้ POST
+   *
+   * หรือ
+   *
+   * - POST 404 → ใช้ GET fallback
    * =========================================================
    */
 
@@ -5327,7 +5572,7 @@ async function apiPost(
 
   /*
    * =========================================================
-   * ตรวจ Success
+   * 9. ตรวจ Success จาก Backend
    * =========================================================
    */
 
@@ -5351,10 +5596,15 @@ async function apiPost(
   }
 
 
+  /*
+   * =========================================================
+   * 10. คืนข้อมูล
+   * =========================================================
+   */
+
   return data;
 
 }
-
 /* =========================================================
    LOGIN
    เข้าสู่ระบบด้วย Password อย่างเดียว
