@@ -4971,48 +4971,86 @@ async function apiLoginFast(
 ) {
 
   /*
-   * Login ส่งข้อมูลน้อยมาก:
-   * action + password
+   * =========================================================
+   * FAST LOGIN
    *
-   * ใช้ POST โดยตรง
-   * ไม่ผ่าน query string
+   * ใช้ GET เฉพาะ Login
+   * เพราะ Code.gs รองรับ doGet(action=login) อยู่แล้ว
+   * และ Payload มีแค่ Password
+   * =========================================================
    */
 
-  const requestBody = {
-    action:
-      "login",
+  const cleanPassword =
+    String(
+      password || ""
+    ).trim();
 
-    password:
-      String(
-        password || ""
-      ).trim()
-  };
+
+  if (!cleanPassword) {
+
+    throw new Error(
+      "กรุณากรอกรหัสผ่าน"
+    );
+
+  }
+
+
+  const url =
+    new URL(
+      API_URL
+    );
 
 
   /*
-   * Login ไม่ควรรอนาน
-   *
-   * Retry 1 ครั้ง:
-   * 8 วินาที + 0.5 วินาที + 8 วินาที
-   *
-   * แต่ปกติควรตอบกลับเร็วมาก
+   * action
    */
+  url.searchParams.set(
+    "action",
+    "login"
+  );
+
+
+  /*
+   * payload
+   *
+   * Code.gs parseGetPayload_()
+   * รองรับรูปแบบนี้อยู่แล้ว
+   */
+  url.searchParams.set(
+    "payload",
+    JSON.stringify({
+      password:
+        cleanPassword
+    })
+  );
+
+
+  /*
+   * ป้องกัน Browser ใช้ Response เก่า
+   */
+  url.searchParams.set(
+    "_",
+    String(
+      Date.now()
+    )
+  );
+
+
+  /*
+   * =========================================================
+   * Login Request
+   *
+   * รอบแรกให้เวลา 15 วินาที
+   * Retry สูงสุด 2 ครั้ง
+   * =========================================================
+   */
+
   const response =
     await fetchWithRetry(
-      API_URL,
+      url.toString(),
       {
         method:
-          "POST",
-
-        headers: {
-          "Content-Type":
-            "text/plain;charset=utf-8"
-        },
-
-        body:
-          JSON.stringify(
-            requestBody
-          ),
+          "GET",
 
         cache:
           "no-store",
@@ -5021,7 +5059,7 @@ async function apiLoginFast(
           "follow"
       },
 
-      8000,
+      15000,
 
       2
     );
