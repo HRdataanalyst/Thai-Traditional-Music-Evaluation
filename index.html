@@ -5120,59 +5120,83 @@ loginForm.addEventListener(
         "";
 
 
-      /*
-       * Reset Applicant ก่อนโหลดข้อมูล
-       */
-      applicants =
-        [];
+/*
+ * =====================================================
+ * 9. ใช้ Applicants ที่ส่งมาพร้อม Login
+ * =====================================================
+ */
+
+if (
+  Array.isArray(
+    loginResult.applicants
+  )
+) {
+
+  applicants =
+    loginResult.applicants;
+
+  currentPage =
+    1;
+
+  renderApplicants();
 
 
-      renderApplicants();
+  /*
+   * ใช้ Summary ที่ Backend ส่งมาด้วย
+   */
+  if (
+    loginResult.summary
+  ) {
+
+    updateSummary(
+      loginResult.summary
+    );
+
+  }
 
 
-      /*
-       * URL → Dashboard
-       */
-      history.replaceState(
-        {
-          page:
-            "dashboard"
-        },
-        "",
-        "#dashboard"
-      );
+  showToast(
+    "เข้าสู่ระบบสำเร็จ",
+    "success"
+  );
+
+} else {
+
+  /*
+   * ===================================================
+   * Fallback
+   *
+   * ถ้า Applicant Cache ยังไม่พร้อม
+   * ค่อยเรียก API applicants แยก
+   * ===================================================
+   */
+
+  setLoading(
+    true,
+    "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
+  );
+
+  await loadApplicants();
+
+  showToast(
+    "เข้าสู่ระบบสำเร็จ",
+    "success"
+  );
+
+}
 
 
-      /*
-       * =====================================================
-       * 9. โหลดรายการประเมิน
-       *
-       * loadApplicants()
-       * จะใช้ authToken
-       *
-       * Backend จะอ่าน JudgeID
-       * จาก Session ที่สร้างไว้
-       * =====================================================
-       */
-
-      setLoading(
-        true,
-        "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
-      );
-
-
-      try {
-
-        await loadApplicants();
-
-
-        showToast(
-          "เข้าสู่ระบบสำเร็จ",
-          "success"
-        );
-
-
-      } catch (loadError) {
+/*
+ * URL → Dashboard
+ */
+history.replaceState(
+  {
+    page:
+      "dashboard"
+  },
+  "",
+  "#dashboard"
+);
 
         console.error(
           "loadApplicants failed:",
