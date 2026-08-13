@@ -4838,16 +4838,24 @@ async function apiGet(
   timeoutMs = 30000,
   forceFresh = false
 ) {
+
   const url =
-    new URL(API_URL);
+    new URL(
+      API_URL
+    );
+
 
   url.searchParams.set(
     "action",
     action
   );
 
-  Object.entries(params)
-    .forEach(function(entry) {
+
+  Object.entries(
+    params || {}
+  ).forEach(
+    function(entry) {
+
       const key =
         entry[0];
 
@@ -4858,66 +4866,169 @@ async function apiGet(
         key,
         value ?? ""
       );
-    });
 
-  /*
-   * เติม Timestamp เฉพาะ Request
-   * ที่ต้องการบังคับข้อมูลล่าสุดจริง ๆ
-   */
-  if (forceFresh) {
+    }
+  );
+
+
+  if (
+    forceFresh
+  ) {
+
     url.searchParams.set(
       "_",
-      Date.now()
+      String(
+        Date.now()
+      )
     );
+
   }
 
-const response =
- await fetchWithRetry(
-   API_URL,
-   {
-     method: "POST",
 
-     headers: {
-       "Content-Type":
-         "text/plain;charset=utf-8"
-     },
+  const response =
+    await fetchWithRetry(
+      url.toString(),
+      {
+        method:
+          "GET",
 
-     body:
-       JSON.stringify(
-         requestBody
-       ),
+        cache:
+          forceFresh
+            ? "no-store"
+            : "default",
 
-     cache:
-       "no-store",
+        redirect:
+          "follow"
+      },
+      timeoutMs,
+      2
+    );
 
-     redirect:
-       "follow"
-   },
-   timeoutMs,
-   2
- );
 
   const data =
     await parseApiResponse(
       response
     );
 
-  if (!data.success) {
+
+  if (
+    !data ||
+    data.success !== true
+  ) {
+
     throw new Error(
-      data.message ||
-      "เกิดข้อผิดพลาดจากระบบ"
+      data &&
+      data.message
+        ? data.message
+        : "เกิดข้อผิดพลาดจากระบบ"
     );
+
   }
 
+
   return data;
+
 }
 
-  /**
- * เรียก Google Apps Script API ผ่าน GET
- *
- * ใช้ชื่อ apiPost ต่อไปเพื่อไม่ต้องแก้
- * จุดเรียกใช้งานอื่นในระบบ
- */
+    /* =========================================================
+ FAST LOGIN API
+ ใช้เฉพาะการเข้าสู่ระบบ
+
+ Login Payload มีแค่ Password
+ จึงสามารถใช้ GET ได้อย่างปลอดภัยในโครงสร้างปัจจุบัน
+ และ Code.gs รองรับ doGet(action=login) อยู่แล้ว
+========================================================= */
+
+async function apiLoginFast(
+  password
+) {
+
+  const url =
+    new URL(
+      API_URL
+    );
+
+
+  url.searchParams.set(
+    "action",
+    "login"
+  );
+
+
+  url.searchParams.set(
+    "payload",
+    JSON.stringify({
+      password:
+        String(
+          password || ""
+        ).trim()
+    })
+  );
+
+
+  /*
+   * ป้องกัน Browser ใช้ Response เก่า
+   */
+  url.searchParams.set(
+    "_",
+    String(
+      Date.now()
+    )
+  );
+
+
+  const response =
+    await fetchWithRetry(
+      url.toString(),
+      {
+        method:
+          "GET",
+
+        cache:
+          "no-store",
+
+        redirect:
+          "follow"
+      },
+
+      /*
+       * Login ใหม่ควรเบามาก
+       * ไม่ควรรอ 30 วินาที
+       */
+      12000,
+
+      /*
+       * ลองใหม่สูงสุด 2 ครั้ง
+       */
+      2
+    );
+
+
+  const data =
+    await parseApiResponse(
+      response
+    );
+
+
+  if (
+    !data ||
+    data.success !== true
+  ) {
+
+    throw new Error(
+      data &&
+      data.message
+        ? data.message
+        : "ไม่สามารถเข้าสู่ระบบได้"
+    );
+
+  }
+
+
+  return data;
+
+}
+    
 async function apiPost(
   action,
   payload = {}
@@ -4954,7 +5065,7 @@ async function apiPost(
   );
 
   const response =
-    await fetchWithTimeout(
+    await fetchWithRetry(
       API_URL,
       {
         method: "POST",
@@ -4979,7 +5090,8 @@ async function apiPost(
         redirect:
           "follow"
       },
-      timeoutMs
+      timeoutMs,
+      2
     );
 
   const data =
@@ -5092,14 +5204,10 @@ loginForm.addEventListener(
        * =====================================================
        */
 
-      const loginResult =
-        await apiPost(
-          "login",
-          {
-            password:
-              enteredPassword
-          }
-        );
+const loginResult =
+  await apiLoginFast(
+    enteredPassword
+  );
 
 
       /*
@@ -5254,71 +5362,96 @@ loginForm.addEventListener(
         "#dashboard"
       );
 
+/*
+ * =====================================================
+ * 9. Login สำเร็จ
+ *
+ * เปิด Dashboard ทันที
+ * ไม่รอ Applicant API
+ * =====================================================
+ */
 
-if (
-  Array.isArray(
-    loginResult.applicants
+applicants =
+  [];
+
+currentPage =
+  1;
+
+
+/*
+ * เปิดหน้า Dashboard ก่อน
+ */
+renderApplicants();
+
+
+showToast(
+  "เข้าสู่ระบบสำเร็จ",
+  "success"
+);
+
+
+/*
+ * =====================================================
+ * 10. โหลดรายการประเมินแยกจาก Login
+ *
+ * ไม่ใช้ await ตรงนี้
+ * เพราะเราไม่ต้องการให้หน้า Login รอ
+ * =====================================================
+ */
+
+applicantGrid.innerHTML =
+  '<div class="empty-state">' +
+  '<strong>กำลังโหลดรายการประเมิน...</strong>' +
+  '<p style="margin-top:6px;">กรุณารอสักครู่</p>' +
+  '</div>';
+
+
+loadApplicants()
+  .then(
+    function() {
+
+      console.info(
+        "[APPLICANTS] loaded",
+        applicants.length
+      );
+
+    }
   )
-) {
+  .catch(
+    function(loadError) {
 
-  applicants =
-    loginResult.applicants;
+      console.error(
+        "loadApplicants failed:",
+        loadError
+      );
 
-  currentPage = 1;
+      applicantGrid.innerHTML =
+        '<div class="empty-state">' +
 
-  renderApplicants();
+        '<strong>' +
+        'โหลดรายการประเมินไม่สำเร็จ' +
+        '</strong>' +
 
-  /*
-   * ใช้การคำนวณจาก applicants
-   * ตามระบบ render เดิม
-   */
+        '<p style="margin-top:6px;">' +
+        escapeHtml(
+          loadError &&
+          loadError.message
+            ? loadError.message
+            : "กรุณาลองใหม่อีกครั้ง"
+        ) +
+        '</p>' +
 
-  showToast(
-    "เข้าสู่ระบบสำเร็จ",
-    "success"
+        '<button ' +
+        'type="button" ' +
+        'class="filter-refresh-button reload-data-button" ' +
+        'onclick="loadApplicants().catch(function(error){ showToast(error.message); })">' +
+        'โหลดรายการใหม่' +
+        '</button>' +
+
+        '</div>';
+
+    }
   );
-
-} else {
-
-  setLoading(
-    true,
-    "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
-  );
-
-  try {
-
-    await loadApplicants();
-
-    showToast(
-      "เข้าสู่ระบบสำเร็จ",
-      "success"
-    );
-
-  } catch (
-    loadError
-  ) {
-
-    console.error(
-      "loadApplicants failed:",
-      loadError
-    );
-
-    applicantGrid.innerHTML =
-      '<div class="empty-state">' +
-      '<strong>' +
-      'เข้าสู่ระบบสำเร็จ แต่โหลดรายการประเมินไม่สำเร็จ' +
-      '</strong>' +
-      '<p style="margin-top:6px;">' +
-      escapeHtml(
-        loadError.message ||
-        "กรุณาลองโหลดรายการใหม่"
-      ) +
-      '</p>' +
-      '</div>';
-
-  }
-
-}
 
 
     } catch (error) {
