@@ -4761,17 +4761,44 @@ async function fetchWithRetry(
       const responseText = await response.text();
       const trimmedText = responseText.trim();
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error(
-            "ไม่พบ Google Apps Script Web App กรุณา Deploy ใหม่และนำ URL /exec ล่าสุดมาใส่ใน API_URL"
-          );
-        }
+if (!response.ok) {
 
-        throw new Error(
-          `API ตอบกลับ HTTP ${response.status}`
-        );
-      }
+  /*
+   * 404 บางครั้งอาจเป็นการตอบกลับชั่วคราว
+   * จากปลายทาง/redirect
+   *
+   * ไม่ควรสรุปทันทีว่า Deployment หาย
+   */
+  if (
+    response.status === 404
+  ) {
+
+    throw new Error(
+      "ไม่สามารถเชื่อมต่อระบบได้ชั่วคราว กรุณาลองเข้าสู่ระบบอีกครั้ง"
+    );
+
+  }
+
+
+  /*
+   * Google Apps Script / Server Error
+   */
+  if (
+    response.status >= 500
+  ) {
+
+    throw new Error(
+      "ระบบไม่พร้อมใช้งานชั่วคราว กรุณาลองใหม่อีกครั้ง"
+    );
+
+  }
+
+
+  throw new Error(
+    `ไม่สามารถเชื่อมต่อระบบได้ (HTTP ${response.status})`
+  );
+
+}
 
       if (
         trimmedText.startsWith("<!DOCTYPE") ||
@@ -4943,46 +4970,49 @@ async function apiLoginFast(
   password
 ) {
 
-  const url =
-    new URL(
-      API_URL
-    );
+  /*
+   * Login ส่งข้อมูลน้อยมาก:
+   * action + password
+   *
+   * ใช้ POST โดยตรง
+   * ไม่ผ่าน query string
+   */
 
+  const requestBody = {
+    action:
+      "login",
 
-  url.searchParams.set(
-    "action",
-    "login"
-  );
-
-
-  url.searchParams.set(
-    "payload",
-    JSON.stringify({
-      password:
-        String(
-          password || ""
-        ).trim()
-    })
-  );
+    password:
+      String(
+        password || ""
+      ).trim()
+  };
 
 
   /*
-   * ป้องกัน Browser ใช้ Response เก่า
+   * Login ไม่ควรรอนาน
+   *
+   * Retry 1 ครั้ง:
+   * 8 วินาที + 0.5 วินาที + 8 วินาที
+   *
+   * แต่ปกติควรตอบกลับเร็วมาก
    */
-  url.searchParams.set(
-    "_",
-    String(
-      Date.now()
-    )
-  );
-
-
   const response =
     await fetchWithRetry(
-      url.toString(),
+      API_URL,
       {
         method:
-          "GET",
+          "POST",
+
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+
+        body:
+          JSON.stringify(
+            requestBody
+          ),
 
         cache:
           "no-store",
@@ -4991,15 +5021,8 @@ async function apiLoginFast(
           "follow"
       },
 
-      /*
-       * Login ใหม่ควรเบามาก
-       * ไม่ควรรอ 30 วินาที
-       */
-      12000,
+      8000,
 
-      /*
-       * ลองใหม่สูงสุด 2 ครั้ง
-       */
       2
     );
 
@@ -5327,47 +5350,22 @@ const loginResult =
         "hidden"
       );
 
-      appPage.classList.remove(
-        "hidden"
-      );
+appPage.classList.remove(
+  "hidden"
+);
 
 
-      /*
-       * ล้าง Password ออกจากช่อง
-       * หลัง Login สำเร็จ
-       */
-      passwordInput.value =
-        "";
+/*
+ * ล้าง Password ออกจากช่อง
+ * หลัง Login สำเร็จ
+ */
+passwordInput.value =
+  "";
 
-
-      /*
-       * Reset Applicant ก่อนโหลดข้อมูล
-       */
-      applicants =
-        [];
-
-
-      renderApplicants();
-
-
-      /*
-       * URL → Dashboard
-       */
-      history.replaceState(
-        {
-          page:
-            "dashboard"
-        },
-        "",
-        "#dashboard"
-      );
 
 /*
  * =====================================================
- * 9. Login สำเร็จ
- *
- * เปิด Dashboard ทันที
- * ไม่รอ Applicant API
+ * Reset Applicant ก่อนโหลดข้อมูลจริง
  * =====================================================
  */
 
@@ -5379,10 +5377,100 @@ currentPage =
 
 
 /*
- * เปิดหน้า Dashboard ก่อน
+ * =====================================================
+ * ระหว่างโหลดข้อมูลจริง
+ *
+ * ห้าม renderApplicants() ตอนนี้
+ * เพราะ applicants ยังเป็น []
+ *
+ * ถ้า render ตอนนี้
+ * Summary จะกลายเป็น 0 ทั้งหมด
+ * =====================================================
  */
-renderApplicants();
 
+document
+  .getElementById(
+    "totalCount"
+  )
+  .textContent =
+    "—";
+
+
+document
+  .getElementById(
+    "pendingCount"
+  )
+  .textContent =
+    "—";
+
+
+document
+  .getElementById(
+    "draftCount"
+  )
+  .textContent =
+    "—";
+
+
+document
+  .getElementById(
+    "submittedCount"
+  )
+  .textContent =
+    "—";
+
+
+document
+  .getElementById(
+    "progressText"
+  )
+  .textContent =
+    "กำลังโหลด...";
+
+
+document
+  .getElementById(
+    "progressFill"
+  )
+  .style.width =
+    "0%";
+
+
+/*
+ * =====================================================
+ * แสดงข้อความกำลังโหลด
+ * ในพื้นที่รายการ
+ * =====================================================
+ */
+
+applicantGrid.innerHTML =
+  '<div class="empty-state">' +
+  '<strong>กำลังโหลดรายการประเมิน...</strong>' +
+  '<p style="margin-top:6px;">กรุณารอสักครู่</p>' +
+  '</div>';
+
+
+/*
+ * =====================================================
+ * เปลี่ยน URL เป็น Dashboard
+ * =====================================================
+ */
+
+history.replaceState(
+  {
+    page:
+      "dashboard"
+  },
+  "",
+  "#dashboard"
+);
+
+
+/*
+ * =====================================================
+ * Login สำเร็จ
+ * =====================================================
+ */
 
 showToast(
   "เข้าสู่ระบบสำเร็จ",
