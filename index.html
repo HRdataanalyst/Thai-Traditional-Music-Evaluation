@@ -4650,433 +4650,38 @@ async function fetchWithTimeout(
   }
 }
 
-async function parseApiResponse(
-  response
-) {
+    async function parseApiResponse(response) {
+      const responseText = await response.text();
+      const trimmedText = responseText.trim();
 
-  /*
-   * =========================================================
-   * 1. อ่าน Response Text
-   * =========================================================
-   */
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(
+            "ไม่พบ Google Apps Script Web App กรุณา Deploy ใหม่และนำ URL /exec ล่าสุดมาใส่ใน API_URL"
+          );
+        }
 
-  const responseText =
-    await response.text();
-
-
-  const trimmedText =
-    String(
-      responseText ||
-      ""
-    ).trim();
-
-
-  /*
-   * =========================================================
-   * 2. ตรวจ HTTP Status
-   * =========================================================
-   */
-
-  if (
-    !response.ok
-  ) {
-
-    /*
-     * แสดงรายละเอียดใน Console
-     * เพื่อใช้ตรวจสอบกรณี Google Apps Script
-     * Redirect หรือ HTTP Error
-     */
-    console.error(
-      "[API HTTP ERROR]",
-      {
-        status:
-          response.status,
-
-        statusText:
-          response.statusText,
-
-        url:
-          response.url,
-
-        body:
-          trimmedText.substring(
-            0,
-            500
-          )
+        throw new Error(
+          `API ตอบกลับ HTTP ${response.status}`
+        );
       }
-    );
 
-
-    /*
-     * -------------------------------------------------------
-     * 401
-     * -------------------------------------------------------
-     */
-    if (
-      response.status ===
-      401
-    ) {
-
-      throw new Error(
-        "ไม่มีสิทธิ์เข้าถึงระบบ กรุณาตรวจสอบสิทธิ์ของ Google Apps Script Web App"
-      );
-
-    }
-
-
-    /*
-     * -------------------------------------------------------
-     * 403
-     * -------------------------------------------------------
-     */
-    if (
-      response.status ===
-      403
-    ) {
-
-      throw new Error(
-        "ระบบปฏิเสธการเข้าถึง กรุณาตรวจสอบสิทธิ์ของ Google Apps Script Web App"
-      );
-
-    }
-
-
-    /*
-     * -------------------------------------------------------
-     * 404
-     *
-     * ไม่ฟันธงว่า Deployment หาย
-     *
-     * เนื่องจาก Google Apps Script Web App
-     * สามารถ Redirect ผ่าน script.googleusercontent.com
-     * และอาจเกิด HTTP 404 จาก Request Route ได้
-     * -------------------------------------------------------
-     */
-    if (
-      response.status ===
-      404
-    ) {
-
-      throw new Error(
-        "ไม่สามารถเชื่อมต่อระบบได้ในขณะนี้ (HTTP 404) กรุณาลองเข้าสู่ระบบอีกครั้ง"
-      );
-
-    }
-
-
-    /*
-     * -------------------------------------------------------
-     * 429
-     *
-     * Too Many Requests
-     * -------------------------------------------------------
-     */
-    if (
-      response.status ===
-      429
-    ) {
-
-      throw new Error(
-        "มีผู้ใช้งานระบบพร้อมกันจำนวนมาก กรุณารอสักครู่แล้วลองใหม่อีกครั้ง"
-      );
-
-    }
-
-
-    /*
-     * -------------------------------------------------------
-     * 500 ขึ้นไป
-     * -------------------------------------------------------
-     */
-    if (
-      response.status >=
-      500
-    ) {
-
-      throw new Error(
-        "ระบบ Google Apps Script ขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง"
-      );
-
-    }
-
-
-    /*
-     * -------------------------------------------------------
-     * HTTP Error อื่น ๆ
-     * -------------------------------------------------------
-     */
-
-    throw new Error(
-      "ไม่สามารถเชื่อมต่อระบบได้ " +
-      "(HTTP " +
-      response.status +
-      ") กรุณาลองใหม่อีกครั้ง"
-    );
-
-  }
-
-
-  /*
-   * =========================================================
-   * 3. ตรวจว่ามี Response หรือไม่
-   * =========================================================
-   */
-
-  if (
-    !trimmedText
-  ) {
-
-    console.error(
-      "[API EMPTY RESPONSE]",
-      {
-        status:
-          response.status,
-
-        url:
-          response.url
+      if (
+        trimmedText.startsWith("<!DOCTYPE") ||
+        trimmedText.startsWith("<html") ||
+        trimmedText.startsWith("<")
+      ) {
+        throw new Error(
+          "Web App URL ยังชี้ไปที่หน้า HTML หรือ Deployment ยังไม่เปิดสิทธิ์ Anyone"
+        );
       }
-    );
 
-
-    throw new Error(
-      "ระบบไม่ได้ส่งข้อมูลกลับมา กรุณาลองใหม่อีกครั้ง"
-    );
-
-  }
-
-
-  /*
-   * =========================================================
-   * 4. ตรวจกรณี Google ส่ง HTML กลับมาแทน JSON
-   *
-   * ตัวอย่าง:
-   * - Login Page
-   * - Permission Page
-   * - Error Page
-   * - Google Apps Script HTML
-   * =========================================================
-   */
-
-  const lowerText =
-    trimmedText.toLowerCase();
-
-
-  const looksLikeHtml =
-    lowerText.startsWith(
-      "<!doctype"
-    ) ||
-    lowerText.startsWith(
-      "<html"
-    ) ||
-    lowerText.startsWith(
-      "<head"
-    ) ||
-    lowerText.startsWith(
-      "<body"
-    ) ||
-    trimmedText.startsWith(
-      "<"
-    );
-
-
-  if (
-    looksLikeHtml
-  ) {
-
-    console.error(
-      "[API NON JSON RESPONSE]",
-      {
-        status:
-          response.status,
-
-        url:
-          response.url,
-
-        body:
-          trimmedText.substring(
-            0,
-            500
-          )
+      try {
+        return JSON.parse(trimmedText);
+      } catch (_) {
+        throw new Error("API ไม่ได้ส่งข้อมูล JSON กลับมา");
       }
-    );
-
-
-    /*
-     * ตรวจ Permission Page
-     */
-    if (
-      lowerText.includes(
-        "sign in"
-      ) ||
-      lowerText.includes(
-        "accounts.google.com"
-      ) ||
-      lowerText.includes(
-        "authorization"
-      )
-    ) {
-
-      throw new Error(
-        "Google Apps Script Web App ต้องการสิทธิ์เข้าสู่ระบบ กรุณาตรวจสอบว่า Deployment อนุญาตผู้ใช้งานตามที่กำหนดไว้"
-      );
-
     }
-
-
-    /*
-     * Response เป็น HTML แต่ไม่ทราบสาเหตุ
-     */
-    throw new Error(
-      "ระบบตอบกลับข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง"
-    );
-
-  }
-
-
-  /*
-   * =========================================================
-   * 5. แปลง Response เป็น JSON
-   * =========================================================
-   */
-
-  let data;
-
-
-  try {
-
-    data =
-      JSON.parse(
-        trimmedText
-      );
-
-  } catch (error) {
-
-    console.error(
-      "[API JSON PARSE ERROR]",
-      {
-        status:
-          response.status,
-
-        url:
-          response.url,
-
-        body:
-          trimmedText.substring(
-            0,
-            500
-          ),
-
-        error:
-          error
-      }
-    );
-
-
-    throw new Error(
-      "API ไม่ได้ส่งข้อมูล JSON กลับมา"
-    );
-
-  }
-
-
-  /*
-   * =========================================================
-   * 6. ตรวจโครงสร้าง JSON
-   * =========================================================
-   */
-
-  if (
-    !data ||
-    typeof data !==
-      "object"
-  ) {
-
-    console.error(
-      "[API INVALID JSON OBJECT]",
-      {
-        url:
-          response.url,
-
-        data:
-          data
-      }
-    );
-
-
-    throw new Error(
-      "รูปแบบข้อมูลจากระบบไม่ถูกต้อง"
-    );
-
-  }
-
-
-  /*
-   * =========================================================
-   * 7. ตรวจ API Version
-   *
-   * ตรวจเฉพาะกรณี Backend ส่ง apiVersion กลับมา
-   * =========================================================
-   */
-
-  if (
-    typeof EXPECTED_API_VERSION !==
-      "undefined" &&
-    data.apiVersion &&
-    data.apiVersion !==
-      EXPECTED_API_VERSION
-  ) {
-
-    console.warn(
-      "[API VERSION MISMATCH]",
-      {
-        expected:
-          EXPECTED_API_VERSION,
-
-        actual:
-          data.apiVersion,
-
-        url:
-          response.url
-      }
-    );
-
-  }
-
-
-  /*
-   * =========================================================
-   * 8. Log Success สำหรับ Debug
-   * =========================================================
-   */
-
-  console.debug(
-    "[API RESPONSE]",
-    {
-      status:
-        response.status,
-
-      url:
-        response.url,
-
-      success:
-        data.success,
-
-      apiVersion:
-        data.apiVersion ||
-        ""
-    }
-  );
-
-
-  /*
-   * =========================================================
-   * 9. คืนข้อมูล JSON
-   * =========================================================
-   */
-
-  return data;
-
-}
 
     async function checkApiHealth(force = false) {
       if (!force && apiHealthPromise) {
@@ -5202,214 +4807,59 @@ async function apiPost(
   action,
   payload = {}
 ) {
-
-  /*
-   * =========================================================
-   * 1. กำหนด Timeout
-   * =========================================================
-   */
-
   let timeoutMs =
     30000;
 
-
   /*
-   * Login ควรเป็น Request ที่เบามาก
-   *
-   * Backend ตอนนี้ทำเพียง:
-   * - ตรวจ Password
-   * - สร้าง Session
-   * - ส่ง Token
-   *
-   * จึงไม่ควรรอนานถึง 30 วินาที
+   * โหลดรายการและ Ranking อาจมีข้อมูลมาก
    */
   if (
-    action ===
-      "login"
+    action === "applicants" ||
+    action === "ranking"
   ) {
-
-    timeoutMs =
-      15000;
-
-  }
-
-
-  /*
-   * Applicant อาจมีข้อมูลมากกว่า Login
-   */
-  if (
-    action ===
-      "applicants"
-  ) {
-
-    timeoutMs =
-      60000;
-
-  }
-
-
-  /*
-   * Ranking อาจอ่านข้อมูลคะแนน
-   * และใช้เวลานานกว่า
-   */
-  if (
-    action ===
-      "ranking"
-  ) {
-
     timeoutMs =
       90000;
-
   }
 
-
   /*
-   * Save / Submit
-   * มีการเขียน Google Sheet
+   * การบันทึกคะแนนอาจต้องเขียนหลาย Sheet
    */
   if (
-    action ===
-      "saveDraft" ||
-    action ===
-      "submitScore"
+    action === "saveDraft" ||
+    action === "submitScore"
   ) {
-
     timeoutMs =
       60000;
-
   }
 
+  const url =
+    new URL(
+      API_URL
+    );
 
-  /*
-   * =========================================================
-   * 2. เตรียม Request Body สำหรับ POST
-   * =========================================================
-   */
+  url.searchParams.set(
+    "action",
+    action
+  );
 
-  const requestBody = {
-
-    action:
-      action,
-
-    ...(
-      payload ||
-      {}
+  url.searchParams.set(
+    "payload",
+    JSON.stringify(
+      payload || {}
     )
+  );
 
-  };
+  url.searchParams.set(
+    "_",
+    String(
+      Date.now()
+    )
+  );
 
-
-  /*
-   * =========================================================
-   * 3. ฟังก์ชันเรียก POST
-   * =========================================================
-   */
-
-  async function sendPostRequest() {
-
-    return await fetchWithTimeout(
-      API_URL,
+  const response =
+    await fetchWithTimeout(
+      url.toString(),
       {
-
-        method:
-          "POST",
-
-        headers:
-          {
-
-            /*
-             * ใช้ text/plain
-             * เพื่อไม่ให้ Browser ทำ CORS Preflight
-             */
-            "Content-Type":
-              "text/plain;charset=utf-8"
-
-          },
-
-        body:
-          JSON.stringify(
-            requestBody
-          ),
-
-        /*
-         * Request Login / Save
-         * ไม่ควรใช้ Browser Cache
-         */
-        cache:
-          "no-store",
-
-        redirect:
-          "follow"
-
-      },
-      timeoutMs
-    );
-
-  }
-
-
-  /*
-   * =========================================================
-   * 4. ฟังก์ชัน GET Fallback
-   *
-   * Code.gs ของระบบรองรับอยู่แล้วผ่าน:
-   *
-   * doGet()
-   * +
-   * parseGetPayload_(e)
-   *
-   * ใช้เมื่อ POST ถูกตอบ HTTP 404
-   * =========================================================
-   */
-
-  async function sendGetFallbackRequest() {
-
-    const fallbackUrl =
-      new URL(
-        API_URL
-      );
-
-
-    /*
-     * Action
-     */
-    fallbackUrl.searchParams.set(
-      "action",
-      action
-    );
-
-
-    /*
-     * ส่ง Payload เป็น JSON
-     *
-     * Code.gs จะอ่านจาก:
-     *
-     * parseGetPayload_(e)
-     */
-    fallbackUrl.searchParams.set(
-      "payload",
-      JSON.stringify(
-        payload ||
-        {}
-      )
-    );
-
-
-    /*
-     * ป้องกัน Browser Cache
-     */
-    fallbackUrl.searchParams.set(
-      "_",
-      String(
-        Date.now()
-      )
-    );
-
-
-    return await fetchWithTimeout(
-      fallbackUrl.toString(),
-      {
-
         method:
           "GET",
 
@@ -5418,233 +4868,51 @@ async function apiPost(
 
         redirect:
           "follow"
-
       },
       timeoutMs
     );
-
-  }
-
-
-  /*
-   * =========================================================
-   * 5. เริ่ม Request ด้วย POST ก่อน
-   * =========================================================
-   */
-
-  let response;
-
-
-  try {
-
-    response =
-      await sendPostRequest();
-
-  } catch (postNetworkError) {
-
-    /*
-     * =======================================================
-     * POST ติดต่อ Google ไม่สำเร็จในระดับ Network
-     *
-     * ลอง GET สำรองหนึ่งครั้ง
-     * =======================================================
-     */
-
-    console.warn(
-      "[API POST NETWORK ERROR - USE GET FALLBACK]",
-      {
-        action:
-          action,
-
-        error:
-          postNetworkError
-      }
-    );
-
-
-    response =
-      await sendGetFallbackRequest();
-
-  }
-
-
-  /*
-   * =========================================================
-   * 6. ถ้า POST ถูกตอบ HTTP 404
-   *
-   * สำคัญ:
-   *
-   * อย่าส่งเข้า parseApiResponse() ทันที
-   *
-   * เพราะ parseApiResponse()
-   * จะ Throw Error แล้วจบ Login
-   *
-   * ให้ใช้ GET fallback ก่อน
-   * =========================================================
-   */
-
-  if (
-    response &&
-    response.status ===
-      404
-  ) {
-
-    console.warn(
-      "[API POST 404 - USE GET FALLBACK]",
-      {
-        action:
-          action,
-
-        url:
-          response.url
-      }
-    );
-
-
-    response =
-      await sendGetFallbackRequest();
-
-  }
-
-
-  /*
-   * =========================================================
-   * 7. กรณี Google ตอบ 502 / 503 / 504 ชั่วคราว
-   *
-   * ลอง GET อีกหนึ่งครั้ง
-   * =========================================================
-   */
-
-  if (
-    response &&
-    (
-      response.status ===
-        502 ||
-
-      response.status ===
-        503 ||
-
-      response.status ===
-        504
-    )
-  ) {
-
-    console.warn(
-      "[API TEMPORARY ERROR - USE GET FALLBACK]",
-      {
-        action:
-          action,
-
-        status:
-          response.status,
-
-        url:
-          response.url
-      }
-    );
-
-
-    response =
-      await sendGetFallbackRequest();
-
-  }
-
-
-  /*
-   * =========================================================
-   * 8. อ่าน Response
-   *
-   * ณ จุดนี้:
-   *
-   * - POST ปกติ → ใช้ POST
-   *
-   * หรือ
-   *
-   * - POST 404 → ใช้ GET fallback
-   * =========================================================
-   */
 
   const data =
     await parseApiResponse(
       response
     );
 
-
-  /*
-   * =========================================================
-   * 9. ตรวจ Success จาก Backend
-   * =========================================================
-   */
-
   if (
     !data ||
-    data.success !==
-      true
+    data.success !== true
   ) {
-
     throw new Error(
-
       data &&
       data.message
-
         ? data.message
-
         : "เกิดข้อผิดพลาดจากระบบ"
-
     );
-
   }
 
-
-  /*
-   * =========================================================
-   * 10. คืนข้อมูล
-   * =========================================================
-   */
-
   return data;
+}  
 
-}
-/* =========================================================
+    /* =========================================================
    LOGIN
    เข้าสู่ระบบด้วย Password อย่างเดียว
-
-   ขั้นตอนใหม่:
-   1. ตรวจ Password
-   2. รับ Session Token
-   3. เปิด Dashboard
-   4. โหลด Applicants แยกอีก Request
 ========================================================= */
 
 loginForm.addEventListener(
   "submit",
   async function(event) {
 
-    /*
-     * =====================================================
-     * ป้องกัน Form Reload หน้าเว็บ
-     * =====================================================
-     */
-
     event.preventDefault();
 
-
     /*
-     * =====================================================
      * ล้าง Error เดิม
-     * =====================================================
      */
-
     loginError.textContent =
       "";
 
 
     /*
-     * =====================================================
      * ปุ่ม Login
-     * =====================================================
      */
-
     const loginButton =
       loginForm.querySelector(
         ".login-button"
@@ -5652,14 +4920,10 @@ loginForm.addEventListener(
 
 
     /*
-     * =====================================================
-     * ป้องกันกด Login ซ้ำ
-     * =====================================================
+     * ป้องกันการกด Login ซ้ำ
      */
-
     loginButton.disabled =
       true;
-
 
     loginButton.textContent =
       "กำลังเข้าสู่ระบบ...";
@@ -5675,20 +4939,17 @@ loginForm.addEventListener(
 
       const enteredPassword =
         String(
-          passwordInput.value ||
-          ""
+          passwordInput.value || ""
         ).trim();
 
 
       /*
        * =====================================================
-       * 2. ตรวจว่ากรอกรหัสผ่านหรือไม่
+       * 2. ตรวจว่ามี Password หรือไม่
        * =====================================================
        */
 
-      if (
-        !enteredPassword
-      ) {
+      if (!enteredPassword) {
 
         throw new Error(
           "กรุณากรอกรหัสผ่าน"
@@ -5699,25 +4960,23 @@ loginForm.addEventListener(
 
       /*
        * =====================================================
-       * 3. แสดง Loading เฉพาะขั้น Login
-       *
-       * ตอนนี้ Backend จะตรวจ Password
-       * และสร้าง Session เท่านั้น
-       * ไม่โหลด Applicant ในขั้นนี้แล้ว
+       * 3. แสดง Loading
        * =====================================================
        */
 
       setLoading(
         true,
-        "กำลังเข้าสู่ระบบ..."
+        "กำลังตรวจสอบรหัสผ่าน..."
       );
 
 
       /*
        * =====================================================
-       * 4. Login
+       * 4. ส่ง Password ไป Google Apps Script
        *
-       * ส่ง Password ไป Backend
+       * ไม่ส่ง JudgeID
+       * ไม่ส่ง Username
+       * ไม่ส่ง Region
        * =====================================================
        */
 
@@ -5733,62 +4992,43 @@ loginForm.addEventListener(
 
       /*
        * =====================================================
-       * 5. ตรวจ Token
-       * =====================================================
-       */
-
-      if (
-        !loginResult ||
-        !loginResult.token
-      ) {
-
-        throw new Error(
-          "เข้าสู่ระบบไม่สำเร็จ เนื่องจากไม่พบ Session"
-        );
-
-      }
-
-
-      /*
-       * =====================================================
-       * 6. เก็บ Session Token
-       *
-       * Token นี้จะใช้สำหรับ:
-       * - Applicants
-       * - Ranking
-       * - Save Draft
-       * - Submit Score
-       * - Logout
+       * 5. รับ Session Token
        * =====================================================
        */
 
       authToken =
-        loginResult.token;
+        loginResult.token ||
+        "";
 
 
       /*
-       * =====================================================
-       * 7. เก็บข้อมูลกรรมการ
-       * =====================================================
+       * Backend จะส่งข้อมูลกรรมการ
+       * ที่ค้นพบจาก Password กลับมา
        */
-
       currentJudge =
         loginResult.judge ||
         null;
 
 
       /*
-       * =====================================================
-       * 8. Update ข้อมูลกรรมการบนหน้าเว็บ
-       * =====================================================
+       * ตรวจ Token
        */
+      if (!authToken) {
 
-      if (
-        currentJudge
-      ) {
+        throw new Error(
+          "ระบบไม่ได้ส่ง Session Token กลับมา"
+        );
 
-        applyJudgeInfo(
-          currentJudge
+      }
+
+
+      /*
+       * ตรวจข้อมูลกรรมการ
+       */
+      if (!currentJudge) {
+
+        throw new Error(
+          "ระบบไม่พบข้อมูลกรรมการ"
         );
 
       }
@@ -5796,11 +5036,7 @@ loginForm.addEventListener(
 
       /*
        * =====================================================
-       * 9. รับ Score Criteria จาก Login
-       *
-       * ถึงแม้ loadApplicants()
-       * จะส่ง scoreCriteria มาอีกครั้ง
-       * แต่เราสามารถรับไว้ได้ตั้งแต่ Login
+       * 6. รับ Score Criteria
        * =====================================================
        */
 
@@ -5841,155 +5077,62 @@ loginForm.addEventListener(
 
       }
 
-/*
- * =====================================================
- * 10. รับ Applicants จาก Login Response
- *
- * Backend ใหม่จะส่ง Applicants ที่อ่านจาก Cache
- * มาพร้อม Login
- *
- * ถ้า Backend / Cache ยังไม่พร้อม
- * applicants จะยังเป็น []
- * และจะใช้ loadApplicants() fallback ภายหลัง
- * =====================================================
- */
 
-const hasApplicantsFromLogin =
-  Array.isArray(
-    loginResult.applicants
-  );
+      /*
+       * =====================================================
+       * 7. ใส่ข้อมูลกรรมการบนหน้า Dashboard
+       * =====================================================
+       */
 
-
-if (
-  hasApplicantsFromLogin
-) {
-
-  applicants =
-    loginResult.applicants;
-
-} else {
-
-  applicants =
-    [];
-
-}
-
-
-/*
- * Login ใหม่เริ่มหน้า 1 เสมอ
- */
-currentPage =
-  1;
-
-
-/*
- * =====================================================
- * 12. แสดง Applicants
- *
- * ถ้า Applicants มากับ Login แล้ว:
- * Render ทันที
- *
- * ถ้ายังไม่มี:
- * แสดง Loading รอ fallback
- * =====================================================
- */
-
-if (
-  hasApplicantsFromLogin
-) {
-
-  renderApplicants();
-
-} else {
-
-  applicantGrid.innerHTML =
-    '<div class="empty-state">' +
-    '<div class="empty-state-icon">🎵</div>' +
-    '<strong>กำลังโหลดรายการประเมิน...</strong>' +
-    '<p style="margin-top:6px;">กรุณารอสักครู่</p>' +
-    '</div>';
-
-}
-
-/*
- * =====================================================
- * 13. Summary
- *
- * ถ้า Login ส่ง Summary มาแล้ว:
- * แสดงทันที
- *
- * ถ้ายังไม่มี:
- * ใช้ "-" รอ loadApplicants fallback
- * =====================================================
- */
-
-if (
-  hasApplicantsFromLogin &&
-  loginResult.summary
-) {
-
-  updateSummary(
-    loginResult.summary
-  );
-
-} else {
-
-  document
-    .getElementById(
-      "totalCount"
-    )
-    .textContent =
-      "-";
-
-
-  document
-    .getElementById(
-      "pendingCount"
-    )
-    .textContent =
-      "-";
-
-
-  document
-    .getElementById(
-      "draftCount"
-    )
-    .textContent =
-      "-";
-
-
-  document
-    .getElementById(
-      "submittedCount"
-    )
-    .textContent =
-      "-";
-
-
-  document
-    .getElementById(
-      "progressText"
-    )
-    .textContent =
-      "-";
-
-
-  document
-    .getElementById(
-      "progressFill"
-    )
-    .style.width =
-      "0%";
-
-}
+      applyJudgeInfo(
+        currentJudge
+      );
 
 
       /*
        * =====================================================
-       * 14. URL → Dashboard
+       * 8. เปิด Dashboard
        * =====================================================
        */
 
+      loginPage.classList.add(
+        "hidden"
+      );
+
+      evaluationPage.classList.add(
+        "hidden"
+      );
+
+      rankingPage.classList.add(
+        "hidden"
+      );
+
+      appPage.classList.remove(
+        "hidden"
+      );
+
+
+      /*
+       * ล้าง Password ออกจากช่อง
+       * หลัง Login สำเร็จ
+       */
+      passwordInput.value =
+        "";
+
+
+      /*
+       * Reset Applicant ก่อนโหลดข้อมูล
+       */
+      applicants =
+        [];
+
+
+      renderApplicants();
+
+
+      /*
+       * URL → Dashboard
+       */
       history.replaceState(
         {
           page:
@@ -6002,223 +5145,91 @@ if (
 
       /*
        * =====================================================
-       * 15. ล้าง Password
+       * 9. โหลดรายการประเมิน
        *
-       * Password ถูกตรวจเสร็จแล้ว
-       * ไม่จำเป็นต้องเก็บไว้ใน Browser
-       * =====================================================
-       */
-
-      passwordInput.value =
-        "";
-
-
-      /*
-       * =====================================================
-       * 16. ปิด Loading ของขั้น Login
+       * loadApplicants()
+       * จะใช้ authToken
        *
-       * ณ จุดนี้ Password ผ่านแล้ว
-       * และ Dashboard เปิดแล้ว
+       * Backend จะอ่าน JudgeID
+       * จาก Session ที่สร้างไว้
        * =====================================================
        */
 
       setLoading(
-        false
+        true,
+        "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
       );
 
 
-      /*
-       * =====================================================
-       * 17. แจ้ง Login สำเร็จ
-       * =====================================================
-       */
+      try {
 
-      showToast(
-        "เข้าสู่ระบบสำเร็จ",
-        "success"
-      );
+        await loadApplicants();
 
 
-     /*
- * =====================================================
- * 18. Applicant Fallback
- *
- * ปกติ Applicants มากับ Login แล้ว
- * ไม่ต้องเรียก API รอบสอง
- *
- * แต่ถ้า Backend เก่า / Cache ไม่พร้อม
- * จะใช้ loadApplicants() แบบระบบเดิม
- * =====================================================
- */
-
-if (
-  !hasApplicantsFromLogin
-) {
-
-  try {
-
-    /*
-     * แสดง Loading เฉพาะกรณีต้องใช้ Fallback
-     */
-    setLoading(
-      true,
-      "กำลังโหลดรายการประเมิน..."
-    );
+        showToast(
+          "เข้าสู่ระบบสำเร็จ",
+          "success"
+        );
 
 
-    /*
-     * ระบบเดิม
-     */
-    await loadApplicants();
+      } catch (loadError) {
+
+        console.error(
+          "loadApplicants failed:",
+          loadError
+        );
 
 
-  } catch (
-    loadError
-  ) {
-
-    /*
-     * Login ผ่านแล้ว
-     * แต่โหลด Applicant ไม่สำเร็จ
-     */
-
-    console.error(
-      "loadApplicants failed:",
-      loadError
-    );
-
-
-    applicantGrid.innerHTML =
-      '<div class="empty-state">' +
-      '<div class="empty-state-icon">⚠️</div>' +
-      '<strong>โหลดรายการประเมินไม่สำเร็จ</strong>' +
-      '<p style="margin-top:6px;">' +
-      escapeHtml(
-        loadError &&
-        loadError.message
-          ? loadError.message
-          : "กรุณาลองใหม่อีกครั้ง"
-      ) +
-      '</p>' +
-      '</div>';
+        applicantGrid.innerHTML =
+          '<div class="empty-state">' +
+          '<strong>' +
+          'เข้าสู่ระบบสำเร็จ แต่โหลดรายการประเมินไม่สำเร็จ' +
+          '</strong>' +
+          '<p style="margin-top:6px;">' +
+          escapeHtml(
+            loadError.message ||
+            "กรุณาลองโหลดรายการใหม่"
+          ) +
+          '</p>' +
+          '</div>';
 
 
-    document
-      .getElementById(
-        "totalCount"
-      )
-      .textContent =
-        "-";
+        showToast(
+          loadError.message ||
+          "โหลดรายการประเมินไม่สำเร็จ"
+        );
+
+      }
 
 
-    document
-      .getElementById(
-        "pendingCount"
-      )
-      .textContent =
-        "-";
-
-
-    document
-      .getElementById(
-        "draftCount"
-      )
-      .textContent =
-        "-";
-
-
-    document
-      .getElementById(
-        "submittedCount"
-      )
-      .textContent =
-        "-";
-
-
-    document
-      .getElementById(
-        "progressText"
-      )
-      .textContent =
-        "-";
-
-
-    document
-      .getElementById(
-        "progressFill"
-      )
-      .style.width =
-        "0%";
-
-
-    showToast(
-      loadError &&
-      loadError.message
-        ? loadError.message
-        : "โหลดรายการประเมินไม่สำเร็จ"
-    );
-
-
-  } finally {
-
-    setLoading(
-      false
-    );
-
-  }
-
-}
-
-
-    } catch (
-      error
-    ) {
+    } catch (error) {
 
       /*
        * =====================================================
        * Login ไม่สำเร็จ
-       *
-       * จุดนี้หมายถึง:
-       * - Password ผิด
-       * - ไม่ได้รับ Token
-       * - เชื่อมต่อ Login API ไม่ได้
        * =====================================================
        */
 
       authToken =
         "";
 
-
       currentJudge =
         null;
-
 
       applicants =
         [];
 
 
-      rankingRows =
-        [];
-
-
-      currentPage =
-        1;
-
-
       /*
-       * =====================================================
        * ซ่อนหน้าอื่น
-       * =====================================================
        */
-
       appPage.classList.add(
         "hidden"
       );
 
-
       evaluationPage.classList.add(
         "hidden"
       );
-
 
       rankingPage.classList.add(
         "hidden"
@@ -6226,22 +5237,16 @@ if (
 
 
       /*
-       * =====================================================
        * แสดงหน้า Login
-       * =====================================================
        */
-
       loginPage.classList.remove(
         "hidden"
       );
 
 
       /*
-       * =====================================================
-       * แสดง Error
-       * =====================================================
+       * แสดงข้อความ Error
        */
-
       loginError.textContent =
         error &&
         error.message
@@ -6252,17 +5257,14 @@ if (
 
 
       /*
-       * =====================================================
-       * Focus Password
-       * =====================================================
+       * Focus กลับช่อง Password
        */
-
       passwordInput.focus();
 
 
       /*
-       * เลือกรหัสเดิม
-       * เพื่อพิมพ์ใหม่ได้ง่าย
+       * เลือกข้อความเดิม
+       * เพื่อพิมพ์รหัสใหม่ได้ทันที
        */
       passwordInput.select();
 
@@ -6270,25 +5272,16 @@ if (
     } finally {
 
       /*
-       * =====================================================
        * ปิด Loading
-       *
-       * เผื่อ Error เกิดก่อนเข้าสู่
-       * Applicant Loading
-       * =====================================================
        */
-
       setLoading(
         false
       );
 
 
       /*
-       * =====================================================
        * เปิดปุ่ม Login
-       * =====================================================
        */
-
       loginButton.disabled =
         false;
 
