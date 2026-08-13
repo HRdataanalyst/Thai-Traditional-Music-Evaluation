@@ -4650,38 +4650,433 @@ async function fetchWithTimeout(
   }
 }
 
-    async function parseApiResponse(response) {
-      const responseText = await response.text();
-      const trimmedText = responseText.trim();
+async function parseApiResponse(
+  response
+) {
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error(
-            "ไม่พบ Google Apps Script Web App กรุณา Deploy ใหม่และนำ URL /exec ล่าสุดมาใส่ใน API_URL"
-          );
-        }
+  /*
+   * =========================================================
+   * 1. อ่าน Response Text
+   * =========================================================
+   */
 
-        throw new Error(
-          `API ตอบกลับ HTTP ${response.status}`
-        );
+  const responseText =
+    await response.text();
+
+
+  const trimmedText =
+    String(
+      responseText ||
+      ""
+    ).trim();
+
+
+  /*
+   * =========================================================
+   * 2. ตรวจ HTTP Status
+   * =========================================================
+   */
+
+  if (
+    !response.ok
+  ) {
+
+    /*
+     * แสดงรายละเอียดใน Console
+     * เพื่อใช้ตรวจสอบกรณี Google Apps Script
+     * Redirect หรือ HTTP Error
+     */
+    console.error(
+      "[API HTTP ERROR]",
+      {
+        status:
+          response.status,
+
+        statusText:
+          response.statusText,
+
+        url:
+          response.url,
+
+        body:
+          trimmedText.substring(
+            0,
+            500
+          )
       }
+    );
 
-      if (
-        trimmedText.startsWith("<!DOCTYPE") ||
-        trimmedText.startsWith("<html") ||
-        trimmedText.startsWith("<")
-      ) {
-        throw new Error(
-          "Web App URL ยังชี้ไปที่หน้า HTML หรือ Deployment ยังไม่เปิดสิทธิ์ Anyone"
-        );
-      }
 
-      try {
-        return JSON.parse(trimmedText);
-      } catch (_) {
-        throw new Error("API ไม่ได้ส่งข้อมูล JSON กลับมา");
-      }
+    /*
+     * -------------------------------------------------------
+     * 401
+     * -------------------------------------------------------
+     */
+    if (
+      response.status ===
+      401
+    ) {
+
+      throw new Error(
+        "ไม่มีสิทธิ์เข้าถึงระบบ กรุณาตรวจสอบสิทธิ์ของ Google Apps Script Web App"
+      );
+
     }
+
+
+    /*
+     * -------------------------------------------------------
+     * 403
+     * -------------------------------------------------------
+     */
+    if (
+      response.status ===
+      403
+    ) {
+
+      throw new Error(
+        "ระบบปฏิเสธการเข้าถึง กรุณาตรวจสอบสิทธิ์ของ Google Apps Script Web App"
+      );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * 404
+     *
+     * ไม่ฟันธงว่า Deployment หาย
+     *
+     * เนื่องจาก Google Apps Script Web App
+     * สามารถ Redirect ผ่าน script.googleusercontent.com
+     * และอาจเกิด HTTP 404 จาก Request Route ได้
+     * -------------------------------------------------------
+     */
+    if (
+      response.status ===
+      404
+    ) {
+
+      throw new Error(
+        "ไม่สามารถเชื่อมต่อระบบได้ในขณะนี้ (HTTP 404) กรุณาลองเข้าสู่ระบบอีกครั้ง"
+      );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * 429
+     *
+     * Too Many Requests
+     * -------------------------------------------------------
+     */
+    if (
+      response.status ===
+      429
+    ) {
+
+      throw new Error(
+        "มีผู้ใช้งานระบบพร้อมกันจำนวนมาก กรุณารอสักครู่แล้วลองใหม่อีกครั้ง"
+      );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * 500 ขึ้นไป
+     * -------------------------------------------------------
+     */
+    if (
+      response.status >=
+      500
+    ) {
+
+      throw new Error(
+        "ระบบ Google Apps Script ขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง"
+      );
+
+    }
+
+
+    /*
+     * -------------------------------------------------------
+     * HTTP Error อื่น ๆ
+     * -------------------------------------------------------
+     */
+
+    throw new Error(
+      "ไม่สามารถเชื่อมต่อระบบได้ " +
+      "(HTTP " +
+      response.status +
+      ") กรุณาลองใหม่อีกครั้ง"
+    );
+
+  }
+
+
+  /*
+   * =========================================================
+   * 3. ตรวจว่ามี Response หรือไม่
+   * =========================================================
+   */
+
+  if (
+    !trimmedText
+  ) {
+
+    console.error(
+      "[API EMPTY RESPONSE]",
+      {
+        status:
+          response.status,
+
+        url:
+          response.url
+      }
+    );
+
+
+    throw new Error(
+      "ระบบไม่ได้ส่งข้อมูลกลับมา กรุณาลองใหม่อีกครั้ง"
+    );
+
+  }
+
+
+  /*
+   * =========================================================
+   * 4. ตรวจกรณี Google ส่ง HTML กลับมาแทน JSON
+   *
+   * ตัวอย่าง:
+   * - Login Page
+   * - Permission Page
+   * - Error Page
+   * - Google Apps Script HTML
+   * =========================================================
+   */
+
+  const lowerText =
+    trimmedText.toLowerCase();
+
+
+  const looksLikeHtml =
+    lowerText.startsWith(
+      "<!doctype"
+    ) ||
+    lowerText.startsWith(
+      "<html"
+    ) ||
+    lowerText.startsWith(
+      "<head"
+    ) ||
+    lowerText.startsWith(
+      "<body"
+    ) ||
+    trimmedText.startsWith(
+      "<"
+    );
+
+
+  if (
+    looksLikeHtml
+  ) {
+
+    console.error(
+      "[API NON JSON RESPONSE]",
+      {
+        status:
+          response.status,
+
+        url:
+          response.url,
+
+        body:
+          trimmedText.substring(
+            0,
+            500
+          )
+      }
+    );
+
+
+    /*
+     * ตรวจ Permission Page
+     */
+    if (
+      lowerText.includes(
+        "sign in"
+      ) ||
+      lowerText.includes(
+        "accounts.google.com"
+      ) ||
+      lowerText.includes(
+        "authorization"
+      )
+    ) {
+
+      throw new Error(
+        "Google Apps Script Web App ต้องการสิทธิ์เข้าสู่ระบบ กรุณาตรวจสอบว่า Deployment อนุญาตผู้ใช้งานตามที่กำหนดไว้"
+      );
+
+    }
+
+
+    /*
+     * Response เป็น HTML แต่ไม่ทราบสาเหตุ
+     */
+    throw new Error(
+      "ระบบตอบกลับข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง"
+    );
+
+  }
+
+
+  /*
+   * =========================================================
+   * 5. แปลง Response เป็น JSON
+   * =========================================================
+   */
+
+  let data;
+
+
+  try {
+
+    data =
+      JSON.parse(
+        trimmedText
+      );
+
+  } catch (error) {
+
+    console.error(
+      "[API JSON PARSE ERROR]",
+      {
+        status:
+          response.status,
+
+        url:
+          response.url,
+
+        body:
+          trimmedText.substring(
+            0,
+            500
+          ),
+
+        error:
+          error
+      }
+    );
+
+
+    throw new Error(
+      "API ไม่ได้ส่งข้อมูล JSON กลับมา"
+    );
+
+  }
+
+
+  /*
+   * =========================================================
+   * 6. ตรวจโครงสร้าง JSON
+   * =========================================================
+   */
+
+  if (
+    !data ||
+    typeof data !==
+      "object"
+  ) {
+
+    console.error(
+      "[API INVALID JSON OBJECT]",
+      {
+        url:
+          response.url,
+
+        data:
+          data
+      }
+    );
+
+
+    throw new Error(
+      "รูปแบบข้อมูลจากระบบไม่ถูกต้อง"
+    );
+
+  }
+
+
+  /*
+   * =========================================================
+   * 7. ตรวจ API Version
+   *
+   * ตรวจเฉพาะกรณี Backend ส่ง apiVersion กลับมา
+   * =========================================================
+   */
+
+  if (
+    typeof EXPECTED_API_VERSION !==
+      "undefined" &&
+    data.apiVersion &&
+    data.apiVersion !==
+      EXPECTED_API_VERSION
+  ) {
+
+    console.warn(
+      "[API VERSION MISMATCH]",
+      {
+        expected:
+          EXPECTED_API_VERSION,
+
+        actual:
+          data.apiVersion,
+
+        url:
+          response.url
+      }
+    );
+
+  }
+
+
+  /*
+   * =========================================================
+   * 8. Log Success สำหรับ Debug
+   * =========================================================
+   */
+
+  console.debug(
+    "[API RESPONSE]",
+    {
+      status:
+        response.status,
+
+      url:
+        response.url,
+
+      success:
+        data.success,
+
+      apiVersion:
+        data.apiVersion ||
+        ""
+    }
+  );
+
+
+  /*
+   * =========================================================
+   * 9. คืนข้อมูล JSON
+   * =========================================================
+   */
+
+  return data;
+
+}
 
     async function checkApiHealth(force = false) {
       if (!force && apiHealthPromise) {
@@ -4807,90 +5202,158 @@ async function apiPost(
   action,
   payload = {}
 ) {
+
+  /*
+   * =========================================================
+   * Timeout
+   * =========================================================
+   */
+
   let timeoutMs =
     30000;
 
+
   /*
-   * โหลดรายการและ Ranking อาจมีข้อมูลมาก
+   * โหลด Ranking อาจใช้เวลามากกว่า Login
    */
   if (
-    action === "applicants" ||
-    action === "ranking"
+    action ===
+      "ranking"
   ) {
+
     timeoutMs =
       90000;
+
   }
+
 
   /*
-   * การบันทึกคะแนนอาจต้องเขียนหลาย Sheet
+   * การบันทึกคะแนน
    */
   if (
-    action === "saveDraft" ||
-    action === "submitScore"
+    action ===
+      "saveDraft" ||
+    action ===
+      "submitScore"
   ) {
+
     timeoutMs =
       60000;
+
   }
 
-  const url =
-    new URL(
-      API_URL
-    );
 
-  url.searchParams.set(
-    "action",
-    action
-  );
+  /*
+   * =========================================================
+   * เตรียม Request Body
+   *
+   * ส่ง action รวมอยู่ใน JSON Body
+   *
+   * Code.gs → doPost()
+   * จะอ่านผ่าน parseRequestBody_(e)
+   * =========================================================
+   */
 
-  url.searchParams.set(
-    "payload",
-    JSON.stringify(
-      payload || {}
+  const requestBody = {
+
+    action:
+      action,
+
+    ...(
+      payload ||
+      {}
     )
-  );
 
-  url.searchParams.set(
-    "_",
-    String(
-      Date.now()
-    )
-  );
+  };
+
+
+  /*
+   * =========================================================
+   * เรียก Google Apps Script ผ่าน POST จริง
+   *
+   * ไม่ส่ง payload ผ่าน URL แล้ว
+   * =========================================================
+   */
 
   const response =
     await fetchWithTimeout(
-      url.toString(),
+      API_URL,
       {
+
         method:
-          "GET",
+          "POST",
+
+        headers:
+          {
+
+            /*
+             * ใช้ text/plain
+             *
+             * ลดปัญหา CORS Preflight
+             * กับ Google Apps Script Web App
+             */
+            "Content-Type":
+              "text/plain;charset=utf-8"
+
+          },
+
+        body:
+          JSON.stringify(
+            requestBody
+          ),
 
         cache:
           "no-store",
 
         redirect:
           "follow"
+
       },
       timeoutMs
     );
+
+
+  /*
+   * =========================================================
+   * อ่าน Response
+   * =========================================================
+   */
 
   const data =
     await parseApiResponse(
       response
     );
 
+
+  /*
+   * =========================================================
+   * ตรวจ Success
+   * =========================================================
+   */
+
   if (
     !data ||
-    data.success !== true
+    data.success !==
+      true
   ) {
+
     throw new Error(
+
       data &&
       data.message
+
         ? data.message
+
         : "เกิดข้อผิดพลาดจากระบบ"
+
     );
+
   }
 
+
   return data;
-}  
+
+}
 
     /* =========================================================
    LOGIN
