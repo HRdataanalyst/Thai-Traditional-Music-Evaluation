@@ -5087,11 +5087,35 @@ loginForm.addEventListener(
       applyJudgeInfo(
         currentJudge
       );
+      /*
+       * =====================================================
+       * 8. รับ Applicant ที่ได้มาพร้อม Login
+       *
+       * ไม่ต้องยิง API applicants รอบที่สองแล้ว
+       * =====================================================
+       */
+
+      applicants =
+        Array.isArray(
+          loginResult.applicants
+        )
+          ? loginResult.applicants
+          : [];
 
 
       /*
        * =====================================================
-       * 8. เปิด Dashboard
+       * 9. Reset Pagination
+       * =====================================================
+       */
+
+      currentPage =
+        1;
+
+
+      /*
+       * =====================================================
+       * 10. เปิด Dashboard
        * =====================================================
        */
 
@@ -5113,26 +5137,129 @@ loginForm.addEventListener(
 
 
       /*
-       * ล้าง Password ออกจากช่อง
-       * หลัง Login สำเร็จ
+       * =====================================================
+       * 11. Render Applicant
+       *
+       * จุดนี้ applicants มีข้อมูลแล้ว
+       * จึงไม่แสดงหน้า 0 ก่อน
+       * =====================================================
        */
-      passwordInput.value =
-        "";
-
-
-      /*
-       * Reset Applicant ก่อนโหลดข้อมูล
-       */
-      applicants =
-        [];
-
 
       renderApplicants();
 
 
       /*
-       * URL → Dashboard
+       * =====================================================
+       * 12. Update Summary
+       * =====================================================
        */
+
+      if (
+        loginResult.summary
+      ) {
+
+        updateSummary(
+          loginResult.summary
+        );
+
+      } else {
+
+        /*
+         * Fallback
+         *
+         * เผื่อ Backend ไม่ส่ง Summary
+         */
+        const total =
+          applicants.length;
+
+
+        const pending =
+          applicants.filter(
+            function(item) {
+
+              return (
+                item.status ===
+                "not-started"
+              );
+
+            }
+          ).length;
+
+
+        const draft =
+          applicants.filter(
+            function(item) {
+
+              return (
+                item.status ===
+                "draft"
+              );
+
+            }
+          ).length;
+
+
+        const submitted =
+          applicants.filter(
+            function(item) {
+
+              return (
+                item.status ===
+                "submitted"
+              );
+
+            }
+          ).length;
+
+
+        updateSummary(
+          {
+
+            total:
+              total,
+
+            pending:
+              pending,
+
+            draft:
+              draft,
+
+            submitted:
+              submitted,
+
+            progressPercent:
+              total
+                ? Math.round(
+                    (
+                      submitted /
+                      total
+                    ) *
+                    100
+                  )
+                : 0
+
+          }
+        );
+
+      }
+
+
+      /*
+       * =====================================================
+       * 13. ล้าง Password
+       * =====================================================
+       */
+
+      passwordInput.value =
+        "";
+
+
+      /*
+       * =====================================================
+       * 14. URL → Dashboard
+       * =====================================================
+       */
+
       history.replaceState(
         {
           page:
@@ -5145,62 +5272,14 @@ loginForm.addEventListener(
 
       /*
        * =====================================================
-       * 9. โหลดรายการประเมิน
-       *
-       * loadApplicants()
-       * จะใช้ authToken
-       *
-       * Backend จะอ่าน JudgeID
-       * จาก Session ที่สร้างไว้
+       * 15. Login สำเร็จ
        * =====================================================
        */
 
-      setLoading(
-        true,
-        "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
+      showToast(
+        "เข้าสู่ระบบสำเร็จ",
+        "success"
       );
-
-
-      try {
-
-        await loadApplicants();
-
-
-        showToast(
-          "เข้าสู่ระบบสำเร็จ",
-          "success"
-        );
-
-
-      } catch (loadError) {
-
-        console.error(
-          "loadApplicants failed:",
-          loadError
-        );
-
-
-        applicantGrid.innerHTML =
-          '<div class="empty-state">' +
-          '<strong>' +
-          'เข้าสู่ระบบสำเร็จ แต่โหลดรายการประเมินไม่สำเร็จ' +
-          '</strong>' +
-          '<p style="margin-top:6px;">' +
-          escapeHtml(
-            loadError.message ||
-            "กรุณาลองโหลดรายการใหม่"
-          ) +
-          '</p>' +
-          '</div>';
-
-
-        showToast(
-          loadError.message ||
-          "โหลดรายการประเมินไม่สำเร็จ"
-        );
-
-      }
-
 
     } catch (error) {
 
