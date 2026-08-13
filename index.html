@@ -4928,7 +4928,7 @@ async function apiGet(
           "follow"
       },
       timeoutMs,
-      2
+      1
     );
 
 
@@ -5059,9 +5059,9 @@ async function apiLoginFast(
           "follow"
       },
 
-      15000,
+      12000,
 
-      2
+      1
     );
 
 
@@ -5680,14 +5680,16 @@ loadApplicants()
     );
   }
 
-  const result =
-    await apiPost(
-      "applicants",
-      {
-        token:
-          authToken
-      }
-    );
+const result =
+  await apiGet(
+    "applicants",
+    {
+      token:
+        authToken
+    },
+    20000,
+    true
+  );
 
   applicants =
     Array.isArray(
