@@ -5120,83 +5120,59 @@ loginForm.addEventListener(
         "";
 
 
-/*
- * =====================================================
- * 9. ใช้ Applicants ที่ส่งมาพร้อม Login
- * =====================================================
- */
-
-if (
-  Array.isArray(
-    loginResult.applicants
-  )
-) {
-
-  applicants =
-    loginResult.applicants;
-
-  currentPage =
-    1;
-
-  renderApplicants();
+      /*
+       * Reset Applicant ก่อนโหลดข้อมูล
+       */
+      applicants =
+        [];
 
 
-  /*
-   * ใช้ Summary ที่ Backend ส่งมาด้วย
-   */
-  if (
-    loginResult.summary
-  ) {
-
-    updateSummary(
-      loginResult.summary
-    );
-
-  }
+      renderApplicants();
 
 
-  showToast(
-    "เข้าสู่ระบบสำเร็จ",
-    "success"
-  );
-
-} else {
-
-  /*
-   * ===================================================
-   * Fallback
-   *
-   * ถ้า Applicant Cache ยังไม่พร้อม
-   * ค่อยเรียก API applicants แยก
-   * ===================================================
-   */
-
-  setLoading(
-    true,
-    "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
-  );
-
-  await loadApplicants();
-
-  showToast(
-    "เข้าสู่ระบบสำเร็จ",
-    "success"
-  );
-
-}
+      /*
+       * URL → Dashboard
+       */
+      history.replaceState(
+        {
+          page:
+            "dashboard"
+        },
+        "",
+        "#dashboard"
+      );
 
 
-/*
- * URL → Dashboard
- */
-history.replaceState(
-  {
-    page:
-      "dashboard"
-  },
-  "",
-  "#dashboard"
-);
+      /*
+       * =====================================================
+       * 9. โหลดรายการประเมิน
+       *
+       * loadApplicants()
+       * จะใช้ authToken
+       *
+       * Backend จะอ่าน JudgeID
+       * จาก Session ที่สร้างไว้
+       * =====================================================
+       */
+
+      setLoading(
+        true,
+        "เข้าสู่ระบบสำเร็จ กำลังโหลดรายการประเมิน..."
+      );
+
+
+      try {
+
+        await loadApplicants();
+
+
+        showToast(
+          "เข้าสู่ระบบสำเร็จ",
+          "success"
+        );
+
+
+      } catch (loadError) {
 
         console.error(
           "loadApplicants failed:",
