@@ -7733,46 +7733,68 @@ function renderRanking() {
        * 85 → 4
        */
 
-      let previousScore =
-        null;
+/*
+ * =========================================================
+ * DENSE RANKING
+ *
+ * ตัวอย่าง:
+ *
+ * 95 → 1
+ * 95 → 1
+ * 88 → 2
+ * 88 → 2
+ * 87 → 3
+ * 84 → 4
+ * 84 → 4
+ * 83 → 5
+ * =========================================================
+ */
 
-      let previousRank =
-        0;
+let previousScore =
+  null;
 
-
-      rows.forEach(
-        function(row, index) {
-
-          const score =
-            Number(
-              row.myScore || 0
-            );
-
-
-          if (
-            previousScore ===
-              null ||
-            score !==
-              previousScore
-          ) {
-
-            previousRank =
-              index + 1;
-
-            previousScore =
-              score;
-
-          }
+let previousRank =
+  0;
 
 
-          /*
-           * Override Rank เฉพาะในหน้าเว็บ
-           */
-          row.rank =
-            previousRank;
+rows.forEach(
+  function(row) {
 
-        }
+    const score =
+      Number(
+        row.myScore || 0
       );
+
+
+    /*
+     * เมื่อคะแนนเปลี่ยน
+     * เพิ่ม Rank แค่ 1
+     */
+    if (
+      previousScore ===
+        null ||
+      score !==
+        previousScore
+    ) {
+
+      previousRank +=
+        1;
+
+      previousScore =
+        score;
+
+    }
+
+
+    /*
+     * คะแนนเท่ากัน
+     * ใช้ Rank เดียวกัน
+     */
+    row.rank =
+      previousRank;
+
+  }
+);
 
     }
   );
