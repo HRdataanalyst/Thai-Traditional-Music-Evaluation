@@ -993,6 +993,14 @@ padding: 4px;
       font-size: 13px;
     }
 
+    .filter-control:disabled {
+  background: #f3f0f4;
+  color: #aaa3ac;
+  border-color: #e5dfe6;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
     .filter-control:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(93, 40, 95, 0.08);
@@ -4009,8 +4017,8 @@ padding: 4px;
         <span class="ranking-eyebrow">RANKING</span>
         <h1>อันดับคะแนนการแข่งขัน</h1>
         <p>
-          เปรียบเทียบคะแนนภายในภูมิภาค รายการแข่งขัน รุ่นอายุ
-          และประเภทเครื่องดนตรีเดียวกัน
+          เปรียบเทียบคะแนนภายในกลุ่มการแข่งขันเดียวกัน
+  โดยแบ่งตามภูมิภาค รายการแข่งขัน และรุ่นอายุ
         </p>
       </section>
       
@@ -7109,13 +7117,20 @@ async function openRankingPage(
     /*
      * สร้าง Filter
      */
-    populateRankingFilters();
+populateRankingFilters();
 
 
-    /*
-     * แสดง Ranking
-     */
-    renderRanking();
+/*
+ * คู่ / Trio
+ * ไม่ใช้ Instrument Filter
+ */
+updateRankingInstrumentFilterState();
+
+
+/*
+ * แสดง Ranking
+ */
+renderRanking();
 
 
     /*
@@ -7171,6 +7186,140 @@ async function openRankingPage(
     );
 
   }
+}
+
+    /*
+ * =========================================================
+ * NORMALIZE COMPETITION FOR RANKING
+ * =========================================================
+ */
+function normalizeRankingCompetition(
+  value
+) {
+
+  const text =
+    String(
+      value || ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  /*
+   * Trio
+   */
+  if (
+    text.includes("trio") ||
+    text.includes("ทรีโอ")
+  ) {
+
+    return "Trio";
+
+  }
+
+
+  /*
+   * คู่ / Duo
+   */
+  if (
+    text.includes("คู่") ||
+    text.includes("duo")
+  ) {
+
+    return "คู่";
+
+  }
+
+
+  /*
+   * เดี่ยว
+   */
+  if (
+    text.includes("เดี่ยว") ||
+    text.includes("solo")
+  ) {
+
+    return "เดี่ยว";
+
+  }
+
+
+  return String(
+    value || ""
+  ).trim();
+}
+
+
+/*
+ * =========================================================
+ * คู่ / Trio ไม่ใช้ InstrumentCategory
+ * =========================================================
+ */
+function isRankingWithoutInstrument(
+  competition
+) {
+
+  const normalized =
+    normalizeRankingCompetition(
+      competition
+    );
+
+
+  return (
+    normalized === "คู่" ||
+    normalized === "Trio"
+  );
+}
+
+    /*
+ * =========================================================
+ * UPDATE INSTRUMENT FILTER STATE
+ *
+ * เดี่ยว
+ * → ใช้งานประเภทเครื่องดนตรีได้
+ *
+ * คู่ / Trio
+ * → ไม่ใช้ประเภทเครื่องดนตรี
+ * → Disable Dropdown
+ * → Reset เป็น "ทั้งหมด"
+ * =========================================================
+ */
+function updateRankingInstrumentFilterState() {
+
+  const competition =
+    rankingCompetitionFilter.value;
+
+
+  const ignoreInstrument =
+    isRankingWithoutInstrument(
+      competition
+    );
+
+
+  rankingInstrumentFilter.disabled =
+    ignoreInstrument;
+
+
+  if (
+    ignoreInstrument
+  ) {
+
+    /*
+     * ล้าง Filter เดิมทันที
+     *
+     * ป้องกันกรณี:
+     *
+     * ก่อนหน้าเลือก "ตี"
+     * แล้วเปลี่ยน Competition → Trio
+     *
+     * ถ้าไม่ล้าง ค่า "ตี"
+     * จะยังแอบ Filter อยู่
+     */
+    rankingInstrumentFilter.value =
+      "";
+
+  }
+
 }
     
 function populateRankingFilters() {
@@ -7244,7 +7393,29 @@ function renderRanking() {
 
   /*
    * =========================================================
-   * 1. Filter
+   * 1. Competition ที่เลือก
+   * =========================================================
+   */
+
+  const selectedCompetition =
+    normalizeRankingCompetition(
+      rankingCompetitionFilter.value
+    );
+
+
+  /*
+   * ถ้าเป็นคู่ / Trio
+   * ไม่ใช้ Instrument ในการ Filter
+   */
+  const ignoreInstrumentFilter =
+    isRankingWithoutInstrument(
+      selectedCompetition
+    );
+
+
+  /*
+   * =========================================================
+   * 2. Filter
    * =========================================================
    */
 
@@ -7252,30 +7423,63 @@ function renderRanking() {
     rankingRows.filter(
       function(row) {
 
+        const rowCompetition =
+          normalizeRankingCompetition(
+            row.competition
+          );
+
+
         return (
 
+          /*
+           * Region
+           */
           (
             !rankingRegionFilter.value ||
             row.region ===
               rankingRegionFilter.value
           ) &&
 
+
+          /*
+           * Competition
+           */
           (
             !rankingCompetitionFilter.value ||
-            row.competition ===
-              rankingCompetitionFilter.value
+            rowCompetition ===
+              selectedCompetition
           ) &&
 
+
+          /*
+           * Age Group
+           */
           (
             !rankingAgeFilter.value ||
             row.ageGroup ===
               rankingAgeFilter.value
           ) &&
 
+
+          /*
+           * Instrument
+           *
+           * คู่ / Trio
+           * → true เสมอ
+           *
+           * เดี่ยว
+           * → Filter ตามประเภทเครื่องดนตรี
+           */
           (
+            ignoreInstrumentFilter ||
+
             !rankingInstrumentFilter.value ||
-            row.instrumentCategory ===
+
+            String(
+              row.instrumentCategory || ""
+            ).includes(
               rankingInstrumentFilter.value
+            )
           )
 
         );
@@ -7286,7 +7490,7 @@ function renderRanking() {
 
   /*
    * =========================================================
-   * 2. ไม่มีข้อมูล
+   * 3. ไม่มีข้อมูล
    * =========================================================
    */
 
@@ -7315,7 +7519,27 @@ function renderRanking() {
 
   /*
    * =========================================================
-   * 3. Group
+   * 4. Group Ranking ใหม่ที่ HTML
+   *
+   * สำคัญ:
+   *
+   * ไม่ใช้ row.groupKey จาก Backend โดยตรง
+   *
+   * เดี่ยว:
+   * Region
+   * + Competition
+   * + AgeGroup
+   * + InstrumentCategory
+   *
+   * คู่:
+   * Region
+   * + Competition
+   * + AgeGroup
+   *
+   * Trio:
+   * Region
+   * + Competition
+   * + AgeGroup
    * =========================================================
    */
 
@@ -7326,21 +7550,89 @@ function renderRanking() {
   filteredRows.forEach(
     function(row) {
 
+      const region =
+        String(
+          row.region || ""
+        ).trim();
+
+
+      const competition =
+        normalizeRankingCompetition(
+          row.competition
+        );
+
+
+      const ageGroup =
+        String(
+          row.ageGroup || ""
+        ).trim();
+
+
+      const instrumentCategory =
+        String(
+          row.instrumentCategory || ""
+        ).trim();
+
+
+      let groupKey;
+
+
+      /*
+       * คู่ / Trio
+       *
+       * ไม่ใช้ InstrumentCategory
+       */
+      if (
+        isRankingWithoutInstrument(
+          competition
+        )
+      ) {
+
+        groupKey = [
+          region,
+          competition,
+          ageGroup
+        ].join(
+          "||"
+        );
+
+      }
+
+
+      /*
+       * เดี่ยว
+       *
+       * ใช้ InstrumentCategory
+       */
+      else {
+
+        groupKey = [
+          region,
+          competition,
+          ageGroup,
+          instrumentCategory
+        ].join(
+          "||"
+        );
+
+      }
+
+
       if (
         !groups[
-          row.groupKey
+          groupKey
         ]
       ) {
 
         groups[
-          row.groupKey
+          groupKey
         ] = [];
 
       }
 
 
       groups[
-        row.groupKey
+        groupKey
       ].push(
         row
       );
@@ -7351,7 +7643,144 @@ function renderRanking() {
 
   /*
    * =========================================================
-   * 4. Render
+   * 5. Recalculate Rank ฝั่ง HTML
+   *
+   * เพราะถ้า Backend เก่ายังส่ง:
+   *
+   * Trio เครื่องตี = Rank 1
+   * Trio เครื่องเป่า = Rank 1
+   *
+   * หลังรวมเป็น Group เดียว
+   * ต้องคำนวณใหม่เป็น:
+   *
+   * 94 → Rank 1
+   * 75 → Rank 2
+   *
+   * ใช้คะแนนของกรรมการคนปัจจุบัน
+   * myScore
+   * =========================================================
+   */
+
+  Object.keys(
+    groups
+  ).forEach(
+    function(groupKey) {
+
+      const rows =
+        groups[
+          groupKey
+        ];
+
+
+      /*
+       * คะแนนมาก → น้อย
+       */
+      rows.sort(
+        function(a, b) {
+
+          const scoreA =
+            Number(
+              a.myScore || 0
+            );
+
+
+          const scoreB =
+            Number(
+              b.myScore || 0
+            );
+
+
+          if (
+            scoreB !==
+            scoreA
+          ) {
+
+            return (
+              scoreB -
+              scoreA
+            );
+
+          }
+
+
+          /*
+           * คะแนนเท่ากัน
+           * ใช้ Submission เป็นลำดับแสดงผล
+           */
+          return String(
+            a.submissionNumber ||
+            a.applicantId ||
+            ""
+          ).localeCompare(
+            String(
+              b.submissionNumber ||
+              b.applicantId ||
+              ""
+            ),
+            "th"
+          );
+
+        }
+      );
+
+
+      /*
+       * Competition Ranking
+       *
+       * 94 → 1
+       * 90 → 2
+       * 90 → 2
+       * 85 → 4
+       */
+
+      let previousScore =
+        null;
+
+      let previousRank =
+        0;
+
+
+      rows.forEach(
+        function(row, index) {
+
+          const score =
+            Number(
+              row.myScore || 0
+            );
+
+
+          if (
+            previousScore ===
+              null ||
+            score !==
+              previousScore
+          ) {
+
+            previousRank =
+              index + 1;
+
+            previousScore =
+              score;
+
+          }
+
+
+          /*
+           * Override Rank เฉพาะในหน้าเว็บ
+           */
+          row.rank =
+            previousRank;
+
+        }
+      );
+
+    }
+  );
+
+
+  /*
+   * =========================================================
+   * 6. Render
    * =========================================================
    */
 
@@ -7384,6 +7813,51 @@ function renderRanking() {
             rows[0];
 
 
+          const competition =
+            normalizeRankingCompetition(
+              first.competition
+            );
+
+
+          const hideInstrument =
+            isRankingWithoutInstrument(
+              competition
+            );
+
+
+          /*
+           * =================================================
+           * Subtitle
+           *
+           * คู่ / Trio:
+           * Junior
+           *
+           * เดี่ยว:
+           * Junior · ประเภท ดีด
+           * =================================================
+           */
+
+          const subtitle =
+            hideInstrument
+
+              ? escapeHtml(
+                  first.ageGroup ||
+                  "-"
+                )
+
+              : (
+                  escapeHtml(
+                    first.ageGroup ||
+                    "-"
+                  ) +
+                  " · ประเภท " +
+                  escapeHtml(
+                    first.instrumentCategory ||
+                    "-"
+                  )
+                );
+
+
           return `
             <article
               class="ranking-group-card"
@@ -7400,24 +7874,17 @@ function renderRanking() {
                   )}
                   ·
                   ${escapeHtml(
-                    first.competition ||
+                    competition ||
                     "-"
                   )}
                 </h3>
 
                 <p>
-                  ${escapeHtml(
-                    first.ageGroup ||
-                    "-"
-                  )}
-                  · ประเภท
-                  ${escapeHtml(
-                    first.instrumentCategory ||
-                    "-"
-                  )}
+                  ${subtitle}
                 </p>
 
               </header>
+
 
               <div
                 class="ranking-table-wrap"
@@ -7427,18 +7894,6 @@ function renderRanking() {
                   class="ranking-table"
                 >
 
-                  <!--
-                    =========================================================
-                    กำหนดความกว้างคอลัมน์ให้ทุก Ranking Table เหมือนกัน
-
-                    1 = อันดับ
-                    2 = Submission
-                    3 = โรงเรียน
-                    4 = เพลง
-                    5 = ผู้เข้าแข่งขัน
-                    6 = คะแนนของฉัน
-                    =========================================================
-                  -->
                   <colgroup>
 
                     <col
@@ -7654,19 +8109,65 @@ backFromRankingButton.addEventListener(
    RANKING FILTERS
 ========================================================= */
 
-[
-  rankingRegionFilter,
-  rankingCompetitionFilter,
-  rankingAgeFilter,
-  rankingInstrumentFilter
+/*
+ * =========================================================
+ * RANKING FILTER EVENTS
+ * =========================================================
+ */
 
-].forEach(
-  function(select) {
 
-    select.addEventListener(
-      "change",
-      renderRanking
-    );
+/*
+ * Region
+ */
+rankingRegionFilter.addEventListener(
+  "change",
+  function() {
+
+    renderRanking();
+
+  }
+);
+
+
+/*
+ * Age
+ */
+rankingAgeFilter.addEventListener(
+  "change",
+  function() {
+
+    renderRanking();
+
+  }
+);
+
+
+/*
+ * Instrument
+ */
+rankingInstrumentFilter.addEventListener(
+  "change",
+  function() {
+
+    renderRanking();
+
+  }
+);
+
+
+/*
+ * Competition
+ *
+ * สำคัญ:
+ * ต้อง Update Instrument Filter ก่อน
+ */
+rankingCompetitionFilter.addEventListener(
+  "change",
+  function() {
+
+    updateRankingInstrumentFilterState();
+
+    renderRanking();
 
   }
 );
