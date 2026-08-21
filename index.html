@@ -4596,8 +4596,9 @@ async function fetchWithTimeout(
   url,
   options = {},
   timeoutMs = 30000,
-  maxRetries = 2
-) {
+  maxRetries = 1
+)
+{
 
   let lastError =
     null;
@@ -4953,17 +4954,28 @@ async function apiPost(
 ) {
   let timeoutMs =
     30000;
+/*
+ * Applicant อ่านจาก Prebuilt Cache
+ * ปกติควรตอบกลับเร็ว
+ */
+if (
+  action === "applicants"
+) {
+  timeoutMs =
+    30000;
+}
 
-  /*
-   * โหลดรายการและ Ranking อาจมีข้อมูลมาก
-   */
-  if (
-    action === "applicants" ||
-    action === "ranking"
-  ) {
-    timeoutMs =
-      90000;
-  }
+
+/*
+ * Ranking อาจมีการอ่านคะแนนเพิ่มเติม
+ * จึงให้เวลามากกว่า Applicants
+ */
+if (
+  action === "ranking"
+) {
+  timeoutMs =
+    60000;
+}
 
   /*
    * การบันทึกคะแนนอาจต้องเขียนหลาย Sheet
