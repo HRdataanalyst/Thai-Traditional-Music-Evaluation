@@ -4595,67 +4595,203 @@ const apiLoading =
 async function fetchWithTimeout(
   url,
   options = {},
-  timeoutMs = 30000
+  timeoutMs = 30000,
+  maxRetries = 2
 ) {
-  const controller =
-    new AbortController();
 
-  const timeoutId =
-    setTimeout(
-      function() {
-        controller.abort();
-      },
-      timeoutMs
-    );
+  let lastError =
+    null;
 
-  try {
-    return await fetch(
-      url,
-      {
-        ...options,
 
-        signal:
-          controller.signal,
+  for (
+    let attempt = 0;
+    attempt <= maxRetries;
+    attempt++
+  ) {
 
-        redirect:
-          "follow",
+    const controller =
+      new AbortController();
 
-        /*
-         * ไม่บังคับ no-store แล้ว
-         *
-         * Request ที่ต้องการข้อมูลล่าสุด
-         * จะกำหนด Cache Mode จาก apiGet/apiPost
-         */
-        cache:
-          options.cache ||
-          "default"
+
+    const timeoutId =
+      setTimeout(
+        function() {
+          controller.abort();
+        },
+        timeoutMs
+      );
+
+
+    try {
+
+      const response =
+        await fetch(
+          url,
+          {
+            ...options,
+
+            signal:
+              controller.signal,
+
+            redirect:
+              "follow",
+
+            cache:
+              options.cache ||
+              "default"
+          }
+        );
+
+
+      /*
+       * Apps Script / Google infrastructure
+       * อาจตอบ 404 / 429 / 5xx ชั่วคราวได้
+       *
+       * ลองใหม่อัตโนมัติ
+       */
+      if (
+        response.status === 404 ||
+        response.status === 429 ||
+        response.status >= 500
+      ) {
+
+        if (
+          attempt <
+          maxRetries
+        ) {
+
+          clearTimeout(
+            timeoutId
+          );
+
+
+          await new Promise(
+            function(resolve) {
+
+              setTimeout(
+                resolve,
+                800 *
+                (attempt + 1)
+              );
+
+            }
+          );
+
+
+          continue;
+
+        }
+
       }
-    );
 
-  } catch (error) {
-    if (
-      error &&
-      error.name ===
-        "AbortError"
-    ) {
-      throw new Error(
-        "ระบบใช้เวลาประมวลผลนานกว่าปกติ กรุณาลองใหม่อีกครั้ง"
+
+      return response;
+
+
+    } catch (error) {
+
+      lastError =
+        error;
+
+
+      /*
+       * Timeout
+       */
+      if (
+        error &&
+        error.name ===
+          "AbortError"
+      ) {
+
+        if (
+          attempt <
+          maxRetries
+        ) {
+
+          await new Promise(
+            function(resolve) {
+
+              setTimeout(
+                resolve,
+                800 *
+                (attempt + 1)
+              );
+
+            }
+          );
+
+
+          continue;
+
+        }
+
+
+        throw new Error(
+          "ระบบใช้เวลาประมวลผลนานกว่าปกติ กรุณาลองใหม่อีกครั้ง"
+        );
+
+      }
+
+
+      /*
+       * Network error
+       */
+      if (
+        error instanceof
+          TypeError
+      ) {
+
+        if (
+          attempt <
+          maxRetries
+        ) {
+
+          await new Promise(
+            function(resolve) {
+
+              setTimeout(
+                resolve,
+                800 *
+                (attempt + 1)
+              );
+
+            }
+          );
+
+
+          continue;
+
+        }
+
+
+        throw new Error(
+          "ไม่สามารถเชื่อมต่อระบบได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง"
+        );
+
+      }
+
+
+      throw error;
+
+
+    } finally {
+
+      clearTimeout(
+        timeoutId
       );
+
     }
 
-    if (
-      error instanceof TypeError
-    ) {
-      throw new Error(
-        "ไม่สามารถเชื่อมต่อระบบได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง"
-      );
-    }
-
-    throw error;
-
-  } finally {
-    clearTimeout(timeoutId);
   }
+
+
+  throw (
+    lastError ||
+    new Error(
+      "ไม่สามารถเชื่อมต่อระบบได้"
+    )
+  );
+
 }
 
     async function parseApiResponse(response) {
@@ -4663,11 +4799,11 @@ async function fetchWithTimeout(
       const trimmedText = responseText.trim();
 
       if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error(
-            "ไม่พบ Google Apps Script Web App กรุณา Deploy ใหม่และนำ URL /exec ล่าสุดมาใส่ใน API_URL"
-          );
-        }
+if (response.status === 404) {
+  throw new Error(
+    "ไม่สามารถติดต่อ Google Apps Script ได้ชั่วคราว กรุณาลองใหม่อีกครั้ง"
+  );
+}
 
         throw new Error(
           `API ตอบกลับ HTTP ${response.status}`
@@ -4736,7 +4872,7 @@ async function fetchWithTimeout(
 async function apiGet(
   action,
   params = {},
-  timeoutMs = 30000,
+  timeoutMs = 20000,
   forceFresh = false
 ) {
   const url =
